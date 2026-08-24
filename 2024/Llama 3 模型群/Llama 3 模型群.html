@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Llama 3 模型群</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">Llama 3 模型群</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#llama-3">Llama 3 模型群</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 总体概览</a></li>
+<li><a href="#3">3 预训练</a><ul>
+<li><a href="#31">3.1 预训练数据</a><ul>
+<li><a href="#311">3.1.1 网页数据策展</a></li>
+<li><a href="#312">3.1.2 确定数据配比</a></li>
+<li><a href="#313">3.1.3 退火数据</a></li>
+</ul>
+</li>
+<li><a href="#32">3.2 模型架构</a><ul>
+<li><a href="#321">3.2.1 缩放定律</a></li>
+</ul>
+</li>
+<li><a href="#33">3.3 基础设施、扩展与效率</a><ul>
+<li><a href="#331">3.3.1 训练基础设施</a></li>
+<li><a href="#332">3.3.2 面向模型扩展的并行</a></li>
+<li><a href="#333">3.3.3 集合通信</a></li>
+<li><a href="#334">3.3.4 可靠性与运行挑战</a></li>
+</ul>
+</li>
+<li><a href="#34">3.4 训练方案</a><ul>
+<li><a href="#341">3.4.1 初始预训练</a></li>
+<li><a href="#342">3.4.2 长上下文预训练</a></li>
+<li><a href="#343">3.4.3 退火</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#4">4 后训练</a><ul>
+<li><a href="#41">4.1 建模</a><ul>
+<li><a href="#411">4.1.1 对话格式</a></li>
+<li><a href="#412">4.1.2 奖励建模</a></li>
+<li><a href="#413">4.1.3 监督微调</a></li>
+<li><a href="#414">4.1.4 直接偏好优化</a></li>
+<li><a href="#415">4.1.5 模型平均</a></li>
+<li><a href="#416">4.1.6 迭代轮次</a></li>
+</ul>
+</li>
+<li><a href="#42">4.2 后训练数据</a><ul>
+<li><a href="#421">4.2.1 偏好数据</a></li>
+<li><a href="#422-sft">4.2.2 SFT 数据</a></li>
+<li><a href="#423">4.2.3 数据处理与质量控制</a></li>
+</ul>
+</li>
+<li><a href="#43">4.3 专项能力</a><ul>
+<li><a href="#431">4.3.1 代码</a></li>
+<li><a href="#432">4.3.2 多语言</a></li>
+<li><a href="#433">4.3.3 数学与推理</a></li>
+<li><a href="#434">4.3.4 长上下文</a></li>
+<li><a href="#435">4.3.5 工具使用</a></li>
+<li><a href="#436">4.3.6 事实性</a></li>
+<li><a href="#437">4.3.7 可控性</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#5">5 结果</a><ul>
+<li><a href="#51">5.1 预训练语言模型</a><ul>
+<li><a href="#511">5.1.1 标准基准</a></li>
+<li><a href="#512">5.1.2 模型稳健性</a></li>
+<li><a href="#513">5.1.3 对抗基准</a></li>
+<li><a href="#514">5.1.4 污染分析</a></li>
+</ul>
+</li>
+<li><a href="#52">5.2 后训练语言模型</a><ul>
+<li><a href="#521">5.2.1 通用知识与指令跟随基准</a></li>
+<li><a href="#522">5.2.2 能力考试</a></li>
+<li><a href="#523">5.2.3 代码基准</a></li>
+<li><a href="#524">5.2.4 多语言基准</a></li>
+<li><a href="#525">5.2.5 数学与推理基准</a></li>
+<li><a href="#526">5.2.6 长上下文基准</a></li>
+<li><a href="#527">5.2.7 工具使用表现</a></li>
+</ul>
+</li>
+<li><a href="#53">5.3 人工评测</a></li>
+<li><a href="#54">5.4 安全</a><ul>
+<li><a href="#541">5.4.1 基准构建</a></li>
+<li><a href="#542">5.4.2 预训练安全</a></li>
+<li><a href="#543">5.4.3 安全微调</a></li>
+<li><a href="#544">5.4.4 安全结果</a></li>
+<li><a href="#545">5.4.5 网络安全与化学、生物武器安全</a></li>
+<li><a href="#546">5.4.6 红队测试</a></li>
+<li><a href="#547">5.4.7 系统级安全</a></li>
+<li><a href="#548">5.4.8 局限性</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#6">6 推理</a><ul>
+<li><a href="#61">6.1 流水线并行</a></li>
+<li><a href="#62-fp8">6.2 FP8 量化</a></li>
+</ul>
+</li>
+<li><a href="#7">7 视觉实验</a><ul>
+<li><a href="#71">7.1 数据</a><ul>
+<li><a href="#711">7.1.1 图像数据</a></li>
+<li><a href="#712">7.1.2 视频数据</a></li>
+</ul>
+</li>
+<li><a href="#72">7.2 模型架构</a></li>
+<li><a href="#73">7.3 模型扩展</a></li>
+<li><a href="#74">7.4 预训练</a></li>
+<li><a href="#75">7.5 后训练</a><ul>
+<li><a href="#751">7.5.1 监督微调数据</a></li>
+<li><a href="#752">7.5.2 监督微调方案</a></li>
+<li><a href="#753">7.5.3 偏好数据</a></li>
+<li><a href="#754">7.5.4 奖励建模</a></li>
+<li><a href="#755">7.5.5 直接偏好优化</a></li>
+<li><a href="#756">7.5.6 拒绝采样</a></li>
+<li><a href="#757">7.5.7 质量调优</a></li>
+</ul>
+</li>
+<li><a href="#76">7.6 图像识别结果</a></li>
+<li><a href="#77">7.7 视频识别结果</a></li>
+</ul>
+</li>
+<li><a href="#8">8 语音实验</a><ul>
+<li><a href="#81">8.1 数据</a><ul>
+<li><a href="#811">8.1.1 语音理解</a></li>
+<li><a href="#812">8.1.2 语音生成</a></li>
+</ul>
+</li>
+<li><a href="#82">8.2 模型架构</a><ul>
+<li><a href="#821">8.2.1 语音理解</a></li>
+<li><a href="#822">8.2.2 语音生成</a></li>
+</ul>
+</li>
+<li><a href="#83">8.3 训练方案</a><ul>
+<li><a href="#831">8.3.1 语音理解</a></li>
+<li><a href="#832">8.3.2 语音生成</a></li>
+</ul>
+</li>
+<li><a href="#84">8.4 语音理解结果</a></li>
+<li><a href="#85">8.5 语音生成结果</a></li>
+</ul>
+</li>
+<li><a href="#9">9 相关工作</a><ul>
+<li><a href="#91">9.1 语言</a></li>
+<li><a href="#92">9.2 多模态</a></li>
+</ul>
+</li>
+<li><a href="#10">10 结论</a></li>
+<li><a href="#_2">贡献者与致谢</a><ul>
+<li><a href="#_3">核心贡献者</a></li>
+<li><a href="#_4">贡献者</a></li>
+<li><a href="#_5">致谢</a></li>
+</ul>
+</li>
+<li><a href="#_6">参考文献（原文截图）</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="llama-3">Llama 3 模型群</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2024-07-31">2024 年 7 月 31 日</time></p>
+<p><strong>作者：</strong> Meta 人工智能部门 Llama 团队<br>
+<strong>日期：</strong> 2024 年 7 月 23 日<br>
+<strong>网站：</strong> https://llama.meta.com/<br>
+<strong>说明：</strong> 完整贡献者名单见论文末尾。</p>
+<h2 id="_1">摘要</h2>
+<p>现代人工智能系统由基础模型驱动。本文介绍一组名为 Llama 3 的新基础模型。这一语言模型群原生支持多语言、代码、推理与工具使用。最大模型是一个具有 4050 亿参数的稠密 Transformer，上下文窗口最长为 128K 词元。本文对 Llama 3 进行广泛的实证评测；结果发现，它在大量任务上的质量可与 GPT-4 等领先语言模型相比。</p>
+<p>我们公开发布 Llama 3，其中包括 4050 亿参数语言模型的预训练版与后训练版，以及用于输入和输出安全的 Llama Guard 3。论文还报告了通过组合式方法把图像、视频和语音能力集成进 Llama 3 的实验。该方法在图像、视频与语音识别任务上能够与先进水平竞争。由于这些多模态模型仍在开发，暂未广泛发布。</p>
+<h2 id="1">1 引言</h2>
+<p>基础模型是面向语言、视觉、语音和其他模态的通用模型，旨在支持大量不同的人工智能任务，并构成许多现代人工智能系统的基础。</p>
+<p>现代基础模型的开发主要分为两个阶段。第一是预训练：使用下一词预测、图像描述等直接任务，以极大规模训练模型。第二是后训练：调整模型，使其能够遵循指令、符合人类偏好，并提高代码、推理等具体能力。</p>
+<p>本文介绍名为 Llama 3 的新语言基础模型集合。Llama 3 模型群原生支持多语言、代码、推理和工具使用。最大模型是具有 4050 亿参数的稠密 Transformer，能够在最长 128K 词元的上下文窗口内处理信息。论文所有结果都来自 Llama 3.1 模型，为简洁起见，下文统一称为 Llama 3。</p>
+<p>我们认为，高质量基础模型的开发有三个关键杠杆：数据、规模和复杂度管理。开发流程围绕这三个方面进行优化。</p>
+<ul>
+<li><strong>数据。</strong> 与先前 Llama 相比，我们同时提高预训练和后训练数据的数量与质量。改进包括：为预训练数据开发更谨慎的预处理和策展流程；为后训练数据建立更严格的质量保证和过滤方法。Llama 3 使用约 15 万亿个多语言词元预训练，而 Llama 2 使用 1.8 万亿个词元。</li>
+<li><strong>规模。</strong> 训练规模远大于先前 Llama。旗舰模型的预训练计算量为 $3.8\times10^{25}$ FLOP，几乎是最大 Llama 2 的 50 倍。具体而言，旗舰模型具有 4050 亿个可训练参数，使用 15.6 万亿文本词元预训练。</li>
+</ul>
+<p><img alt="原论文第 1 页：标题、摘要与引言开篇" src="资源/原页-01.png"></p>
+<p>基础模型缩放定律表明，采用相同训练流程时，旗舰模型会优于较小模型。我们的缩放定律还显示，旗舰模型的规模大致符合训练预算下的计算最优点；但较小模型的训练时长远超其计算最优值。这样得到的小模型在同等推理预算下优于计算最优模型。后训练期间，我们还利用旗舰模型进一步提高小模型质量。</p>
+<ul>
+<li><strong>复杂度管理。</strong> 所有设计选择都服务于扩大模型开发流程。例如，为最大化训练稳定性，我们选择仅做少量调整的标准稠密 Transformer，而没有采用混合专家模型。类似地，后训练使用基于监督微调（SFT）、拒绝采样（RS）和直接偏好优化（DPO）的相对简单流程，而不是稳定性较低、扩展难度更大的复杂强化学习算法。</li>
+</ul>
+<p>最终得到的 Llama 3 包含三个多语言模型，参数量分别为 80 亿、700 亿和 4050 亿。我们在覆盖大量语言理解任务的众多基准上评估它们，并通过广泛人工评测与竞争模型比较。实验表明，旗舰模型在多种任务上与 GPT-4 等领先语言模型相当，接近当时的先进水平；两个较小模型则在同参数量级中表现最佳，超过其他相近规模模型。相比前代，Llama 3 也在有帮助与无害之间取得更好的平衡。</p>
+<p>我们通过更新后的 Llama 3 社区许可证公开发布三个模型，包括 4050 亿参数语言模型的预训练版和后训练版，以及用于输入和输出安全的新版 Llama Guard。我们希望旗舰模型的开放发布能够激发研究社区的新一轮创新，并加速以负责任方式迈向通用人工智能。</p>
+<p>开发 Llama 3 时，我们还为模型构建多模态扩展，加入图像识别、视频识别和语音理解能力。这些模型仍在积极开发，尚未准备好发布；除语言建模结果外，本文也报告多模态模型的初步实验结果。</p>
+<p>表 1 汇总 Llama 3 模型群。2024 年 4 月发布 Llama 3 8B、70B 及其指令版；2024 年 7 月发布原生多语言、支持长上下文的 Llama 3.1 8B、70B、405B，三个指令版还支持工具调用。</p>
+<p><img alt="原论文第 2 页：模型群总览与引言续" src="资源/原页-02.png"></p>
+<p>表 2 比较经过微调的 Llama 3 与 Gemma 2、Mistral、Mixtral、GPT、Nemotron 和 Claude 等模型，覆盖通用能力、代码、数学、推理、工具使用、长上下文和多语言。Llama 3 405B 在 MMLU 五样本、MMLU-Pro、IFEval、HumanEval、MBPP EvalPlus、GSM8K、MATH、ARC Challenge、GPQA、BFCL、长上下文与 MGSM 等基准上均达到当时顶尖或接近顶尖的水平。</p>
+<h2 id="2">2 总体概览</h2>
+<p>Llama 3 语言模型的开发包含两个主要阶段。</p>
+<ul>
+<li><strong>语言模型预训练。</strong> 首先把大规模多语言文本语料转换为离散词元，再让 LLM 在这些数据上执行下一词元预测。模型由此学习语言结构，并从所“阅读”的文本中获得大量世界知识。预训练规模极大：4050 亿参数模型在 15.6 万亿词元上训练，初始上下文窗口为 8K；随后继续预训练，把支持的窗口扩展到 128K。</li>
+<li><strong>语言模型后训练。</strong> 预训练模型对语言有丰富理解，但还不能像助手一样遵循指令。我们进行多轮人类反馈对齐，每一轮都包含指令数据上的 SFT 和 DPO。后训练还集成工具使用等新能力，并显著改进代码与推理。安全缓解措施同样在这一阶段纳入模型。</li>
+</ul>
+<p>最终模型能以至少八种语言回答问题、编写高质量代码、解决复杂推理问题，并能直接或以零样本方式使用工具。</p>
+<p>我们还以组合方式为 Llama 3 加入图像、视频和语音能力，额外包含三个阶段。</p>
+<ul>
+<li><strong>多模态编码器预训练。</strong> 分别训练图像编码器和语音编码器。图像编码器使用大量图文对，学习视觉内容与自然语言描述之间的关系；语音编码器采用自监督方法，遮蔽一部分语音输入，并通过离散词元表示重建被遮蔽部分，从而学习语音信号结构。</li>
+</ul>
+<p><img alt="原论文第 3 页：关键基准表与总体训练流程" src="资源/原页-03.png"></p>
+<ul>
+<li><strong>视觉适配器训练。</strong> 训练适配器，把预训练图像编码器集成进预训练语言模型。适配器由一系列交叉注意力层组成，将图像编码器表示送入语言模型，并使用图文对训练，从而对齐图像表示与语言表示。训练适配器时会更新图像编码器参数，但刻意不更新语言模型参数。随后在图文适配器之上，使用视频—文本配对数据训练视频适配器，使模型能够跨帧聚合信息。</li>
+<li><strong>语音适配器训练。</strong> 通过适配器把语音编码器接入模型。适配器将语音编码转换成可以直接输入微调语言模型的词元表示。适配器与编码器参数在监督微调阶段共同更新，以实现高质量语音理解，但语言模型保持不变。系统还集成了文本转语音模块。</li>
+</ul>
+<p>这些多模态实验得到的模型能够识别图像和视频内容，并通过语音界面交互；它们仍在开发，尚未准备好发布。</p>
+<h2 id="3">3 预训练</h2>
+<p>语言模型预训练包含四部分：策展并过滤大规模训练语料；开发模型架构及相应缩放定律，以确定模型大小；开发大规模高效预训练技术；制定具体预训练方案。</p>
+<h3 id="31">3.1 预训练数据</h3>
+<p>预训练数据集来自多种数据源，知识截止时间为 2023 年末。对每种来源采用多种去重和清理机制以获得高质量词元，并移除含大量个人身份信息的域名及已知成人内容域名。</p>
+<h4 id="311">3.1.1 网页数据策展</h4>
+<p>训练数据很大一部分来自网页，清理过程如下。</p>
+<p><strong>个人信息与安全过滤。</strong> 过滤可能含不安全内容或大量个人身份信息的网站、按照多项 Meta 安全标准被判为有害的域名，以及已知成人内容域名。</p>
+<p><img alt="原论文第 4 页：总体架构图与预训练数据策展开篇" src="资源/原页-04.png"></p>
+<p><strong>文本提取与清理。</strong> 对未截断网页文档的原始 HTML 进行处理，提取高质量、多样化文本。我们构建定制解析器，在移除样板内容的精度和内容召回率之间优化。人工评测把它与多种偏向文章内容的流行第三方解析器比较，结果显示定制解析器表现更好。对于含数学和代码的 HTML 页面，我们谨慎保留其内容结构；还保留图像的替代文本，因为数学内容经常以预渲染图像表示，公式也会写在替代属性中。实验比较多种清理配置后发现，对于主要在网页数据上训练的模型，Markdown 相较纯文本会损害性能，因此移除全部 Markdown 标记。</p>
+<p><strong>去重。</strong> 在网址、文档和行三个层级执行多轮去重。</p>
+<ul>
+<li>网址级：对整个数据集去重，同一网址只保留最新页面版本。</li>
+<li>文档级：对整个数据集执行全局 MinHash 去重，移除近似重复文档。</li>
+<li>行级：采用类似 ccNet 的激进去重，每 3000 万文档组成一桶，删除桶内出现超过六次的行。人工分析发现它不仅移除导航菜单、Cookie 提示等残留样板，也会删除部分频繁出现的高质量文本，但实证评测仍显示整体明显改善。</li>
+</ul>
+<p><strong>启发式过滤。</strong> 设计启发规则移除更多低质量文档、离群文档和过度重复文档。例如：使用重复 n 元语法覆盖率移除日志或错误消息等重复内容组成的长行；统计“脏词”以过滤域名黑名单未覆盖的成人网站；计算词元分布相对于训练语料分布的 KL 散度，过滤异常词元过多的文档。</p>
+<p><strong>基于模型的质量过滤。</strong> 实验使用不同模型分类器选取高质量词元，包括训练用于识别某段文本是否会被维基百科引用的 fastText 快速分类器，以及使用 Llama 2 预测训练、计算量更大的 RoBERTa 分类器。构建 Llama 2 质量分类器时，我们准备清理后的网页文档训练集，描述质量要求，并指示 Llama 2 对话模型判断文档是否满足要求；为提高效率，使用 DistilRoBERTa 为每篇文档生成质量分数。实验评估了多种质量过滤配置。</p>
+<p><strong>代码与推理数据。</strong> 我们构建面向特定领域的流程，抽取与代码和数学相关的网页。代码与推理分类器均为 DistilRoBERTa，使用 Llama 2 标注的网页数据训练。与通用质量分类器不同，我们针对包含数学推导、科学—技术—工程—数学推理，以及自然语言与代码交错的网页进行提示调优。代码和数学的词元分布与自然语言差异很大，因此这些流程采用领域专用 HTML 提取、定制文本特征和过滤启发规则。</p>
+<p><strong>多语言数据。</strong> 与英语流程相似，过滤可能包含个人信息或不安全内容的网站。多语言文本处理还有以下特点：使用基于 fastText 的语言识别模型，把文档归入 176 种语言；在每种语言内部执行文档级与行级去重；使用语言专用启发规则和模型过滤器剔除低质量文档。</p>
+<p><img alt="原论文第 5 页：网页文本清理、去重、质量过滤与多语言数据" src="资源/原页-05.png"></p>
+<p>此外，我们使用基于多语言 Llama 2 的分类器对多语言文档进行质量排序，优先保留高质量内容。预训练中的多语言词元数量通过实验确定，在英语基准和多语言基准的性能之间取得平衡。</p>
+<h4 id="312">3.1.2 确定数据配比</h4>
+<p>要训练高质量语言模型，必须谨慎确定预训练数据混合物中不同来源的比例。主要工具是知识分类与缩放定律实验。</p>
+<p><strong>知识分类。</strong> 开发分类器识别网页数据包含的信息类型，以更有效地确定数据混合比例。对于网页中过度代表的类别，例如艺术与娱乐，使用分类器降低其采样率。</p>
+<p><strong>数据配比缩放定律。</strong> 在某个数据配比上训练多个小模型，据此预测大模型在该配比下的性能；针对不同配比重复多次，选择新的候选方案，再用候选配比训练更大模型并在若干关键基准上评估。</p>
+<p><strong>最终配比。</strong> 约 50% 词元属于通用知识，25% 属于数学和推理，17% 属于代码，8% 属于多语言。</p>
+<h4 id="313">3.1.3 退火数据</h4>
+<p>实验发现，在少量高质量代码和数学数据上退火，能够提高预训练模型在关键基准上的表现。退火配比会提高特定领域高质量数据的采样权重，但不含常用基准的任何训练集，因此仍可衡量 Llama 3 真正的少样本学习能力与域外泛化。</p>
+<p>我们使用 GSM8K 与 MATH 的训练集评估退火有效性。退火使预训练 Llama 3 8B 在两者验证集上的性能分别提高 24.0% 和 6.4%；405B 模型的提升则可忽略不计，说明旗舰模型已有强大的上下文学习和推理能力，不需要特定域内样本也能表现良好。</p>
+<p>退火还可用于判断小型领域数据集的价值。具体方法是：在 400 亿词元上，把已经完成 50% 训练的 Llama 3 8B 学习率线性降到零；新数据集权重设为 30%，默认配比占 70%。相较为每个小数据集执行完整缩放定律实验，这种评估方法效率更高。</p>
+<h3 id="32">3.2 模型架构</h3>
+<p>Llama 3 采用标准稠密 Transformer，在架构上与 Llama、Llama 2 差异不大；主要性能提升来自数据质量与多样性提高，以及训练规模扩大。相较 Llama 2，有四项小改动。</p>
+<ul>
+<li>使用具有八个键值头的 GQA，提高推理速度并减少解码阶段键值缓存大小。</li>
+<li>使用注意力掩码，禁止同一序列内不同文档彼此执行自注意力。该改动在标准预训练中的影响有限，但在超长序列继续预训练中十分重要。</li>
+</ul>
+<p><img alt="原论文第 6 页：数据配比、退火数据与模型架构开篇" src="资源/原页-06.png"></p>
+<ul>
+<li>词表包含 12.8 万个词元：从 tiktoken 分词器取 10 万个，再增加 2.8 万个以更好支持非英语语言。与 Llama 2 分词器相比，新分词器在英语样本上的压缩率从每词元 3.17 个字符提高到 3.94 个字符，使模型在相同训练计算量下能够“阅读”更多文本。加入选定非英语语言的 2.8 万个词元，还改善了压缩率和下游性能，同时不影响英语分词。</li>
+<li>把 RoPE 基础频率提高到 500,000，从而更好支持长上下文；已有研究证明该值对最长 32,768 的上下文有效。</li>
+</ul>
+<p>Llama 3 405B 包含 126 层，词元表示维度 16,384，使用 128 个注意力头。根据本文数据上的缩放定律，在 $3.8\times10^{25}$ FLOP 训练预算下，这一模型大小接近计算最优。</p>
+<h4 id="321">3.2.1 缩放定律</h4>
+<p>我们建立缩放定律，以便在给定预训练计算预算时确定旗舰模型的最优规模。除模型大小外，另一项重大挑战是预测旗舰模型在下游基准上的性能，原因有二：既有缩放定律通常只预测下一词元损失，而不是具体基准性能；缩放定律往往根据小计算预算下的预训练运行建立，因而可能噪声大、不可靠。</p>
+<p>为解决这些问题，我们采用两阶段方法，建立能够准确预测下游基准表现的缩放定律。</p>
+<ol>
+<li>先建立计算最优模型在下游任务上的负对数似然与训练 FLOP 之间的相关关系。</li>
+<li>再结合缩放定律模型与以更高计算量训练的旧模型，建立下游负对数似然与任务准确率之间的关系；此处特别使用 Llama 2 模型家族。</li>
+</ol>
+<p>由此可以在给定训练 FLOP 时，预测计算最优模型的下游任务表现；类似方法也用于选择预训练数据配比。</p>
+<p><strong>缩放定律实验。</strong> 使用 $6\times10^{18}$ 至 $10^{22}$ FLOP 的预算预训练模型。在每档预算下，选择 4000 万至 160 亿参数之间的若干规模。训练使用带 2000 步线性预热的余弦学习率；最大学习率随模型规模在 $2\times10^{-4}$ 至 $4\times10^{-4}$ 之间；余弦衰减终点为峰值的 0.1；每一步的权重衰减设为该步学习率的 0.1 倍；不同计算档位的固定批量大小介于 25 万至 400 万词元。</p>
+<p><img alt="原论文第 7 页：模型超参数与缩放定律方法" src="资源/原页-07.png"></p>
+<p>这些实验形成图 2 的等 FLOP 曲线，损失在独立验证集上测量。对各计算档位的实测损失拟合二次多项式，并找出每条抛物线的最小值；这一最小值对应相应预算下的计算最优模型。</p>
+<p>利用这些模型预测特定计算预算下的最优训练词元数。假设计算预算 $C$ 与最优词元数量 $N^*(C)$ 满足幂律关系：</p>
+<div class="math-block">$$N^*(C)=AC^\alpha.$$</div>
+<p>拟合得到 $(\alpha,A)=(0.53,0.29)$。将缩放定律外推到 $3.8\times10^{25}$ FLOP，建议使用 16.55 万亿词元训练约 4020 亿参数的模型。</p>
+<p>随着计算预算增加，等 FLOP 曲线在最低点附近变得更平坦。这意味着旗舰模型的性能对模型大小与训练词元数量之间的小幅权衡变化较为稳健，因此最终选择训练 4050 亿参数模型。</p>
+<p><strong>预测下游任务性能。</strong> 先把基准正确答案的标准化负对数似然与训练 FLOP 线性关联，此分析只使用最多训练至 $10^{22}$ FLOP 的缩放定律模型；再同时使用缩放定律模型与 Llama 2，建立负对数似然和准确率之间的 S 形关系。ARC Challenge 实验表明，这种跨越四个数量级的两阶段预测相当准确，只略微低估旗舰 Llama 3 的最终性能。</p>
+<h3 id="33">3.3 基础设施、扩展与效率</h3>
+<p>下文介绍支撑 Llama 3 405B 大规模预训练的硬件和基础设施，以及多项提高训练效率的优化。</p>
+<h4 id="331">3.3.1 训练基础设施</h4>
+<p>Llama 1 和 Llama 2 在 Meta 人工智能研究超级集群上训练。随着规模继续扩大，Llama 3 迁移到 Meta 生产集群，以获得生产级可靠性。</p>
+<p><img alt="原论文第 8 页：缩放定律曲线、下游预测与基础设施开篇" src="资源/原页-08.png"></p>
+<p><strong>计算。</strong> Llama 3 405B 最多使用 1.6 万张 H100 GPU 训练，每张卡热设计功耗 700W，配备 80GB HBM3；服务器采用 Meta Grand Teton 人工智能平台，每台含八张 GPU 与两颗 CPU，GPU 在服务器内部通过 NVLink 连接。训练任务由 Meta 全球规模训练调度器 MAST 负责调度。</p>
+<p><strong>存储。</strong> Meta 通用分布式文件系统 Tectonic 为预训练构建存储结构。7500 台配备固态硬盘的服务器提供 240PB 存储，持续吞吐量 2TB/s，峰值 7TB/s。主要挑战是支持高度突发的检查点写入，它会在短时间内占满存储带宽。检查点为每张 GPU 保存 1MB 至 4GB 不等的模型状态，用于恢复和调试。系统尽量减少保存期间的 GPU 暂停时间，并提高保存频率，以降低恢复后损失的工作量。</p>
+<p><strong>网络。</strong> Llama 3 405B 使用基于 Arista 7800 与 Minipack2 开放计算项目机架交换机的融合以太网远程直接内存访问（RoCE）网络。较小模型使用 Nvidia Quantum2 InfiniBand。两类集群的 GPU 间互连均为 400Gbps，经过调优后在大型训练负载上达到相当性能。</p>
+<ul>
+<li><strong>网络拓扑。</strong> RoCE 集群包含 2.4 万张 GPU，由三层 Clos 网络连接。底层每机架放置两台服务器共 16 张 GPU，并通过一台 Minipack2 机架顶交换机连接；中层把 192 个机架连接为一个含 3072 张 GPU、具备全对分带宽且无超额订阅的计算舱；顶层在同一数据中心建筑内连接八个计算舱，形成 2.4 万张 GPU 的集群。聚合层不具备全对分带宽，而是 1:7 超额订阅。模型并行与训练调度器都感知网络拓扑，尽量减少跨计算舱通信。</li>
+<li><strong>负载均衡。</strong> LLM 训练产生粗粒度大流，传统等价多路径路由难以在所有路径之间均衡。集合通信库为两张 GPU 建立 16 条而非一条网络流，降低每流流量并增加可分配流数；增强型等价多路径协议还对 RoCE 包头中的额外字段做哈希，把 16 条流均衡到不同路径。</li>
+</ul>
+<p><img alt="原论文第 9 页：缩放预测图与训练计算、存储和网络" src="资源/原页-09.png"></p>
+<ul>
+<li><strong>拥塞控制。</strong> 主干层使用深缓冲交换机，吸收集合通信造成的瞬时拥塞和缓存压力，并限制训练中常见的慢服务器引发的持续拥塞与网络反压。增强型等价多路径带来的更好均衡也显著降低拥塞概率。凭借这些优化，2.4 万张 GPU 集群无需数据中心量化拥塞通知等传统拥塞控制方法即可运行。</li>
+</ul>
+<h4 id="332">3.3.2 面向模型扩展的并行</h4>
+<p>为了扩展最大模型的训练，我们使用四维并行，把四种并行方法结合起来切分模型。它能把计算高效分配到众多 GPU，并确保每张 GPU 的参数、优化器状态、梯度和激活都能放进高带宽显存。四维并行包含：张量并行（TP）、流水线并行（PP）、上下文并行（CP）与数据并行（DP）。</p>
+<p>张量并行把单个权重张量切分到多台设备；流水线并行按层把模型纵向划成多个阶段，使设备并行处理完整模型流水线的不同部分；上下文并行切分输入上下文，缓解超长序列的内存瓶颈；完全切分数据并行（FSDP）切分模型、优化器和梯度，同时在多张 GPU 上并行处理数据并于每步训练后同步。Llama 3 的 FSDP 会切分优化器状态和梯度，但前向计算后不重新切分模型分片，以免反向传播时增加一次全收集通信。</p>
+<p><strong>GPU 利用率。</strong> 通过谨慎调优并行配置、硬件与软件，表 4 所列配置的 BF16 模型浮点运算利用率达到 38% 至 43%。使用 1.6 万张 GPU、数据并行度 128 时为 41%，略低于 8192 张 GPU、数据并行度 64 时的 43%，原因是保持每批全局词元数不变时，每个数据并行组必须采用更小批量。</p>
+<p><strong>流水线并行改进。</strong> 既有实现有三个问题：每张 GPU 的批量大小必须能被流水阶段数整除，缺乏预训练所需的调节灵活性；嵌入层和预热微批量使第一阶段消耗更多内存，造成资源不均；最后一层之后还需计算输出与损失，使末阶段成为延迟瓶颈。</p>
+<p><img alt="原论文第 10 页：扩展配置与四维并行说明" src="资源/原页-10.png"></p>
+<p>我们修改流水线调度，使连续处理同一阶段前向或反向的微批量数 $N$ 可以灵活设置。因此，大规模批量受限时可以让微批量数少于阶段数，也可以增加微批量来隐藏点到点通信，从深度优先与广度优先调度之间寻找通信和内存效率的最佳点。为平衡流水线，第一阶段和最后阶段各减少一层 Transformer：第一阶段的首个模型块只含嵌入，最后阶段的末块只含输出投影与损失计算。</p>
+<p>为减少流水气泡，每个流水线进程使用含 $V$ 个阶段的交错调度，总气泡比率为 $(PP-1)/(V\cdot M)$。流水线并行还采用异步点到点通信，在文档掩码造成额外计算不均时尤其能加速训练；启用特定 NCCL 设置以降低异步通信的内存占用。系统依据详细内存分析，主动释放后续不再使用的张量，包括各流水阶段不再需要的输入输出。经过这些优化，Llama 3 能在无需激活检查点的情况下，以 8K 序列预训练。</p>
+<p><strong>长序列的上下文并行。</strong> 为把上下文扩展到 128K，使用上下文并行提高内存效率。输入序列被切成 $2\times CP$ 个块，每个上下文并行进程接收两个块以改善负载均衡：第 $i$ 个进程接收第 $i$ 块与第 $(2CP-1-i)$ 块。</p>
+<p>不同于以环状结构重叠通信和计算的既有实现，本文先全收集键和值张量，再为本地查询块计算注意力输出。尽管全收集延迟暴露在关键路径上，仍选择该方法，原因是它能更灵活地支持文档掩码等多种注意力掩码；而且 GQA 使键值张量远小于查询张量。在完整因果掩码下，注意力计算复杂度为 $O(S^2)$，全收集为 $O(S)$，前者高一个数量级，因此通信开销可以忽略。</p>
+<p><img alt="原论文第 11 页：四维并行示意与流水线、上下文并行优化" src="资源/原页-11.png"></p>
+<p><strong>网络感知并行配置。</strong> 并行维度按“张量、上下文、流水线、数据”排列，以优化网络通信。最内层并行对带宽和时延要求最高，通常限制在同一服务器内；最外层可能跨越多跳网络，应能容忍更高延迟。数据并行位于最外层，因为 FSDP 可异步预取切分权重、归约梯度，从而容忍较长网络时延。寻找通信开销最低、又不会使显存溢出的并行配置很困难，因此我们开发内存消耗估计器和性能预测工具，用于探索配置、预测总体训练性能并有效定位内存缺口。</p>
+<p><strong>数值稳定性。</strong> 通过比较不同并行设置下的训练损失，修复多项影响稳定性的数值问题。为保证收敛，在多个微批量的反向计算中使用 FP32 累积梯度，FSDP 数据并行工作进程之间也以 FP32 对梯度执行归约散射。视觉编码器输出等在前向计算中多次使用的中间张量，其反向梯度同样以 FP32 累积。</p>
+<h4 id="333">3.3.3 集合通信</h4>
+<p>Llama 3 的集合通信库 NCCLX 基于 Nvidia NCCL 分支开发，对高延迟网络的性能提升尤其明显。最外层流水线与数据并行可能跨多跳网络通信，延迟可达数十微秒。原始 NCCL 的 FSDP 全收集、归约散射和流水线点到点通信需要切块与分阶段复制，会产生大量小控制消息、额外内存复制和额外 GPU 通信周期。Llama 3 通过调整切块与数据传输来适配大集群延迟，并允许小控制消息以较高优先级通过网络，尤其避免其在深缓冲核心交换机中发生队首阻塞。未来版本将继续深入改造 NCCLX，系统解决上述问题。</p>
+<p><img alt="原论文第 12 页：流水线调度、网络感知配置与集合通信" src="资源/原页-12.png"></p>
+<h4 id="334">3.3.4 可靠性与运行挑战</h4>
+<p>1.6 万张 GPU 同步训练的复杂度与潜在故障情形，超过团队运营过的更大 CPU 集群；任何一张 GPU 故障都可能要求整个任务重启。尽管如此，Llama 3 在支持固件和 Linux 内核升级等自动集群维护、平均每天至少中断一次的情况下，仍实现超过 90% 的有效训练时间。有效训练时间是有用训练时间占实际经过时间的比例。</p>
+<p>在一个 54 天的预训练窗口中，任务共中断 466 次。其中 47 次是固件升级、配置更新、数据集更新等计划操作，其余 419 次为意外中断。约 78% 的意外中断来自已确认硬件问题或疑似硬件问题，包括 GPU、主机部件故障、静默数据损坏和单主机临时维护；GPU 问题占全部意外故障的 58.7%。尽管故障很多，期间只有三次需要显著人工干预，其余均由自动化处理。</p>
+<p>为提高有效训练时间，我们缩短任务启动与检查点保存时间，并开发快速诊断和解决工具。大量使用 PyTorch 内置的 NCCL 飞行记录器，把集合通信元数据与调用栈写入环形缓冲，迅速诊断大规模挂起和性能问题。系统记录每次通信及集合操作时长，在 NCCLX 看门狗或心跳超时后自动转储追踪数据；还可通过线上配置变更，按需启用计算量更大的追踪与元数据收集，而无需发布代码或重启任务。</p>
+<p><img alt="原论文第 13 页：54 天训练中断根因与可靠性工程" src="资源/原页-13.png"></p>
+<p>NVLink 与 RoCE 混合使用使大规模调试更加复杂。NVLink 数据传输通常由 CUDA 内核发出的加载与存储操作完成，远端 GPU 或连接故障常表现为 CUDA 内核内部操作停滞，却没有清晰错误码。NCCLX 与 PyTorch 紧密协同，让 PyTorch 访问 NCCLX 内部状态并跟踪信息，提高故障检测与定位速度。虽然无法完全避免 NVLink 故障造成的停滞，系统会监控通信库状态并在检测到停滞时自动超时。NCCLX 还追踪每次通信的内核和网络活动，提供失败集合操作内部状态快照，包括所有进程之间已完成与待处理的数据传输。</p>
+<p>硬件有时会变成仍能工作但速度很慢的掉队者，难以发现；单个掉队者便能拖慢数千张 GPU，而且表面上只像是正常但缓慢的通信。我们开发工具，优先列出选定进程组中的可疑通信，通常只调查少数最高优先级对象便能找到掉队者。</p>
+<p>大规模训练还受到环境影响。Llama 3 405B 的吞吐量会随昼夜变化 1% 至 2%，原因是午间温度较高，影响 GPU 的动态电压与频率调整。</p>
+<p>训练期间，数万张 GPU 可能同时增减功耗，例如共同等待检查点或集合通信结束，或整个任务同时启停。这会使数据中心功耗瞬间波动数十兆瓦，触及电网极限。未来训练更大 Llama 模型时，这仍是持续挑战。</p>
+<h3 id="34">3.4 训练方案</h3>
+<p>Llama 3 405B 预训练包含三个阶段：初始预训练、长上下文预训练和退火。80 亿与 700 亿模型使用相似方案。</p>
+<h4 id="341">3.4.1 初始预训练</h4>
+<p>使用 AdamW 训练，峰值学习率 $8\times10^{-5}$，线性预热 8000 步，再用余弦计划在 120 万步内衰减到 $8\times10^{-7}$。早期采用较小批量提高稳定性，随后增大以提升效率：初始批量为 400 万词元、序列长度 4096；预训练 2.52 亿词元后，二者加倍为 800 万词元和 8192；训练至 2.87 万亿词元后，批量再次加倍到 1600 万词元。该方案非常稳定，损失尖峰很少，也无需人工修正训练发散。</p>
+<p><strong>调整数据配比。</strong> 训练中多次调整配比，以改善特定下游任务。增加非英语数据比例以提高多语言能力；提高数学数据采样率以增强数学推理；后期加入更近期的网页数据以推进知识截止时间；降低后来被判定为低质量的数据子集采样率。</p>
+<h4 id="342">3.4.2 长上下文预训练</h4>
+<p>预训练末期改用长序列，把上下文窗口扩展到 128K。早期不使用长序列，因为自注意力计算量随序列长度平方增长。上下文长度分阶段增加，每次都训练到模型成功适应；成功标准是短上下文评测性能完全恢复，并能在相应长度上完美解决“大海捞针”任务。405B 模型从原始 8K 开始，经过六个阶段逐步扩展到 128K；这一阶段使用约 8000 亿训练词元。</p>
+<p><img alt="原论文第 14 页：可靠性续、初始预训练与长上下文方案" src="资源/原页-14.png"></p>
+<h4 id="343">3.4.3 退火</h4>
+<p>预训练最后 4000 万词元期间，在保持 128K 上下文的同时，把学习率线性退火到零；并调整数据配比，提高极高质量来源的采样率。最后在退火阶段对多个模型检查点求平均，得到最终预训练模型。</p>
+<h2 id="4">4 后训练</h2>
+<p>在预训练检查点之上进行多轮后训练，也就是利用人类反馈进行对齐，从而得到对齐后的 Llama 3。每一轮先使用人工标注或合成样本执行 SFT，再执行 DPO。4.1 节和 4.2 节分别说明模型方法与数据方法，4.3 节进一步介绍为改进推理、代码、事实性、多语言、工具使用、长上下文和精确指令跟随而设计的数据策展策略。</p>
+<h3 id="41">4.1 建模</h3>
+<p>后训练以奖励模型和语言模型为核心。先在预训练检查点上使用人工偏好数据训练奖励模型，再对预训练检查点执行 SFT，并用 DPO 继续对齐。除非另有说明，该流程都适用于 Llama 3 405B，下文简称 Llama 3。</p>
+<h4 id="411">4.1.1 对话格式</h4>
+<p>要让 LLM 服务于人机交互，必须定义对话协议，使模型能够理解人类指令并完成对话任务。与前代相比，Llama 3 加入工具使用等能力，可能需要生成多条消息并把内容发送给不同接收者。</p>
+<p><img alt="原论文第 15 页：退火、后训练总览与对话格式开篇" src="资源/原页-15.png"></p>
+<p>为了支持这些能力，我们设计新的多消息对话协议，使用多种特殊的消息头与终止词元。消息头指明对话中每条消息的来源与目标，终止词元则指示何时应在人类和人工智能之间切换发言方。</p>
+<h4 id="412">4.1.2 奖励建模</h4>
+<p>在预训练检查点上训练覆盖不同能力的奖励模型。目标函数与 Llama 2 相同，但移除了损失中的间隔项，因为数据规模扩大后，它带来的改进逐渐减小。经过滤除回答相近的样本后，全部偏好数据都用于奖励建模。</p>
+<p>除标准的“选中回答、拒绝回答”偏好对外，部分提示还有第三个“编辑后回答”：标注者会继续改进选中回答。因此，每个偏好样本有两到三个清晰排序的回答，即“编辑后回答优于选中回答，选中回答优于拒绝回答”。训练时把提示和多条回答拼接为同一行，并随机打乱回答顺序。相较把回答分成多行后分别计算分数的标准做法，这是一种近似，但消融显示它能提高训练效率而不损失准确率。</p>
+<h4 id="413">4.1.3 监督微调</h4>
+<p>奖励模型用于对人工标注提示执行拒绝采样。将拒绝采样结果与包括合成数据在内的其他来源结合，在目标词元上使用标准交叉熵损失微调预训练语言模型，并遮蔽提示词元的损失。虽然许多目标是模型生成的，本文仍将该阶段称为监督微调。最大模型使用 $10^{-5}$ 学习率训练 8500 至 9000 步，这组超参数在多轮训练和不同数据配比中都表现良好。</p>
+<h4 id="414">4.1.4 直接偏好优化</h4>
+<p>继续使用 DPO 训练 SFT 模型，实现人类偏好对齐。主要使用最新一批偏好数据，它们由前几轮表现最佳的模型生成，因此更符合当轮待优化策略模型的分布。我们也探索 PPO 等在策略算法，但大规模模型上的 DPO 所需计算更少，性能也更好，尤其是在 IFEval 等指令跟随基准上。</p>
+<p>Llama 3 使用 $10^{-5}$ 学习率，$\beta=0.1$，并对 DPO 做两项改动。</p>
+<ul>
+<li><strong>遮蔽格式词元。</strong> 在选中和拒绝回答的损失中，遮蔽消息头、终止符等特殊格式词元，以稳定训练。这些词元参与损失可能造成尾部重复或突然生成终止符。我们推测，原因是 DPO 的对比性质：选中与拒绝回答中的共有词元会带来冲突目标，模型被要求同时提高和降低同一词元的概率。</li>
+<li><strong>使用负对数似然损失正则化。</strong> 在选中序列上增加缩放系数 0.2 的负对数似然损失，借此维持期望生成格式、防止选中回答的对数概率下降，进一步稳定 DPO。</li>
+</ul>
+<h4 id="415">4.1.5 模型平均</h4>
+<p>在奖励模型、SFT 和 DPO 每个阶段，对使用不同数据版本或超参数所得的模型求平均。</p>
+<p><img alt="原论文第 16 页：奖励模型、监督微调、DPO 与模型平均" src="资源/原页-16.png"></p>
+<h4 id="416">4.1.6 迭代轮次</h4>
+<p>沿用 Llama 2 的方法，共执行六轮上述流程。每轮收集新的偏好标注和 SFT 数据，并从最新模型采样合成数据。</p>
+<h3 id="42">4.2 后训练数据</h3>
+<p>后训练数据组成对语言模型的实用性和行为至关重要。本节说明人工标注与偏好收集、SFT 数据构成，以及数据质量控制和清理。</p>
+<h4 id="421">4.2.1 偏好数据</h4>
+<p>偏好标注流程与 Llama 2 相近。每轮后部署多个模型，针对每条用户提示从两个不同模型各采样一个回答。这些模型可以采用不同配比和对齐方案，因而在代码专长等能力上各有强弱，也能提高数据多样性。</p>
+<p>标注者把选中回答相对于拒绝回答的偏好强度分为四级：显著更好、更好、稍好或略好。排序后还会进行编辑，以进一步改善偏好回答：标注者可以直接改写选中回答，也可以向模型提供反馈，让模型自行改进。因此，部分偏好数据包含三条有序回答。</p>
+<p>表 6 展示训练所用偏好标注的统计。通用英语涵盖知识问答、精确指令跟随等不属于特定能力的子类。相较 Llama 2，提示和回答的平均长度都更长，说明 Llama 3 使用更复杂的任务训练。我们还实施质量分析和人工评测，严格评估收集的数据，从而改进提示并向标注者提供系统、可执行的反馈。随着模型逐轮增强，提示复杂度也相应提高，集中补足模型仍落后的领域。</p>
+<p>每轮后训练都会使用当时全部偏好数据训练奖励模型，但 DPO 只使用各能力的最新批次。奖励建模和 DPO 都只保留“显著更好”或“更好”的样本，舍弃回答相近的样本。</p>
+<p><img alt="原论文第 17 页：偏好数据统计、迭代轮次与后训练数据" src="资源/原页-17.png"></p>
+<h4 id="422-sft">4.2.2 SFT 数据</h4>
+<p>微调数据主要来自三类来源：人工标注提示及其拒绝采样回答；针对特定能力生成的合成数据；少量人工策展数据。随着后训练推进，更强的 Llama 3 变体被用于收集覆盖复杂能力的更大数据集。</p>
+<p><strong>拒绝采样。</strong> 对每条人工标注提示，从最新对话策略模型采样 $K$ 个输出，通常为 10 至 30 个；策略一般选用前一轮表现最佳的检查点，或特定能力上最佳的检查点。奖励模型随后选出最佳候选。后期加入系统提示，引导回答采用所需语气、风格或格式，并可针对不同能力设置不同要求。</p>
+<p>为提高拒绝采样效率，采用 PagedAttention 动态分配键值缓存，并根据当前缓存容量调度请求，从而支持任意输出长度。但内存不足时可能发生换出。为消除换出开销，系统定义最大输出长度，只在可用内存足以容纳该长度时执行请求。PagedAttention 还能让同一提示对应的全部输出共享键值缓存页，最终使拒绝采样吞吐量提高两倍以上。</p>
+<p><strong>总体数据组成。</strong> 表 7 给出“有帮助”数据混合物的统计：通用英语占 52.66%，代码 14.89%，多语言 3.01%，考试类 8.14%，推理和工具 21.19%，长上下文 0.11%。SFT 和偏好数据虽覆盖相似领域，但策展方式不同，数量统计也不同。每轮都会按主题、复杂度和质量仔细调整配比；最终配比会多轮重复部分高质量来源，并降低其他来源采样率。</p>
+<h4 id="423">4.2.3 数据处理与质量控制</h4>
+<p>多数训练数据由模型生成，必须谨慎清理和控制质量。</p>
+<p><strong>数据清理。</strong> 早期数据存在过度使用表情符号、感叹号等不良模式，因此设计一系列基于规则的删除和修改策略。例如，为缓解过度道歉的语气，识别“抱歉”等滥用短语，并谨慎平衡这类样本的占比。</p>
+<p><img alt="原论文第 18 页：SFT 数据统计、拒绝采样与数据清理" src="资源/原页-18.png"></p>
+<p><strong>数据剪枝。</strong> 使用多种基于模型的技术移除低质量样本并改善整体性能。</p>
+<ul>
+<li><strong>主题分类。</strong> 先把 Llama 3 8B 微调为主题分类器，对全部数据执行推理，同时归入“数学推理”等粗粒度桶和“几何与三角学”等细粒度桶。</li>
+<li><strong>质量评分。</strong> 同时使用奖励模型与 Llama 信号。奖励模型分数最高四分位的数据视为高质量；Llama 对通用英语从准确性、指令跟随和语气表达三个维度按三级评分，对代码从漏洞识别和用户意图两个维度按二级评分，获得最高分的视为高质量。两种信号分歧很大，但组合后在内部测试集上召回率最佳，因此最终保留任何一种过滤器判为高质量的样本。</li>
+<li><strong>难度评分。</strong> 使用 InsTag 和基于 Llama 的评分优先保留复杂样本。让 Llama 3 70B 为 SFT 提示标注意图，意图越多表示越复杂；同时让 Llama 3 按三级衡量对话难度。</li>
+<li><strong>语义去重。</strong> 先使用 RoBERTa 对完整对话聚类，在每个簇内按“质量分乘以难度分”排序，再从高到低贪心选择；只有当候选与簇内已保留样本的最大余弦相似度低于阈值时才保留。</li>
+</ul>
+<h3 id="43">4.3 专项能力</h3>
+<p>我们特别加强代码、多语言、数学与推理、长上下文、工具使用、事实性和可控性。</p>
+<h4 id="431">4.3.1 代码</h4>
+<p>自 Copilot 与 Codex 发布以来，代码 LLM 广受关注，开发者已广泛使用它们生成代码片段、调试、自动化任务和提高代码质量。Llama 3 重点改善 Python、Java、JavaScript、C/C++、TypeScript、Rust、PHP、HTML/CSS、SQL 与 Bash/Shell 的生成、文档、调试和审查能力。</p>
+<p><strong>专家训练。</strong> 从主预训练分支出一个代码专家，在以代码为主、代码占比超过 85% 的 1 万亿词元混合物上继续预训练。最后数千步使用高质量仓库级代码执行长上下文微调，把专家上下文扩展到 16K。随后按相近后训练方案对齐，但 SFT 和 DPO 配比主要针对代码；该模型也用于代码提示的拒绝采样。</p>
+<p><strong>合成数据生成。</strong> 开发中识别出指令跟随困难、语法错误、代码错误和修复漏洞困难等关键问题。大量人工标注理论上可以解决，但合成数据成本更低、规模更大，也不受标注者专业水平限制。因此，Llama 3 与代码专家被用于生成大量 SFT 合成对话，总计超过 270 万条。</p>
+<p><img alt="原论文第 19 页：数据剪枝、专项能力与代码专家" src="资源/原页-19.png"></p>
+<p>代码合成采用三类高层方法。</p>
+<ol>
+<li><strong>执行反馈。</strong> 80 亿和 700 亿模型在更大模型生成的数据上训练会显著提升，但 4050 亿模型使用自身生成数据并无帮助，甚至可能退化。为此，引入执行反馈作为事实依据，让模型从错误中学习。流程生成约 100 万条合成代码对话。
+   - 先从多种来源随机抽取代码片段，提示模型据此生成覆盖广泛乃至长尾主题的编程题目。
+   - 再要求 Llama 3 使用指定语言解决问题。向提示加入良好编程的一般规则能改善方案质量，要求模型在注释中解释思路也有帮助。
+   - 生成方案不保证正确，因此抽取源代码，结合静态与动态分析近似判断。静态分析使用解析器和代码检查器发现语法、未初始化变量、未导入函数、风格与类型等问题；动态分析让模型为每个题目和方案生成单元测试，并在容器环境中共同运行，以发现运行时和部分语义错误。
+   - 任一步骤失败后，让模型结合原题、错误方案和解析器、检查器或测试器的标准输出、标准错误与返回码进行修订。单元测试失败时，模型既可能修复代码，也可能修改测试以适配代码。只有通过全部检查的对话才进入 SFT。约 20% 的方案最初错误但成功自我修正，说明模型从执行反馈中学习并改善。
+   - 微调分多轮执行，每轮在前一轮基础上改进模型，再由更强模型为下一轮生成更高质量合成数据，从而持续优化。</li>
+<li><strong>编程语言翻译。</strong> 主流语言与 TypeScript、PHP 等较少见语言之间存在性能差距，原因之一是后者训练数据更少。为此，把主流语言数据翻译成较少见语言，并使用语法解析、编译与执行保证质量。该方法显著提高 MultiPL-E 上的低资源语言表现。</li>
+<li><strong>回译。</strong> 对代码文档、解释等难以用执行反馈判断质量的能力，使用多步骤方法生成约 120 万条对话。从预训练数据中的多语言代码片段开始：让模型添加注释、文档字符串或解释；再让模型仅根据文档或解释回译为原代码；最后以原代码为参照，让 Llama 3 判断输出质量，只把自验证分最高的样本用于 SFT。</li>
+</ol>
+<p><img alt="原论文第 20 页：执行反馈代码合成与语言翻译" src="资源/原页-20.png"></p>
+<p><strong>拒绝采样中的系统提示引导。</strong> 使用代码专用系统提示，提高代码可读性、文档完整性、详尽程度和针对性。系统提示会促使模型添加必要注释、采用信息更充分的变量名、节省内存等。</p>
+<p><strong>用执行信号和模型裁判过滤。</strong> 拒绝采样回答往往混合自然语言与代码，代码也不一定应该可执行，例如用户可能明确要求伪代码或只修改极小片段，因此无法像纯合成代码那样直接检查。我们让早期 Llama 3 根据代码正确性和代码风格各给出 0/1 二元分，只保留总分 2 的样本。严格过滤起初使下游性能下降，因为它不成比例地删除了困难提示。为此，挑出最困难的一部分代码数据，反复修订回答直到通过模型裁判，从而在质量和难度之间取得平衡并达到最佳下游表现。</p>
+<p><img alt="原论文第 21 页：回译、系统提示引导与代码质量过滤" src="资源/原页-21.png"></p>
+<h4 id="432">4.3.2 多语言</h4>
+<p>多语言改进包括：使用更多多语言数据训练专门专家；为德语、法语、意大利语、葡萄牙语、印地语、西班牙语和泰语采集并生成高质量指令调优数据；解决多语言语言引导中的特定问题。</p>
+<p><strong>专家训练。</strong> Llama 3 预训练中的英语词元远多于非英语词元。为收集更高质量的非英语人工标注，从预训练分支出一个多语言专家，在含 90% 多语言词元的数据混合物上继续预训练，再按统一方案进行后训练。在主预训练完成前，这个专家一直用于收集更高质量的非英语标注。</p>
+<p><strong>多语言数据收集。</strong> 多语言 SFT 数据中，人工标注占 2.4%，其他自然语言处理任务数据占 44.2%，拒绝采样数据占 18.8%，翻译的推理数据占 34.6%。</p>
+<ul>
+<li>人工数据由语言学家与母语者标注，主要是代表真实用例的开放式提示。</li>
+<li>其他任务数据会被改写为对话形式，包括多语言考试问答与常识数据。平行文本还用于改善语言对齐，但不会直接使用双语句对，而是套用多语言模板，更好模拟真实翻译和语言学习对话；语言识别过滤与 Blaser 2.0 用于移除低质量数据。</li>
+<li>对人工提示执行拒绝采样。早期在 0.2 至 1 之间随机选择温度以增加多样性；高温回答更有创意，但也更容易产生不必要、不自然的语言切换。最后一轮固定为 0.6，并使用专门系统提示改善格式、结构和可读性。奖励模型选取前还执行多语言专用检查，确保提示与回答语言匹配，例如罗马化印地语提示不应得到天城文回答。</li>
+<li>原则上避免使用机器翻译数据，以防翻译腔、姓名偏差、性别偏差与文化偏差，也避免模型只接触源自英语文化语境的任务。唯一例外是把合成定量推理数据翻译成多语言，以提高非英语定量推理能力。</li>
+</ul>
+<p><img alt="原论文第 22 页：代码过滤与多语言专家、数据收集" src="资源/原页-22.png"></p>
+<p>这些数学题的语言结构较简单，因此翻译样本几乎没有质量问题；加入这些数据后，MGSM 得分显著提高。</p>
+<h4 id="433">4.3.3 数学与推理</h4>
+<p>本文把推理定义为执行多步计算并得到正确最终答案的能力。训练擅长数学推理的模型面临五项挑战。</p>
+<ul>
+<li><strong>提示不足。</strong> 问题越复杂，可用于 SFT 的有效问题越少，难以构建多样、有代表性的训练集来教授不同数学技能。</li>
+<li><strong>缺少真实思维链。</strong> 有效推理需要逐步解法，但真实思维链往往不足，模型缺少如何拆解问题并得出答案的指导。</li>
+<li><strong>中间步骤错误。</strong> 模型生成的思维链并不总是正确，中间错误会导致错误最终答案。</li>
+<li><strong>教授外部工具使用。</strong> 代码解释器等工具允许模型交错使用代码与文字推理，可显著提高解题能力。</li>
+<li><strong>训练与推理不一致。</strong> 微调方式与实际推理用法常有差异。推理时模型可能与人类或其他模型交互，并依据反馈改进推理；保持训练和真实使用一致，对维持性能很重要。</li>
+</ul>
+<p>相应方法如下。</p>
+<ul>
+<li>从数学语境的预训练数据中抽取内容并转换成问答格式；识别模型薄弱的数学技能，再请人类主动提供相应问题。团队建立数学技能分类体系，用于指导问题收集。</li>
+<li>使用 Llama 3 为一组提示生成逐步解答，每题生成数量可变，并依据正确答案过滤；再让 Llama 3 自我验证某个逐步解法是否适用于给定问题，移除无效推理轨迹。</li>
+<li>训练结果奖励模型与逐步奖励模型，过滤中间推理错误的数据。对于更难的提示，结合逐步奖励模型与蒙特卡洛树搜索生成有效推理轨迹。</li>
+<li>提示 Llama 3 结合文字推理和 Python 代码解决问题，以代码执行结果作为反馈，剔除无效推理链。</li>
+<li>利用导致错误推理轨迹的生成结果模拟人类反馈，再提示 Llama 3 纠错并产生正确解答。通过反复使用错误尝试的反馈并修正，模型学会更准确地推理和从错误中学习。</li>
+</ul>
+<p><img alt="原论文第 23 页：数学与推理挑战及训练方法" src="资源/原页-23.png"></p>
+<h4 id="434">4.3.4 长上下文</h4>
+<p>预训练最后阶段把上下文从 8K 扩展到 128K；微调时同样需要谨慎调整方案，以平衡短上下文与长上下文能力。</p>
+<p><strong>SFT 与合成数据。</strong> 如果直接使用只含短上下文数据的原 SFT 方案，预训练所得长上下文能力会明显退化，因此必须加入长上下文 SFT 数据。但让人类阅读很长上下文并标注既枯燥又耗时，实际难以大规模执行，所以主要依靠早期 Llama 3 生成合成数据，覆盖问答、长文档摘要与代码仓库推理。</p>
+<ul>
+<li><strong>问答。</strong> 从预训练混合物中谨慎选择长文档，切成 8K 词元块，提示早期模型根据随机选择的块生成问答对；训练时则提供完整文档作为上下文。</li>
+<li><strong>摘要。</strong> 对长文档执行分层摘要：先用最强的 8K 上下文模型分别总结 8K 块，再对这些摘要继续总结。训练时提供完整文档，并要求模型在保留全部重要细节的前提下归纳。还根据文档摘要生成需要理解整篇长文的问答对。</li>
+<li><strong>长上下文代码推理。</strong> 解析 Python 文件的导入语句并确定依赖关系，选择被至少五个文件引用的关键文件；从仓库删除其中一个，再让模型识别依赖缺失文件的其他文件，并补写必要代码。</li>
+</ul>
+<p>合成样本按 16K、32K、64K 和 128K 序列长度分类，以便精细控制输入长度。消融显示，在原短上下文数据中混入 0.1% 合成长上下文数据，能够同时优化短、长上下文基准。</p>
+<p><strong>DPO。</strong> 只要 SFT 模型的长上下文质量足够好，DPO 仅使用短上下文训练数据也不会损害长上下文性能；可能原因是 DPO 优化步骤少于 SFT。因此，长上下文 SFT 检查点之上的 DPO 仍使用标准短上下文方案。</p>
+<h4 id="435">4.3.5 工具使用</h4>
+<p>教 LLM 使用搜索引擎、代码解释器等工具，可以大幅扩展可解决任务，使纯对话模型成为通用助手。Llama 3 接入三类工具。</p>
+<ul>
+<li><strong>搜索引擎。</strong> 使用 Brave Search 回答知识截止时间之后的近期事件，或从网页检索特定信息。</li>
+<li><strong>Python 解释器。</strong> 生成并执行代码完成复杂计算，读取用户上传文件，并进行问答、摘要、数据分析或可视化。</li>
+<li><strong>数学计算引擎。</strong> 使用 Wolfram Alpha API 更准确地解决数学、科学问题或检索数据库中的准确知识。</li>
+</ul>
+<p>所得模型可以在单轮和多轮对话中使用工具；需要多次调用时，能编写逐步计划、依次调用，并在每次调用后继续推理。我们还训练零样本工具使用：给定上下文中的、可能从未见过的工具定义与用户问题，模型应生成正确调用。</p>
+<p><img alt="原论文第 24 页：长上下文数据与工具使用开篇" src="资源/原页-24.png"></p>
+<p><strong>实现。</strong> 核心工具实现为带不同方法的 Python 对象。零样本工具可以是带说明、文档和示例的 Python 函数，模型只需函数签名与文档字符串即可生成调用。函数定义与调用也可转为 JSON，例如网页 API。全部工具调用由 Python 解释器执行，并须在系统提示中启用；每个核心工具都可单独启停。</p>
+<p><strong>数据收集。</strong> 与主要依赖合成数据的方法不同，Llama 3 使用人工标注与偏好教授工具调用。相较通用后训练流程，有两点差异。</p>
+<ul>
+<li>工具对话通常包含多条助手消息，例如先调用工具、再解释结果，因此按消息粒度标注。标注者在相同上下文的两条助手消息之间选择；如果两条都有严重问题，就编辑其中一条。选中或编辑后的消息加入上下文，对话继续。这样可以同时评价调用工具与解释结果的能力，但标注者不能修改工具输出。</li>
+<li>工具数据不执行拒绝采样，因为工具基准上没有观察到收益。</li>
+</ul>
+<p>为加快标注，先在旧 Llama 3 检查点生成的合成数据上微调，预先建立基础能力，减少标注者所需编辑。模型逐渐变强后，人工协议也逐步复杂化：从单轮工具调用，过渡到对话中的工具调用，再到多步骤工具使用和数据分析。</p>
+<p><strong>工具数据集。</strong> 构建过程如下。</p>
+<ul>
+<li><strong>单步工具调用。</strong> 通过少样本生成，构造必然需要某个核心工具的用户提示，例如知识截止时间之后的问题；再生成适当调用、执行并把结果加入上下文，最后根据工具输出生成用户答案。得到“系统提示、用户提示、工具调用、工具输出、最终回答”的轨迹，并过滤约 30% 无法执行或格式错误的数据。</li>
+<li><strong>多步工具调用。</strong> 先生成需要至少两次、可以涉及同一或不同核心工具的提示，再让 Llama 3 少样本生成推理步骤与工具调用交错的方案。</li>
+<li><strong>文件上传。</strong> 标注覆盖纯文本、Word、PDF、PowerPoint、Excel、CSV、TSV、Python、JSON、JSONL、HTML 和 XML。提示基于所给文件，要求摘要、查错修复、优化代码、数据分析或可视化。</li>
+</ul>
+<p>在合成数据上微调后，再收集多轮交互、超过三步的工具调用，以及工具无法给出满意答案等多样且困难场景的人工标注。还用不同系统提示扩充合成数据，使模型只在工具被启用时调用；为避免对简单问题也调用工具，加入容易的数学和问答数据及其无工具回答，同时在系统提示中仍保持工具开启。</p>
+<p><img alt="原论文第 25 页：工具实现、人工标注与工具数据集" src="资源/原页-25.png"></p>
+<p><strong>零样本工具数据。</strong> 使用大规模、多样且部分合成的“函数定义、用户问题、对应调用”元组微调，评测则采用未见工具。</p>
+<ul>
+<li><strong>单一、嵌套与并行函数调用。</strong> 调用可以简单、嵌套，也就是把一个函数调用作为另一个的参数，或并行返回多个独立调用。为生成多样的真实函数、问题和标准答案，从代码语料 The Stack 挖掘函数调用和定义，清理缺少文档字符串、无法执行等情况，再让 Llama 3 生成与调用对应的自然语言问题。</li>
+<li><strong>多轮函数调用。</strong> 多个智能体分步协作，分别生成领域、API、用户问题、API 调用和回答，并确保数据覆盖多样领域与真实 API；各智能体都是针对角色采用不同提示的 Llama 3 变体。</li>
+</ul>
+<h4 id="436">4.3.6 事实性</h4>
+<p>幻觉仍是 LLM 的重大挑战。模型即使在几乎不了解的领域也容易过度自信，却又常被当成知识库，可能导致虚假信息扩散等危险结果。事实性不只包含幻觉，但本文优先解决幻觉。</p>
+<p><img alt="原论文第 26 页：多步工具调用、零样本工具与事实性开篇" src="资源/原页-26.png"></p>
+<p>后训练应让模型“知道自己知道什么”，而不是添加知识。主要方法是生成数据，使模型回答与预训练数据中已有的事实子集一致。为此，利用 Llama 3 的上下文学习能力建立知识探测技术，流程如下。</p>
+<ol>
+<li>从预训练数据抽取一段内容。</li>
+<li>提示 Llama 3 根据该段上下文生成事实问题。</li>
+<li>让 Llama 3 对问题采样多个回答。</li>
+<li>以原上下文为参照、让 Llama 3 作为裁判，评价回答正确性。</li>
+<li>同样用 Llama 3 评价回答的信息量。</li>
+<li>如果多个生成结果持续表现为“信息丰富但错误”，就让 Llama 3 生成拒绝回答。</li>
+</ol>
+<p>知识探测数据用于鼓励模型只回答它确实掌握的问题，并拒绝自己不确定的问题。预训练数据本身也不一定事实一致或正确，因此另行收集少量带标签的事实性数据，专门处理矛盾或错误陈述多发的敏感主题。</p>
+<p><img alt="原论文第 27 页：文件分析示例与事实性数据生成" src="资源/原页-27.png"></p>
+<h4 id="437">4.3.7 可控性</h4>
+<p>可控性是引导模型行动和输出，使其满足开发者与用户规范的能力。Llama 3 是通用基础模型，应尽可能容易地适配不同下游场景。我们重点通过自然语言系统提示增强可控性，特别关注回答长度、格式、语气与角色设定。</p>
+<p><strong>数据收集。</strong> 在通用英语类别中收集可控性偏好样本，让标注者设计不同系统提示，再与模型对话，评估它在整段对话中是否持续遵守系统指令。论文示例可译为：</p>
+<blockquote>
+<p>你是一名乐于助人、性格开朗的人工智能聊天机器人，担任忙碌家庭的膳食规划助手。家庭成员包括两名成人、三名青少年和两名学龄前儿童。每次规划两天或三天，并把剩菜或多余食材用于第二天；用户会说明需要两天还是三天，如未说明则默认三天。每天应包括早餐、午餐、零食和晚餐。询问用户是否认可计划或需要调整；确认后，按照家庭人数提供购物清单。始终考虑家庭偏好，对不喜欢的食物给出替代品。如果用户没有灵感，询问他们本周最想去哪里度假，再根据当地文化推荐餐食。周末可以复杂一些，工作日应快捷简单。早餐和午餐优先选择麦片、英式松饼配预制培根等易准备食物。这个家庭很忙。务必询问他们是否已有咖啡或能量饮料等常用必需品和喜爱食品，以免忘记购买。除非是特殊场合，否则始终注意预算。</p>
+</blockquote>
+<p><strong>建模。</strong> 收集偏好数据后，将其用于奖励建模、拒绝采样、SFT 和 DPO，增强可控性。</p>
+<h2 id="5">5 结果</h2>
+<p>我们进行广泛评测，分别研究预训练语言模型、后训练语言模型和 Llama 3 的安全特征。</p>
+<h3 id="51">5.1 预训练语言模型</h3>
+<p>本节把预训练 Llama 3 与多个相近规模模型比较。能复现时会重新运行竞争模型；非 Llama 模型取公开报告或自行复现中的最佳分数。评测质量涵盖标准基准、多项选择题设置变化的稳健性、对抗评测与训练数据污染分析。配置、样本数、指标和超参数已公开，使用公共基准生成的评测数据也一并发布。</p>
+<h4 id="511">5.1.1 标准基准</h4>
+<p>表 8 所列标准评测覆盖八大类：常识推理、知识、阅读理解、数学与问题求解、长上下文、代码、对抗评测与综合评测。</p>
+<p><img alt="原论文第 28 页：可控性示例与预训练模型评测开篇" src="资源/原页-28.png"></p>
+<p>具体包括：SQuAD V2、QuaC、RACE 等阅读理解；HumanEval、MBPP 代码；CommonSenseQA、PIQA、SIQA、OpenBookQA 与 WinoGrande 常识；GSM8K、MATH、ARC Challenge、DROP、WorldSense 数学推理；Adv SQuAD、Dynabench SQuAD、GSM-Plus、PAWS 对抗评测；QuALITY 与多样本 GSM8K 长上下文；MMLU、MMLU-Pro、AGIEval、BIG-Bench Hard 综合能力。</p>
+<p><strong>实验设置。</strong> 对 Llama 3 和相近规模预训练模型计算每项分数。能够重新评测时，对竞争模型使用相同流程；为公平比较，在自行计算值与采用相当或更保守设置的公开值中取更高者。部分模型无法重新评测，例如未发布预训练模型或 API 不提供对数概率；405B 的全部同规模竞争模型都属于这种情况，因此不报告要求所有基准值齐全的类别平均分。</p>
+<p><strong>显著性估计。</strong> 基准集是从底层分布抽取的有限样本，分数只是模型真实性能的估计。本文假设分数近似高斯分布，报告 95% 置信区间：</p>
+<div class="math-block">$$CI(S)=1.96\sqrt{\frac{S(1-S)}{N}},$$</div>
+<p>其中 $S$ 是观察分数，$N$ 是样本量。非简单平均分不报告区间。由于子采样并非唯一方差来源，这些区间只是实际能力估计波动的下界。</p>
+<p><strong>80 亿与 700 亿结果。</strong> Llama 3 8B 几乎在每一类别上都超过竞争模型，无论按类别胜率还是平均性能衡量都如此。Llama 3 70B 除已趋于饱和的常识基准外，在多数任务上大幅超过 Llama 2 70B，也超过 Mixtral 8x22B。表 9 至表 14 给出三个规模在阅读理解、代码、常识、数学推理和通用任务上的详细结果。</p>
+<p><img alt="原论文第 29 页：预训练基准分类、实验设置与显著性估计" src="资源/原页-29.png"></p>
+<p>详细表明，Llama 3 405B 在同类模型中具有竞争力，并显著超过先前开放模型。长上下文的更完整结果另在后训练章节报告。</p>
+<h4 id="512">5.1.2 模型稳健性</h4>
+<p>除基准性能外，稳健性也是预训练模型质量的重要方面。多项选择题评测可能对看似任意的设计选择敏感，例如上下文样本的顺序与标签、提示的精确格式、答案选项格式和顺序都可能改变分数甚至排名。我们使用 MMLU，评估模型对少样本标签偏差、标签变体、答案顺序和提示格式的稳健性。</p>
+<ul>
+<li><strong>少样本标签偏差。</strong> 四个样例分别采用全部相同标签、四个不同标签，或只出现两个标签的分布。</li>
+<li><strong>标签变体。</strong> 比较常见且不依赖语言的符号、没有隐含顺序的罕见符号、两种标准字母标签格式与数字列表。</li>
+<li><strong>答案顺序。</strong> 按固定置换重映射数据集全部答案，衡量不同顺序下结果是否稳定。</li>
+<li><strong>提示格式。</strong> 使用五种信息量不同的任务提示：有的只要求回答问题，有的声明模型具有专业能力，或要求选择最佳答案。</li>
+</ul>
+<p>图 13 至图 14 显示，预训练模型对选择题标签变化、少样本标签结构、答案顺序与提示格式均非常稳健，405B 模型尤其如此。</p>
+<p><img alt="原论文第 30 页：预训练类别汇总、阅读代码结果与稳健性开篇" src="资源/原页-30.png"></p>
+<p>表 11 至表 13 给出常识理解、数学推理和通用任务的详细分数。405B 在 CommonSenseQA、PIQA、SIQA 上分别达到 85.8、85.6、53.7；GSM8K、MATH、ARC-C、DROP 与 WorldSense 分别为 89.0、53.8、96.1、84.8、63.7；MMLU、MMLU-Pro、AGIEval 与 BIG-Bench Hard 分别为 85.2、61.6、71.6 和 85.9。</p>
+<p><img alt="原论文第 31 页：常识、数学推理与通用任务结果表" src="资源/原页-31.png"></p>
+<p>图 13 的左侧比较不同标签符号，右侧比较少样本标签分布；图 14 左侧比较答案置换距离，右侧比较提示格式。随着模型扩大到 405B，性能变化范围进一步收窄。</p>
+<p><img alt="原论文第 32 页：MMLU 标签、答案顺序和提示格式稳健性" src="资源/原页-32.png"></p>
+<h4 id="513">5.1.3 对抗基准</h4>
+<p>我们在问答、数学推理和复述识别三个领域加入对抗基准，测试专门构造的困难任务，并探查模型是否过拟合普通基准。问答使用 Adversarial SQuAD 与 Dynabench SQuAD；数学推理使用 GSM-Plus；复述识别使用 PAWS。</p>
+<p>图 15 把三个规模模型的对抗分数绘制为非对抗分数的函数。非对抗基准分别是 SQuAD、GSM8K 与 QQP，每个点对应同一类别的一对普通和对抗数据集，对角线表示二者表现相同。</p>
+<p>在复述识别上，无论预训练还是后训练模型都不太受 PAWS 所使用的对抗构造影响，较上一代明显进步；这也支持“大模型不易受到多种对抗数据集中伪相关影响”的既有结论。但在数学推理和问答中，对抗表现仍显著低于非对抗表现，而且预训练与后训练模型的模式相近。</p>
+<h4 id="514">5.1.4 污染分析</h4>
+<p>我们估计评测数据出现在预训练语料中会在多大程度上影响基准分数。既有工作采用多种检测方法和超参数，所有方法都可能出现假阳性与假阴性，最佳分析方式仍是开放问题。本文主要遵循较新的系统性建议。</p>
+<p><img alt="原论文第 33 页：对抗基准与污染分析开篇" src="资源/原页-33.png"></p>
+<p><strong>方法。</strong> 对每个评测样本计算连续八词元重合度。若样本中有比例 $T_D$ 的词元属于在预训练语料至少出现一次的八词元片段，就判定为污染。每个数据集单独选择 $T_D$，目标是在三个模型规模中得到最大的、具有统计显著性的估计性能增益，也就是完整数据集与“干净”部分之间的最大差异。</p>
+<p><strong>结果。</strong> 表 15 报告各关键基准在最大估计增益阈值下的污染比例及性能增益。不显著、干净或污染子集太小、或者增益估计极不稳定的基准不报告数值。PiQA 与 HellaSwag 的污染率和估计增益都很高；NaturalQuestions 估计 52% 污染，却几乎不影响性能；SQuAD 与 MATH 在低阈值下看似高度污染，但没有性能增益，可能说明重合无帮助，或需要更长片段才能准确估计。MBPP、HumanEval、MMLU 和 MMLU-Pro 即使提高阈值，八词元重合仍给出过高污染率，无法得到良好增益估计，可能需要其他方法。</p>
+<h3 id="52">5.2 后训练语言模型</h3>
+<p>本节报告各能力基准上的后训练结果。公共基准评测产生的数据同样开放。后训练数据会与每个基准提示执行精确匹配以去污，此外还进行了广泛的专项人工评测。</p>
+<p><strong>基准与指标。</strong> 表 16 按能力汇总：通用能力使用 MMLU、MMLU-Pro、IFEval；数学推理使用 GSM8K、MATH、GPQA、ARC-Challenge；代码使用 HumanEval、MBPP、HumanEval+、MBPP EvalPlus、MultiPL-E；多语言使用 MGSM 与内部多语言 MMLU；工具使用 Nexus、API-Bank、API-Bench、BFCL；长上下文使用 ZeroSCROLLS、大海捞针和 InfiniteBench。</p>
+<p><strong>实验设置。</strong> 与预训练阶段相近，把 Llama 3 与同规模、同能力模型比较。能自行评测时重新运行竞争模型，并在实测值与公开值中取更高者。</p>
+<p><img alt="原论文第 34 页：污染结果、长上下文表与后训练评测设置" src="资源/原页-34.png"></p>
+<h4 id="521">5.2.1 通用知识与指令跟随基准</h4>
+<p><strong>通用知识。</strong> MMLU 使用无思维链的标准五样本设置，报告各子任务准确率的宏平均；MMLU-Pro 删除噪声题、加入更难且更侧重推理的问题，并把四个选项扩展到十个，因此使用五样本思维链。全部任务都格式化为生成任务。Llama 3 8B 与 70B 在两项通识任务上均超过相近规模模型；405B 超过 GPT-4 与 Nemotron 4 340B，在大模型中仅低于 Claude 3.5 Sonnet。</p>
+<p><strong>指令跟随。</strong> IFEval 含约 500 条可以用启发规则验证的指令，例如“用 400 字以上作答”。本文报告严格与宽松约束下提示级和指令级准确率的平均值。三个 Llama 3 规模都超过相近模型。</p>
+<h4 id="522">5.2.2 能力考试</h4>
+<p>我们使用原本为人类设计的公开官方考试，包括两套 GRE 练习、四套 LSAT、2018 官方 SAT 指南中的八套考试、每科一套 AP 练习，以及 GMAT 官方在线考试。题目既有选择题，也有生成题；排除带图像的问题。GRE 中存在多个正确选项的题，只有模型选中全部正确项才计为正确。有多套试卷时使用少样本提示。GRE 分数缩放到 130 至 170，其余报告准确率。</p>
+<p><img alt="原论文第 35 页：后训练基准分类、通识、指令跟随与能力考试" src="资源/原页-35.png"></p>
+<p>表 17 显示，Llama 3 405B 在 LSAT、SAT、GMAT、GRE 与多科 AP 上的表现与 Claude 3.5 Sonnet、GPT-4o 非常接近。Llama 3 70B 的结果也很突出，显著超过 GPT-3.5 Turbo，并在多项考试上超过 Nemotron 4 340B。</p>
+<h4 id="523">5.2.3 代码基准</h4>
+<p>我们在多个 Python 与多编程语言基准上评估代码生成。功能正确性使用 $\operatorname{pass@}N$，即 $N$ 次生成中通过单元测试的比例，本文报告 $\operatorname{pass@}1$。</p>
+<p>HumanEval 和 MBPP 关注相对简单、彼此独立的 Python 函数；HumanEval+ 增加更多测试以避免假阳性；MBPP EvalPlus 基础版从原始训练与测试共 974 题中选出 378 个格式良好的问题。两个较小 Llama 3 在这些 Python 基准上均超过相近规模模型。</p>
+<p><img alt="原论文第 36 页：能力考试完整结果与代码评测开篇" src="资源/原页-36.png"></p>
+<p>表 18 中，Llama 3 8B 在 HumanEval、HumanEval+、MBPP 与 MBPP EvalPlus 上分别为 72.6、67.1、60.8、72.8；70B 为 80.5、74.4、75.4、86.0；405B 为 89.0、82.3、78.8、88.6。最大规模的 Llama 3、Claude 3.5 Sonnet 与 GPT-4o 总体相近，其中 GPT-4o 最强。</p>
+<p><strong>多编程语言代码生成。</strong> MultiPL-E 把 HumanEval 与 MBPP 问题翻译为其他语言。表 19 报告 C++、Java、PHP、TypeScript、C# 和 Shell；与 Python 结果相比，各语言性能均明显下降。</p>
+<h4 id="524">5.2.4 多语言基准</h4>
+<p>Llama 3 正式支持英语、德语、法语、意大利语、葡萄牙语、印地语、西班牙语和泰语八种语言，尽管基础模型还用更广泛语言训练。其他语言并未经过针对性优化或安全调优；开发者可以在遵守许可证和可接受使用政策的前提下继续微调，并负责保证安全使用。</p>
+<p><strong>多语言 MMLU。</strong> 使用 Google 翻译处理 MMLU 问题、少样本示例和答案，任务说明仍为英语，采用五样本设置；报告七种非英语支持语言的平均结果。</p>
+<p><img alt="原论文第 37 页：Python、多语言代码结果与多语言评测" src="资源/原页-37.png"></p>
+<p><strong>MGSM。</strong> 使用原生提示执行零样本思维链，报告 MGSM 所含语言的平均结果。Llama 3 405B 的 MGSM 为 91.6%，超过多数模型；多语言 MMLU 为 83.2%，比 GPT-4o 低约 2 个百分点。70B 和 8B 在两项任务上都以较大优势领先同级模型。</p>
+<h4 id="525">5.2.5 数学与推理基准</h4>
+<p>Llama 3 8B 在 GSM8K、MATH 和 GPQA 上超过相近规模模型；70B 在全部基准上显著领先同级；405B 在 GSM8K 与 ARC-C 上同档最佳，在 MATH 上第二，在 GPQA 上与 GPT-4o 接近，但明显低于 Claude 3.5 Sonnet。</p>
+<h4 id="526">5.2.6 长上下文基准</h4>
+<p>我们选择覆盖不同领域和文本类型、评测协议无偏且方差较低的任务。</p>
+<ul>
+<li><strong>大海捞针。</strong> 在长文档随机位置插入隐藏信息，测量检索能力。三个 Llama 3 在全部文档深度与上下文长度上都实现 100% 单针检索。多针变体在上下文中插入四条信息并要求找出两条，结果也接近完美。</li>
+<li><strong>ZeroSCROLLS。</strong> 长文本零样本自然语言理解基准。由于测试答案未公开，报告验证集；405B 与 70B 在多项任务上匹配或超过其他模型。</li>
+<li><strong>InfiniteBench。</strong> 需要理解上下文中的长距离依赖。评测小说问答 En.QA 与小说选择题 En.MC，405B 均优于其他模型，在 En.QA 上优势尤其明显。</li>
+</ul>
+<h4 id="527">5.2.7 工具使用表现</h4>
+<p>使用 Nexus、API-Bank、Gorilla API-Bench 与 Berkeley 函数调用榜单评估零样本工具调用。各 Llama 3 在 Nexus 上都优于同级；8B 和 70B 在 API-Bank 上大幅领先；405B 只比 Claude 3.5 Sonnet 低 0.6%；405B、70B 在 BFCL 上均为同档接近第二，8B 则同档最佳。</p>
+<p><img alt="原论文第 38 页：多语言、数学、长上下文与工具基准" src="资源/原页-38.png"></p>
+<p>长上下文完整表显示，Llama 3 405B 在 QuALITY、Qasper、SQuALITY、En.QA、En.MC 与多针检索上分别为 95.2、49.8、15.4、30.5、83.4 与 98.1。工具表显示 405B 在 Nexus、API-Bank、API-Bench 与 BFCL 上分别为 58.7、92.3、35.3、88.5。</p>
+<p><strong>工具人工评测。</strong> 收集 2000 条与纯代码执行、绘图和文件上传有关的用户提示，来源包括 LMSYS、GAIA、人工标注和合成生成。使用 OpenAI Assistants API 把 405B 与 GPT-4o 比较。Llama 3 在不含绘图或文件上传的代码执行和绘图生成上显著超过 GPT-4o，但在文件上传场景中落后。</p>
+<h3 id="53">5.3 人工评测</h3>
+<p>人工评测用于衡量语气、详略程度、细微差别和文化语境理解等更微妙的方面。设计良好的人工评测与真实用户体验高度相关。</p>
+<p><strong>提示收集。</strong> 先建立尽可能覆盖模型能力的类别和子类别体系，收集约 7000 条提示，覆盖英语、推理、代码、印地语、西班牙语、葡萄牙语六项单轮能力，以及英语、推理、代码三项多轮能力。每个类别内的子类均匀分布；难度约为 10% 简单、30% 中等、60% 困难。全部提示经过严格质保，模型开发团队无权访问，避免意外污染或过拟合。</p>
+<p><img alt="原论文第 39 页：长上下文、工具结果与人工评测设计" src="资源/原页-39.png"></p>
+<p><strong>评测流程。</strong> 对两个模型进行成对人工比较，标注者在七级量表上指出一个回答比另一个好很多、好、稍好，或大致相同。若标为“好”或“好很多”，该模型记为一次胜利；按提示集能力类别报告胜率。</p>
+<p><strong>结果。</strong> Llama 3 405B 与 GPT-4 0125 版总体相当；相较 GPT-4o 和 Claude 3.5 Sonnet 则有胜有负。几乎所有能力上，Llama 3 与 GPT-4 的胜率差都在误差范围内。405B 在多轮推理和代码上超过 GPT-4，但在印地语、西班牙语和葡萄牙语提示上落后；在英语提示上与 GPT-4o 相当，在多语言上与 Claude 3.5 Sonnet 相当，单轮与多轮英语则超过 Claude；代码和推理仍落后于 Claude。定性分析发现，语气、回答结构与详略程度会强烈影响人工评价，这些因素正是后训练优化的重点。总体结果与标准基准一致：405B 对领先闭源模型极具竞争力，是当时表现最佳的公开模型。</p>
+<p><strong>局限。</strong> 全部人工数据都经过严格质保，但模型回答难以用客观标准评价，结果仍可能受到标注者个人偏见、背景和偏好的影响，导致不一致或不可靠。</p>
+<h3 id="54">5.4 安全</h3>
+<p>安全研究既要评估 Llama 3 能否以安全、负责任的方式生成内容，也要尽量保留有帮助的信息。工作从预训练的数据清理与过滤开始，随后通过安全微调让模型符合具体政策且维持实用性；再按多语言、长上下文、工具和多模态等能力逐项测量缓解措施的效果。</p>
+<p>我们还评估网络安全及化学、生物武器风险的“增量”，也就是相较网页搜索等现有技术，新技术额外引入的风险；使用红队测试迭代识别并对抗各类风险，进行残余风险评估；最后建立系统级安全，在模型输入输出周围编排分类器，使开发者更容易为用例定制安全措施并负责任地部署生成式人工智能。</p>
+<p><img alt="原论文第 40 页：工具人工结果、总体人工评测与安全开篇" src="资源/原页-40.png"></p>
+<p>图 17 分别把 405B 与 GPT-4、GPT-4o、Claude 3.5 Sonnet 比较，覆盖英语、推理、代码、多语言以及相应多轮任务，并报告 95% 置信区间、排除平局。</p>
+<h4 id="541">5.4.1 基准构建</h4>
+<p>内部安全基准主要参考 ML Commons 危害分类。虽然已有 ToxiGen、XS Test 等外部基准，但 Llama 3 多项新能力缺乏足够覆盖，已有基准的广度和深度也常常不足。</p>
+<p>每个风险类别都收集人工编写的对抗或边界提示。对抗提示既包括直接诱导有害回答的简单问题，也包括复杂越狱技巧，用来衡量违规率。与违规率相对，还构建由边界提示组成的误拒绝基准。“误拒绝”指本可给出合理安全答案，模型却没有提供有帮助的回答；边界提示接近决策边界，校准良好的模型应能妥善处理。违规与误拒绝合计，每种能力或语言都超过 4000 条提示，兼有单轮和多轮。</p>
+<p><img alt="原论文第 41 页：人工胜负结果与安全基准构建" src="资源/原页-41.png"></p>
+<p>表 23 给出英语、多语言、长文档问答和搜索工具的对抗提示实例，涉及投票机入侵、伤害他人、利用暴力组织资料和搜索色情服务等。此类高风险示例仅保留于原页截图。</p>
+<h4 id="542">5.4.2 预训练安全</h4>
+<p>负责任开发必须端到端贯穿模型开发和部署。预训练阶段应用多种过滤器，例如识别可能含个人身份信息的网站，并重点评估可发现的逐字记忆。使用整个语料全部 n 元语法的高效滚动哈希索引，按训练数据中的不同出现频率采样提示和标准续文；通过改变提示长度、标准答案长度、目标语言和域构造不同测试。</p>
+<p>逐字记忆定义为包含率，即模型生成中原样包含标准续文的比例；结果按照相应特征在数据中的流行程度加权。表 24 显示记忆率较低：405B 在 50 词元和 1000 词元片段上的平均值分别为 1.13% 与 3.91%，与相近规模 Llama 2 使用相同方法时大致相当。该分析仍有局限，例如只使用精确匹配和固定提示搜索。</p>
+<h4 id="543">5.4.3 安全微调</h4>
+<p>安全微调跨越多项能力，包含安全训练数据和风险缓解技术。它建立在通用微调之上，并针对具体安全问题调整。主要优化两项指标：违规率，即模型输出违反安全政策的回答；误拒绝率，即模型错误拒绝无害提示。同时监控有帮助基准，确保安全改进不会损害总体实用性。</p>
+<p><img alt="原论文第 42 页：对抗提示、逐字记忆与安全微调开篇" src="资源/原页-42.png"></p>
+<p><strong>微调数据。</strong> 安全训练数据的质量和设计影响很大，广泛消融发现质量比数量更关键。数据主要由供应商人员生成，但在细微安全政策上容易出错和不一致，因此开发人工智能辅助标注工具，配合严格质保。除对抗提示外，还收集相近的边界提示，教模型在安全前提下提供帮助并降低误拒绝。</p>
+<p>合成数据用于提高质量与覆盖范围。技术包括：精心设计系统提示的上下文学习；根据新攻击向量对种子提示做引导式变异；以及 Rainbow Teaming 等先进算法，在多个多样性维度约束提示生成。</p>
+<p>安全回答的语气会影响用户体验，因此团队制定拒绝语气指南，并通过严格质保让全部新数据遵循；现有安全数据也通过零样本改写和人机协同编辑与指南对齐，再以语气分类器评价质量，显著改善模型措辞。</p>
+<p><strong>安全 SFT。</strong> 对齐阶段混合全部有帮助数据与安全数据，并加入边界数据，让模型识别安全与不安全请求的细微差别。标注团队按照指南谨慎编写回答。对抗与边界样本比例得到策略性平衡，困难风险领域使用更高比例边界样本，从而在有效缓解风险的同时尽量降低误拒绝。不同规模的最佳比例不同：小模型需要相对于有帮助数据加入更高比例安全数据，并且比大模型更难同时平衡违规率和误拒绝率。</p>
+<p><strong>安全 DPO。</strong> 在偏好数据中加入对抗与边界样本。让回答对在嵌入空间中近似正交，特别有助于教授模型区分同一提示下的好坏回答。通过多轮实验选择对抗、边界和有帮助样本的最佳比例；由于模型规模会影响学习结果，各规模采用不同安全配比。</p>
+<p><img alt="原论文第 43 页：安全数据、语气、SFT 与 DPO" src="资源/原页-43.png"></p>
+<h4 id="544">5.4.4 安全结果</h4>
+<p>首先概述模型总体行为，再分能力报告具体结果和缓解措施效果。</p>
+<p><strong>总体表现。</strong> 图 19、20 将 Llama 3 405B 与相近竞争模型比较违规率和误拒绝率。其中两个竞争对象是通过 API 使用的端到端系统，另一个是内部托管、直接评测的开放模型；出于内部基准不可由外部复现，竞争对象匿名。Llama 3 同时以裸模型形式和搭配开放系统级安全方案 Llama Guard 的形式评测。</p>
+<p>低违规率固然理想，但必须同时考虑误拒绝：始终拒绝的模型最安全，却完全无帮助；始终回答的模型则可能有害。图 21 显示，Llama 3 在保持低误拒绝的同时也取得有竞争力的违规率，在有帮助与安全之间实现扎实平衡。</p>
+<p>图 19 分英语、法语、德语、印地语、意大利语、葡萄牙语、西班牙语和泰语展示短上下文违规率与误拒绝率；图 20 则展示搜索工具、长文档问答与多样本长上下文的结果。</p>
+<p><img alt="原论文第 44 页：多语言、工具和长上下文安全结果" src="资源/原页-44.png"></p>
+<p><strong>多语言安全。</strong> 英语安全知识不会自然、完整地迁移到其他语言，尤其因为安全政策和语言语境包含细微差异，所以每种语言都必须收集高质量安全数据。各语言安全数据分布会显著影响结果：部分语言能从迁移学习获益，另一些需要更多专用数据。为平衡两项指标，我们迭代加入对抗和边界数据并持续监控。</p>
+<p>各支持语言上，搭配 Llama Guard 的 405B 在内部基准中至少与两个竞争系统一样安全，通常更安全，同时误拒绝率也有竞争力。仅看裸模型，它的违规率显著低于匿名开放模型，但代价是误拒绝更高。</p>
+<p><strong>长上下文安全。</strong> 若无针对性缓解，长上下文模型容易受到多样本越狱攻击。我们在 SFT 数据中加入上下文包含不安全示范时仍保持安全行为的样本，形成可扩展策略；即使攻击含 256 个示范，也能显著降低违规率，对误拒绝和大多数有帮助指标几乎没有影响。</p>
+<p>评测包含两种方法。长文档问答提供可能被对抗利用的长文档和相关提示，检查文档信息是否影响安全回答；多样本方法构造由不安全提示—回答对组成的合成聊天历史，再以无关最终提示测试上下文是否诱导模型继续不安全。无论是否搭配 Llama Guard，405B 在两项任务的违规与误拒绝上都帕累托优于匿名系统 2；相较系统 1 更安全，但误拒绝较高。</p>
+<p><strong>工具安全。</strong> 工具种类繁多，调用实现与模型集成也各异，风险难以完全缓解。本文聚焦搜索。与匿名系统 1 相比，405B 显著更安全，但误拒绝略高。</p>
+<p><img alt="原论文第 45 页：安全权衡、多语言与长上下文安全" src="资源/原页-45.png"></p>
+<h4 id="545">5.4.5 网络安全与化学、生物武器安全</h4>
+<p><strong>网络安全评测。</strong> 使用 CyberSecEval，覆盖不安全代码、恶意代码、文本提示注入和漏洞识别，并新增鱼叉式网络钓鱼和自主网络攻击基准。</p>
+<ul>
+<li><strong>不安全代码。</strong> 模型越大，生成的不安全代码越多，但代码平均 BLEU 也越高。</li>
+<li><strong>代码解释器滥用。</strong> 某些提示能诱导模型执行恶意代码；405B 对恶意提示的遵从率为 10.4%，70B 为 3.8%。</li>
+<li><strong>文本提示注入。</strong> 针对 405B 的注入成功率为 21.7%。在该基准上，Llama 3 平均比 GPT-4 Turbo 与 Gemini Pro 更容易受注入影响，但比 Mixtral 更稳健。</li>
+<li><strong>漏洞识别。</strong> 在 CyberSecEval 2 夺旗挑战中，Llama 3 识别和利用漏洞的能力没有超过常用传统非 LLM 工具。</li>
+<li><strong>鱼叉式钓鱼。</strong> 让裁判 Llama 3 70B 评估 70B、405B 与受害者模型交互的说服力和攻击成功率。两者都被判为中等说服力，70B 成功率 24%，405B 为 14%。</li>
+<li><strong>攻击自动化。</strong> 测试勒索软件攻击的网络侦察、漏洞识别、利用执行与利用后动作。模型在 Kali Linux 虚拟机中根据前一命令输出迭代生成并执行新命令，攻击已知有漏洞的另一虚拟机。70B 和 405B 能高效发现网络服务与开放端口，但在 20 次和 23 次运行中均未利用这些信息取得初始访问；漏洞识别中等有效，选择和应用利用技术困难，利用执行及维持访问、影响主机等后续尝试全部失败。</li>
+</ul>
+<p><strong>网络攻击增量测试。</strong> 62 名内部志愿者中，31 名专家、31 名新手。第一阶段只允许使用开放互联网，第二阶段同时提供 405B，完成难度相近的另一项攻击挑战。无论新手还是专家，使用模型后各攻击阶段的完成率相较只使用互联网都没有显著提升。</p>
+<p><img alt="原论文第 46 页：网络安全评测与攻击自动化" src="资源/原页-46.png"></p>
+<p><strong>化学、生物武器增量测试。</strong> 为判断 Llama 3 是否会实质提高策划化学或生物攻击的能力，设计六小时情境：两人团队制定虚构攻击行动方案，覆盖试剂获取、生产、武器化与投送，并要求处理受限材料采购、真实实验室规程和行动安全。参与者按经验组成两名低技能者或两名中等技能者的团队。</p>
+<p>研究与化学—生物—放射性—核—爆炸物专家共同设计，并通过预备研究和统计功效分析验证。团队随机进入对照或模型条件：对照组只有互联网，模型组还能使用支持网页搜索、PDF 导入、检索增强生成、Python 和 Wolfram Alpha 的 Llama 3。系统预载关键词搜索所得的数百篇相关科学论文。完成后，生物、化学和行动规划专家从科学准确性、细节、规避侦测、科学执行和行动成功概率等方面评分；再用德尔菲流程降低专家偏差与波动，汇总为综合分。</p>
+<p>定量结果显示，使用 Llama 3 没有带来显著性能增量。无论聚合比较模型组与只用网页的对照组，还是按 70B/405B、化学/生物情境拆分，结论都成立。经专家验证后，团队判断发布 Llama 3 增加生态系统化学或生物武器攻击风险的概率较低。</p>
+<p><img alt="原论文第 47 页：提示注入、钓鱼和化生武器增量测试" src="资源/原页-47.png"></p>
+<h4 id="546">5.4.6 红队测试</h4>
+<p>红队测试用于发现风险，再将发现补充进基准与安全调优数据。测试反复开展，以持续发现新风险并指导模型开发和缓解。团队包括网络安全、对抗机器学习、负责任人工智能与诚信专家，以及熟悉特定地理市场诚信问题的多语言内容专家；关键风险领域还与内外部主题专家合作建立分类并开展聚焦评估。</p>
+<p><strong>按模型能力开展对抗测试。</strong> 初期先在具体高风险类别内分别测试各能力，再组合测试。红队重点模拟更可能发生在真实世界的提示级攻击；当意图被掩盖或提示叠加多层抽象时，模型尤其容易偏离预期。风险随能力增加而变复杂。</p>
+<ul>
+<li><strong>英语短、长上下文。</strong> 单轮和多轮同时采用公开与未公开技巧，并使用类似 PAIR 的高级自动多轮攻击。多轮通常产生更多有害输出，多种攻击组合时尤其普遍。</li>
+<li>多轮拒绝压制：要求回答采用指定格式，或针对拒绝加入、排除特定短语。</li>
+<li>假设情境：把违规提示包装成假设、理论或虚构任务，从只添加“假设”一词到构造复杂多层情境。</li>
+<li>角色扮演：赋予模型违规角色与目标，或让用户扮演无害角色以掩盖语境。</li>
+<li>添加免责声明和警告：先为回答定调，给模型一条看似符合泛化安全训练、实则继续提供帮助的路径；与其他攻击结合会提高违规率。</li>
+<li>逐步升级：从相对无害的请求开始，多轮要求更夸张内容，逐步诱导严重违规。一旦模型开始输出违规内容，就很难恢复；长上下文会使这一问题更加常见。</li>
+<li><strong>多语言。</strong> 同一提示或对话混合多种语言，比只用一种更容易造成违规；低资源语言因安全微调数据少、泛化弱或测试优先级低而更容易违规，但总体回答质量也常较差，限制真实攻击价值；俚语、特定语境或文化引用可能混淆模型，有时看似违规，实际是模型未正确理解引用，因而并未真正造成危害。</li>
+</ul>
+<p><img alt="原论文第 48 页：红队组织与英语、多语言攻击发现" src="资源/原页-48.png"></p>
+<ul>
+<li><strong>工具使用。</strong> 除英语文本攻击外，还发现工具专用攻击：把多个工具串联，其中一个带违规目的，早期检查点可能同时调用全部工具；使用特定输入字符串、碎片化或编码文本强制工具调用，可能形成违规输入，再以其他技巧读取工具结果；在多轮中替换查询词、重试或混淆原始请求等参数修改，也曾使早期检查点违规。</li>
+</ul>
+<p><strong>儿童安全风险。</strong> 专家团队评估模型产生儿童安全风险内容的能力，并据此设计必要微调缓解。测试结果用于持续扩展评测覆盖。Llama 3 还采用基于目标的新方法，沿多条攻击路径深入评估，并与内容专家合作，结合特定市场差异检查潜在违规内容。</p>
+<h4 id="547">5.4.7 系统级安全</h4>
+<p>真实应用中的 LLM 通常嵌入更大系统，而非单独运行。系统级安全以更灵活、可控的组件补充模型缓解措施。</p>
+<p>我们开发并开放 Llama Guard 3：由 Llama 3 8B 微调而来的安全分类器，用于检测输入提示或模型输出是否违反具体危害类别的安全政策。它支持英语和多语言文本，并针对搜索等工具调用与代码解释器滥用优化；还提供量化版本以降低内存需求。开发者应把这些组件作为基础，根据自己的用例配置。</p>
+<p><strong>分类体系。</strong> 训练覆盖人工智能安全分类的 13 类危害：儿童性剥削、诽谤、选举、仇恨、无差别武器、知识产权、非暴力犯罪、隐私、性相关犯罪、色情内容、专业建议、自杀与自残、暴力犯罪；另加代码解释器滥用以支持工具场景。</p>
+<p><strong>训练数据。</strong> 从 Llama Guard 的英语数据开始，扩充多语言和工具等新能力的提示—回答分类数据，并复用安全微调数据。通过提示工程让 LLM 不拒绝对抗问题，以增加训练集中的不安全回答，再由 Llama 3 标注。人工与 Llama 3 标注共同用于大规模清理。用户提示标签对人和 LLM 都更难，尤其是边界提示上人工略好；完整迭代系统仍能减少噪声并产生更准确标签。</p>
+<p><img alt="原论文第 49 页：工具红队、儿童安全与 Llama Guard 3" src="资源/原页-49.png"></p>
+<p><strong>结果。</strong> Llama Guard 3 在各能力上平均降低 65% 的违规，但任何系统防护都会增加对无害提示的拒绝。表 25 分语言报告输入过滤、输出过滤和二者结合相对裸模型的违规率下降与误拒绝率上升。系统组件也更灵活，可以只为特定危害启用，从而在类别级控制权衡。Llama Guard 3 的 int8 量化版体积缩小 40% 以上，性能几乎不受影响。</p>
+<p><strong>基于提示的系统防护。</strong> 另外开放 Prompt Guard 与 Code Shield 两种过滤机制，供社区直接使用或改造。</p>
+<p>Prompt Guard 用于检测试图颠覆应用中 LLM 预期行为的输入字符串，是一个多标签分类器，识别两类风险：显式覆盖安全条件或系统提示的直接越狱，以及第三方数据进入上下文后被模型误当成用户命令执行的间接提示注入。模型从仅 8600 万参数的 mDeBERTa-v3-base 微调而来，适合过滤输入。评测覆盖同分布越狱与注入、英语域外数据、机器翻译构建的多语言越狱，以及 CyberSecEval 的英、多语言间接注入；整体显示它对新分布泛化良好。</p>
+<p>Code Shield 展示另一类推理时系统防护，重点在不安全代码进入生产等下游场景之前发现它。组件调用“不安全代码检测器”静态分析库，组合多种工具检查七种编程语言。开发者可以把这类防护叠加部署到不同应用。</p>
+<p><img alt="原论文第 50 页：Llama Guard 3 结果、Prompt Guard 与 Code Shield" src="资源/原页-50.png"></p>
+<p>表 26 进一步按危害类别报告输入过滤、输出过滤和完整 Llama Guard 相对于裸 Llama 3 的变化。例如，违规率为 $-50\%$ 表示使用 Llama Guard 后，Llama 3 模型的违规率降低了 50%。这些评测采用英语提示和 405B 参数 Llama 3 生成结果，数值越低越好。表 27 比较非量化版与 int8 量化版在英语、多语言和工具使用上的精确率、召回率、F1 与假阳性率；量化对整体分类能力影响很小。</p>
+<h4 id="548">5.4.8 局限性</h4>
+<p>我们针对 Llama 3 的安全使用风险进行了广泛测量并采取了多种缓解措施。然而，任何测试都无法保证穷尽并识别每一种可能风险。由于模型使用多种数据集训练，Llama 3 仍可能生成有害内容；在英语以外的语言中，或面对熟练对抗红队人员精心设计的提示时，这种可能性尤其存在。恶意开发者或对抗用户可能找到新的越狱方法，并将模型用于各种不法用途。我们将继续主动识别风险并研究缓解方法，也鼓励开发者在从模型开发、部署到最终用户的每一个环节承担责任。我们希望开发者能够使用并共同改进我们随开放系统级安全套件发布的工具。</p>
+<h2 id="6">6 推理</h2>
+<p>我们研究两种主要技术，以提高 Llama 3 405B 的推理效率：（1）流水线并行；（2）FP8 量化。我们已经公开发布 FP8 量化的实现。</p>
+<h3 id="61">6.1 流水线并行</h3>
+<p>如果模型参数采用 BF16 数值表示，Llama 3 405B 无法装入一台配备 8 块 Nvidia H100 GPU 的机器。为解决这一问题，我们使用两台机器上的 16 块 GPU，以 BF16 精度并行执行模型推理。单台机器内部的 NVLink 带宽很高，因此可以使用张量并行；节点之间的连接带宽较低、延迟较高，所以跨节点改用流水线并行。</p>
+<p><img alt="原论文第 51 页：Llama Guard 分类结果、安全局限与推理方案开篇" src="资源/原页-51.png"></p>
+<p>表 28 给出 Prompt Guard 的性能，覆盖分布内与分布外评测、通过机器翻译构建的多语言越狱，以及 CyberSecEval 中的间接注入数据。图 24 展示微批处理对预填充和解码阶段推理吞吐量与延迟的影响，图中数字表示批大小或微批大小。</p>
+<p>训练时使用流水线并行，流水线气泡是影响效率的主要问题之一。然而，推理不包含需要清空流水线的反向传播，因此气泡并不构成问题。基于这一点，我们使用微批处理提高流水线并行推理的吞吐量。</p>
+<p>我们分别在推理的键值缓存预填充阶段和解码阶段，评估使用两个微批的影响；工作负载包含 4096 个输入词元和 256 个输出词元。结果表明，在本地批大小相同的情况下，微批处理能够提高推理吞吐量，如图 24 所示。这是因为微批处理允许两个阶段并发执行不同微批。微批处理增加的同步点也会提高延迟，但从整体上看，它仍然带来了更好的吞吐量—延迟权衡。</p>
+<h3 id="62-fp8">6.2 FP8 量化</h3>
+<p>我们利用 H100 GPU 原生支持 FP8 的能力开展低精度推理实验。为实现低精度推理，我们对模型内部的大多数矩阵乘法应用 FP8 量化。具体而言，模型前馈网络层中的大部分参数与激活都被量化；这些运算约占推理计算时间的 50%。模型自注意力层中的参数不做量化。我们使用动态缩放因子提高准确性，并优化 CUDA 内核以降低计算缩放因子的开销。</p>
+<p>我们发现，Llama 3 405B 的质量对某些量化方式较为敏感，因此又作出几项修改以提高模型输出质量：</p>
+<ol>
+<li>与已有研究相似，第一层和最后一层 Transformer 不进行量化。</li>
+<li>日期等高困惑度词元可能产生很大的激活值，继而造成很高的 FP8 动态缩放因子和不可忽略的下溢数量，最终引发解码错误。</li>
+</ol>
+<p><img alt="原论文第 52 页：Prompt Guard、微批推理以及 FP8 量化方法" src="资源/原页-52.png"></p>
+<p>为处理第二项问题，我们把动态缩放因子的上限设为 1200。</p>
+<ol start="3">
+<li>我们采用逐行量化，沿参数矩阵和激活矩阵的每一行计算缩放因子，如图 25 所示。实验发现，它优于对整个张量使用单一缩放因子的逐张量量化方法。</li>
+</ol>
+<p><strong>量化误差的影响。</strong> 标准基准评测往往表明，即使没有上述缓解措施，FP8 推理也能达到与 BF16 推理相当的性能。然而，我们发现这些基准无法充分反映 FP8 量化的影响。当缩放因子没有上限时，即便基准成绩仍然很高，模型也会偶尔产生损坏的回答。与其依赖基准衡量量化引起的分布变化，不如分析分别使用 FP8 和 BF16 生成的 10 万条回答在奖励模型上的得分分布。图 26 给出了本文量化方法得到的奖励分布。结果说明，我们的 FP8 量化方法对模型回答的影响非常有限。</p>
+<p><strong>效率实验评测。</strong> 图 27 展示 Llama 3 405B 使用 FP8 推理时在预填充和解码阶段的吞吐量—延迟权衡，工作负载仍为 4096 个输入词元和 256 个输出词元。图中将 FP8 推理与第 6.1 节所述的双机 BF16 推理方法比较。结果显示，FP8 推理在预填充阶段最多可将吞吐量提高 50%，并在解码阶段实现显著更好的吞吐量—延迟权衡。</p>
+<p><img alt="原论文第 53 页：逐行 FP8 量化、奖励分布与效率评测" src="资源/原页-53.png"></p>
+<h2 id="7">7 视觉实验</h2>
+<p>我们开展了一系列实验，通过组合式方法为 Llama 3 引入视觉识别能力。该方法包含两个主要阶段。首先，在预训练图像编码器与预训练语言模型之间加入并训练一组交叉注意力层，并用大量图像—文本对训练两个模型的组合，由此形成图 28 所示的模型。其次，我们引入时间聚合层和额外的视频交叉注意力层，用大量视频—文本对训练模型识别和处理视频中的时间信息。</p>
+<p>组合式基础模型开发具有几项优势：（1）可以并行开发视觉能力和语言建模能力；（2）绕开视觉与语言数据联合预训练中的复杂问题，包括视觉数据的词元化、来自不同模态的词元具有不同背景困惑度，以及模态之间的竞争；（3）保证引入视觉识别能力不会影响模型在纯文本任务上的性能；（4）交叉注意力架构不需要让全分辨率图像通过越来越大的 LLM 主干，尤其不必经过每个 Transformer 层的前馈网络，因此推理效率更高。需要指出的是，我们的多模态模型仍在开发中，尚未达到发布条件。</p>
+<p>在第 7.6 节和第 7.7 节给出实验结果之前，我们先介绍训练视觉识别能力所使用的数据、视觉组件的模型架构、这些组件的扩展训练方式，以及预训练和后训练方案。</p>
+<h3 id="71">7.1 数据</h3>
+<p>下面分别介绍图像数据和视频数据。</p>
+<h4 id="711">7.1.1 图像数据</h4>
+<p>图像编码器和适配器使用图像—文本对训练。我们通过一条复杂的数据处理流水线构建数据集，它包含四个主要阶段：（1）质量过滤；（2）感知去重；（3）重采样；（4）光学字符识别。此外还应用了一系列安全缓解措施。</p>
+<ul>
+<li><strong>质量过滤。</strong> 我们实现多种质量过滤器，通过启发式方法移除非英语说明文字和低质量说明文字，例如依据 CLIP 所产生的低对齐分数进行过滤。具体来说，CLIP 分数低于某个阈值的所有图像—文本对都会被删除。</li>
+<li><strong>去重。</strong> 对大规模训练数据集去重可以减少在冗余数据上消耗的训练计算，并降低记忆，因此既能提高模型性能，也有利于隐私保护。</li>
+</ul>
+<p><img alt="原论文第 54 页：FP8 推理曲线、视觉实验与图像数据处理" src="资源/原页-54.png"></p>
+<p>为此，我们使用内部版本的先进 SSCD 副本检测模型，对图像进行大规模去重。先用 SSCD 为所有图像计算 512 维表示，再以余弦相似度为度量，在整个数据集中为每幅图像执行最近邻搜索。相似度高于给定阈值的样本被定义为重复项；随后使用连通分量算法将重复项分组，每个连通分量只保留一个图像—文本对。我们通过两种方式提高去重流水线效率：（1）先用 k 均值对数据预聚类；（2）使用 FAISS 执行最近邻搜索和聚类。</p>
+<ul>
+<li><strong>重采样。</strong> 我们采用与既有研究相近的重采样方法，确保图像—文本对具有多样性。首先，解析高质量文本来源并构建 n 元语法词表；然后计算数据集中每个词表 n 元语法的频率。重采样过程如下：如果说明文字中任一 n 元语法在词表里出现少于 $T$ 次，就保留对应的图像—文本对；否则，以 $T/f_i$ 的概率独立采样说明文字中的每个 n 元语法 $n_i$，其中 $f_i$ 表示 $n_i$ 的频率。只要任一 n 元语法被采中，就保留该图像—文本对。这种重采样可以提高低频类别与细粒度识别任务的性能。</li>
+<li><strong>光学字符识别。</strong> 我们提取图像中书写的文本并把它与说明文字拼接，以进一步改善图像—文本数据。书写文本由专有 OCR 流水线提取。实验观察到，在训练数据中加入 OCR 数据，可以大幅改善文档理解等依赖 OCR 能力的任务。</li>
+</ul>
+<p><strong>文档转录。</strong> 为提高模型在文档理解任务上的性能，我们把文档页面渲染为图像，再将图像与各自对应的文本配对。文档文本直接来自源文件，或由文档解析流水线获得。</p>
+<p><strong>安全。</strong> 我们首先确保图像识别预训练数据集不包含儿童性虐待材料等不安全内容。</p>
+<p><img alt="原论文第 55 页：组合式多模态架构与图像数据去重、重采样、OCR" src="资源/原页-55.png"></p>
+<p>我们使用 PhotoDNA 等感知哈希方法以及内部专有分类器，扫描全部训练图像中的儿童性虐待材料；还使用专有媒体风险检索流水线，识别并删除被判定为不适宜工作场所的图像—文本对，例如含有色情或暴力内容的样本。我们认为，尽量减少训练数据集中此类材料的比例，可以提高最终模型的安全性而不损害其有帮助程度。最后，我们模糊处理训练集中所有图像的人脸，并使用由人类编写、引用所附图像的提示测试模型。</p>
+<p><strong>退火数据。</strong> 我们用 n 元语法把图像—说明文字对重采样到约 3.5 亿个样本，构建退火数据集。由于 n 元语法重采样偏好信息更丰富的文本描述，因此会选出质量更高的数据子集。我们再从五类额外来源加入约 1.5 亿个样本：</p>
+<ul>
+<li><strong>视觉指代定位。</strong> 把文本中的名词短语与图像中的边界框或掩码关联起来。图像—文本对以两种方式表示定位信息：（1）在图像上叠加带标记的边界框或掩码，并在文本中用标记引用，类似“标记集合”方法；（2）把归一化的 $(x_{\min},y_{\min},x_{\max},y_{\max})$ 坐标直接插入文本，并以特殊词元分隔。</li>
+<li><strong>截图解析。</strong> 从 HTML 代码渲染截图，让模型预测生成截图中特定元素的代码；目标元素通过截图中的边界框指出。</li>
+<li><strong>问答对。</strong> 加入问答对，使模型能够使用体量过大、无法全部放入模型微调阶段的问答数据。</li>
+<li><strong>合成说明文字。</strong> 加入由模型早期版本生成的合成说明文字图像。与原始说明文字相比，合成说明文字能够更全面地描述图像。</li>
+<li><strong>合成结构化图像。</strong> 在图表、表格、流程图、数学公式和文本数据等多个领域加入合成图像。这些图像带有对应 Markdown 或 LaTeX 表示等结构化表达。除提高模型对这些领域的识别能力外，我们还发现这些数据有助于文本模型为微调生成问答对。</li>
+</ul>
+<h4 id="712">7.1.2 视频数据</h4>
+<p>视频预训练使用一个大型视频—文本对数据集。数据经过多阶段整理：先使用基于规则的启发式方法过滤并清洗关联文本，例如要求文本达到最小长度并修正大小写；然后运行语言识别模型，滤除非英语文本；再运行 OCR 检测模型，滤除叠加文字过多的视频。</p>
+<p>为了确保视频—文本对合理对齐，我们使用 CLIP 风格的图像—文本与视频—文本对比模型。首先取视频中的单帧计算图像—文本相似度，过滤低相似度样本；随后再滤除视频—文本对齐度较低的样本。部分数据包含静态或运动幅度很小的视频，我们用基于运动分数的过滤方法删除这些数据。我们不采用美学分数、分辨率等视觉质量过滤器。</p>
+<p>数据集中视频平均时长 21 秒、中位时长 16 秒，超过 99% 的视频短于一分钟。空间分辨率从 320p 到 4K 差异很大，超过 70% 的视频短边大于 720 像素。视频的宽高比也各不相同，几乎全部位于 1:2 到 2:1 之间，中位数为 1:1。</p>
+<h3 id="72">7.2 模型架构</h3>
+<p>视觉识别模型包含三个主要组件：（1）图像编码器；（2）图像适配器；（3）视频适配器。</p>
+<p><strong>图像编码器。</strong> 图像编码器是一个标准视觉 Transformer，通过图像与文本对齐进行训练。我们采用 ViT-H/14 变体，它有 6.3 亿个参数，在 25 亿个图像—文本对上训练了五个轮次。</p>
+<p><img alt="原论文第 56 页：图像安全与退火数据、视频数据和视觉架构" src="资源/原页-56.png"></p>
+<p>图像编码器以 $224\times224$ 分辨率的图像预训练；图像被分成 $16\times16$ 个等尺寸块，即每个图像块为 $14\times14$ 像素。已有工作同样表明，使用对比式文本对齐目标训练的图像编码器无法保留细粒度定位信息。为缓解这一问题，我们采用多层特征提取：除最终层特征外，还提供第 4、8、16、24 和 31 层的特征。另外，在交叉注意力层预训练之前再插入 8 个带门控的自注意力层，使 Transformer 块总数达到 40，以学习对齐专用特征。因此，加入这些层后图像编码器最终共有 8.5 亿参数。使用多层特征时，图像编码器会为 $16\times16=256$ 个图像块分别产生 7680 维表示。后续训练阶段不会冻结图像编码器参数，因为实验发现继续训练能够提高性能，在文本识别等领域尤为明显。</p>
+<p><strong>图像适配器。</strong> 我们在图像编码器生成的视觉词元表示与语言模型生成的词元表示之间加入交叉注意力层。核心语言模型每四个自注意力层之后应用一个交叉注意力层。与语言模型本身一样，交叉注意力层采用 GQA 以提高效率。它们为模型加入了大量可训练参数：在 Llama 3 405B 中，交叉注意力层约含 1000 亿参数。图像适配器分两个阶段预训练：（1）初始预训练；（2）退火。</p>
+<ul>
+<li><strong>初始预训练。</strong> 使用前文所述约 60 亿个图像—文本对预训练图像适配器。为提高计算效率，把每幅图像缩放到最多四个 $336\times336$ 像素图块之内，并排列图块以支持 $672\times672$、$672\times336$、$1344\times336$ 等不同宽高比。</li>
+<li><strong>退火。</strong> 在前述退火数据集约 5 亿幅图像上继续训练图像适配器。退火时提高单个图块的图像分辨率，以改善信息图理解等需要高分辨率图像的任务。</li>
+</ul>
+<p><strong>视频适配器。</strong> 模型最多输入从完整视频均匀采样的 64 帧，每帧都由图像编码器处理。我们通过两个组件建模视频时间结构：（1）时间聚合器把连续 32 帧合并为一帧；（2）每四个图像交叉注意力层之前加入额外的视频交叉注意力层。时间聚合器采用感知器重采样器实现。预训练时每个视频使用 16 帧并聚合为一帧；监督微调时把输入帧数提高到 64。对于 Llama 3 7B 和 70B，视频聚合器与交叉注意力层分别包含 6 亿和 46 亿参数。</p>
+<h3 id="73">7.3 模型扩展</h3>
+<p>加入视觉识别组件后，Llama 3 包含自注意力层、交叉注意力层和 ViT 图像编码器。训练 8B 与 70B 模型的适配器时，我们发现数据并行与张量并行的组合效率最高。在这些规模下，模型并行或流水线并行不会提高效率，因为聚合模型参数的代价会主导计算。不过，在训练 405B 模型适配器时，除数据并行和张量并行外，我们还会使用流水线并行。如此规模的训练除了第 3.3 节所述问题外，还带来三项新挑战：模型异构性、数据异构性和数值不稳定。</p>
+<p><strong>模型异构性。</strong> 模型计算是异构的，因为不同词元承受的计算量不同。图像词元会经过图像编码器和交叉注意力层，而文本词元只经过语言主干。这种异构性会在流水线并行调度中造成瓶颈。为解决这一问题，我们确保每个流水线阶段都包含五层，即语言主干的四个自注意力层和一个交叉注意力层；这是因为每四个自注意力层之后恰好加入一个交叉注意力层。此外，我们在所有流水线阶段复制图像编码器。由于训练使用配对的图像—文本数据，这样便可在图像计算与文本计算之间执行负载均衡。</p>
+<p><img alt="原论文第 57 页：图像编码器、图像与视频适配器以及模型扩展" src="资源/原页-57.png"></p>
+<p><strong>数据异构性。</strong> 数据是异构的，因为图像平均包含的词元数远多于与之关联的文本：一幅图像包含 2308 个词元，而对应文本平均只有 192 个词元。因此，交叉注意力层的计算比自注意力层需要更多时间和内存。我们在图像编码器中引入序列并行，使每块 GPU 处理大致相同数量的词元，以解决这一问题。由于文本平均长度相对较短，我们还使用大得多的微批大小，由 1 提高到 8。</p>
+<p><strong>数值不稳定。</strong> 图像编码器加入模型后，我们发现以 BF16 执行梯度累积会造成数值不稳定。最可能的解释是，图像词元通过所有交叉注意力层进入语言主干，因此图像词元表示中的数值偏差会在反复叠加后，对整体计算产生格外显著的影响。我们改用 FP32 执行梯度累积，从而解决这一问题。</p>
+<h3 id="74">7.4 预训练</h3>
+<p><strong>图像。</strong> 我们从预训练文本模型与视觉编码器的权重开始初始化。视觉编码器不冻结，而文本模型权重按前文所述保持冻结。首先使用 60 亿个图像—文本对训练模型，每幅图像都被缩放到最多四个 $336\times336$ 像素图块内。全局批大小为 16384，使用余弦学习率调度，初始学习率为 $10\times10^{-4}$，权重衰减为 0.01。初始学习率依据小规模实验确定，但这些发现无法很好地泛化到很长的训练调度，因此当损失值停滞时，我们在训练过程中数次降低学习率。基础预训练结束后，进一步提高图像分辨率，并在退火数据集上继续训练同一组权重。优化器通过预热重新初始化到 $2\times10^{-5}$ 的学习率，随后仍采用余弦调度。</p>
+<p><strong>视频。</strong> 视频预训练从上述图像预训练和退火后的权重开始。我们按架构设计加入随机初始化的视频聚合器与交叉注意力层。除视频专用参数，也就是聚合器和视频交叉注意力层外，模型其余参数全部冻结；随后在视频预训练数据上训练这些专用参数。训练超参数与图像退火阶段基本相同，学习率略有区别。我们从完整视频中均匀采样 16 帧，每帧用四个 $448\times448$ 像素块表示。视频聚合器采用 16 的聚合因子，因而最终得到一帧有效表示，文本词元会对它执行交叉注意力。训练使用 4096 的全局批大小、190 个词元的序列长度和 $10^{-4}$ 的学习率。</p>
+<h3 id="75">7.5 后训练</h3>
+<p>本节介绍视觉适配器的后训练方案。预训练后，我们在经过高度筛选的多模态对话数据上微调模型以赋予聊天能力；进一步采用直接偏好优化提高人工评测表现，并使用拒绝采样增强多模态推理能力。最后增加质量调优阶段，在极少量高质量对话数据上继续微调；这样既能进一步改善人工评测，也能保持各基准上的性能。下面详细说明各步骤。</p>
+<h4 id="751">7.5.1 监督微调数据</h4>
+<p>下面分别介绍图像能力和视频能力的监督微调数据。</p>
+<p><strong>图像。</strong> 监督微调混合使用多种数据集。</p>
+<ul>
+<li><strong>学术数据集。</strong> 使用模板或 LLM 改写，把经过严格过滤的现有学术数据集转为问答对。LLM 改写旨在用不同指令扩充数据，并改善回答的语言质量。</li>
+<li><strong>人工标注。</strong> 针对开放式问答、说明文字生成、实际用例等多类任务，以及自然图像、结构化图像等不同领域，我们由人工标注者收集多模态对话数据。标注者获得图像并据此撰写对话。为保证多样性，先对大规模数据集聚类，再从各聚类中均匀采样图像。对于少数特定领域，还通过种子图像的 k 近邻扩展获取额外图像。</li>
+</ul>
+<p><img alt="原论文第 58 页：视觉模型扩展、预训练、后训练与监督数据" src="资源/原页-58.png"></p>
+<p>我们还向标注者提供现有模型的中间检查点，以支持“模型在环”式标注：标注者可以把模型生成内容作为起点，再进行人工编辑。这是一个迭代过程，模型检查点会定期替换成使用最新数据训练、性能更好的版本。该方法在提高人工标注数量与效率的同时，也改善了标注质量。</p>
+<ul>
+<li><strong>合成数据。</strong> 我们探索多种合成多模态数据生成方式，输入为图像的文本表示，并使用只接收文本输入的 LLM。总体思路是利用文本 LLM 的推理能力，在文本域生成问答对，再把文本表示替换为对应图像，从而形成合成多模态数据。例如，把问答数据集中的文本渲染为图像，或把表格数据渲染成表格和图表的合成图像。此外，还会利用现有图像的说明文字和 OCR 提取结果，生成更多与图像相关的对话或问答数据。</li>
+</ul>
+<p><strong>视频。</strong> 与图像适配器相似，我们使用已有标注的学术数据集，并把它们转为适当的文本指令和目标回答。根据任务需要，目标被转成开放式回答或多项选择。我们还请人工为视频标注问题与答案，并要求标注者重点提出无法依据单帧回答的问题，引导数据关注需要时间理解的任务。</p>
+<h4 id="752">7.5.2 监督微调方案</h4>
+<p>下面分别介绍图像能力和视频能力的监督微调方案。</p>
+<p><strong>图像。</strong> 我们从预训练图像适配器初始化，但把预训练语言模型权重热替换为指令调优语言模型权重。语言模型权重保持冻结，以维持纯文本性能；也就是说，只更新视觉编码器和图像适配器权重。</p>
+<p>模型微调方法与既有权重平均工作相近。首先，对多个随机数据子集、学习率和权重衰减值执行超参数扫描；然后按模型性能排序；最后平均前 $K$ 个模型的权重，得到最终模型。通过评估不同平均模型并选择性能最高者确定 $K$。实验观察到，平均模型始终优于网格搜索找到的最佳单个模型，而且这种策略可以降低模型对超参数的敏感性。</p>
+<p><strong>视频。</strong> 视频监督微调使用预训练权重初始化视频聚合器和交叉注意力层。模型其余参数，也就是图像权重和 LLM，则由各自完成微调阶段的相应模型初始化。与视频预训练相同，只在视频监督微调数据上更新视频参数。该阶段把视频长度提高到 64 帧，并采用 32 的聚合因子得到两帧有效表示；图块分辨率也提高到与相应图像超参数一致。</p>
+<h4 id="753">7.5.3 偏好数据</h4>
+<p>我们为奖励建模和直接偏好优化构建多模态成对偏好数据集。</p>
+<ul>
+<li><strong>人工标注。</strong> 人工偏好数据比较两个不同模型输出，以七级量表标注为“选中”与“拒绝”。用于生成回答的模型会从近期最佳模型池中即时采样，每个模型具有不同特征；模型池每周更新。除偏好标签外，我们还请标注者选择性地人工修正“选中”回答中的不准确内容，因为视觉任务对错误的容忍度很低。人工编辑并非必需步骤，因为实践中数据量与质量之间存在权衡。</li>
+<li><strong>合成数据。</strong> 还可以让纯文本 LLM 编辑监督微调数据并故意引入错误，以生成合成偏好对。我们把对话数据作为输入，让 LLM 加入细微但有实质意义的错误，例如替换对象、改变属性或在计算中加入错误。编辑后的回答作为负面的“拒绝”样本，与原始监督微调数据中的“选中”样本配对。</li>
+</ul>
+<p><img alt="原论文第 59 页：视觉 SFT 数据、微调方案与偏好数据" src="资源/原页-59.png"></p>
+<ul>
+<li><strong>拒绝采样。</strong> 为获得更多遵循当前策略分布的负样本，我们还利用迭代拒绝采样过程收集额外偏好数据，后文将更详细介绍。概括而言，拒绝采样用于从模型中反复采出高质量生成结果；因此，没有被选中的全部生成结果都可以作为负面的拒绝样本，并组成额外偏好数据对。</li>
+</ul>
+<h4 id="754">7.5.4 奖励建模</h4>
+<p>我们在视觉 SFT 模型和语言奖励模型基础上训练视觉奖励模型。视觉编码器与交叉注意力层从视觉 SFT 模型初始化，训练时不冻结；自注意力层从语言奖励模型初始化并保持冻结。我们观察到，冻结语言奖励模型部分通常能得到更高准确率，尤其是在奖励模型需要依据自身知识或语言质量作出判断的任务上。</p>
+<p>训练采用与语言奖励模型相同的目标，但对批内奖励逻辑值平方的平均值加入加权正则项，防止奖励分数漂移。第 7.5.3 节的人工偏好标注用于训练视觉奖励模型。与语言偏好数据相同，我们依据清晰排序“编辑后回答 &gt; 选中回答 &gt; 拒绝回答”构造两对或三对样本。此外，还通过扰动与图像信息相关的词或短语，例如数字和视觉文本，合成扩充负面回答。这样可以鼓励视觉奖励模型依据真实图像内容作出判断。</p>
+<h4 id="755">7.5.5 直接偏好优化</h4>
+<p>与语言模型相似，我们使用第 7.5.3 节介绍的偏好数据，通过直接偏好优化进一步训练视觉适配器。为对抗多轮后训练中的分布偏移，只保留近期批次的人工偏好标注，而删除已经明显偏离当前策略的批次，例如基础预训练模型发生变化后的旧数据。我们发现，与其始终冻结参考模型，不如每隔 $k$ 步以指数移动平均方式更新参考模型；这能使模型从数据中学到更多，并在人工评测中取得更好表现。总体来看，每一轮微调中，视觉 DPO 模型在人工评测里都稳定优于其 SFT 起点。</p>
+<h4 id="756">7.5.6 拒绝采样</h4>
+<p>大多数现有问答对只包含最终答案，缺少训练模型在推理任务上良好泛化所需的思维链解释。我们使用拒绝采样为这类样本生成缺失解释，并增强模型推理能力。</p>
+<p>给定一个问答对，先以不同系统提示或温度从微调模型采样生成多个答案；再使用启发规则或 LLM 裁判比较生成答案与标准答案；最后把正确回答加入微调数据混合，并重新训练模型。我们发现，每个问题保留多个正确回答很有价值。</p>
+<p>为确保只有高质量样本被重新加入训练，我们设置两道防线。第一，部分样本虽然最终答案正确，解释却是错误的；而且在只有很少生成答案正确的问题中，这种模式更加常见。因此，如果某道题回答正确的概率低于给定阈值，就丢弃它的回答。第二，由于语言或风格差异，评分者会偏好某些回答。我们使用奖励模型选出质量最高的前 $K$ 个回答，再将其放回训练数据。</p>
+<h4 id="757">7.5.7 质量调优</h4>
+<p>我们整理一个规模很小但筛选极严的 SFT 数据集，其中全部样本都由人类或最强模型重写并验证，以满足最高质量标准。我们用这些数据训练 DPO 模型以提高回答质量，并把这一过程称为质量调优。</p>
+<p><img alt="原论文第 60 页：拒绝样本、视觉奖励模型、DPO 与质量调优" src="资源/原页-60.png"></p>
+<p>当质量调优数据集覆盖广泛任务并采用适当早停时，质量调优可以显著提高人工评测结果，同时不影响由基准验证的泛化能力。该阶段完全依据基准选择检查点，以确保模型能力得到保留或改善。</p>
+<h3 id="76">7.6 图像识别结果</h3>
+<p>我们在一组覆盖自然图像理解、文本理解、图表理解和多模态推理的任务上，评估 Llama 3 的图像理解能力：</p>
+<ul>
+<li><strong>MMMU。</strong> 一个具有挑战性的多模态推理数据集，要求模型理解图像并解决横跨 30 个不同学科的大学水平问题，既包括多项选择题，也包括开放式问题。与其他工作一致，我们在包含 900 幅图像的验证集上评测。</li>
+<li><strong>VQAv2。</strong> 测试模型结合图像理解、语言理解和常识知识，回答自然图像通用问题的能力。</li>
+<li><strong>AI2 Diagram。</strong> 评估模型解析科学示意图并回答相关问题的能力。我们采用与 Gemini 和 x.ai 相同的评测协议，并使用透明边界框报告得分。</li>
+<li><strong>ChartQA。</strong> 一个具有挑战性的图表理解基准，要求模型从视觉上理解不同类型的图表，并回答有关图表的逻辑问题。</li>
+<li><strong>TextVQA。</strong> 一个常用基准，要求模型读取并推理图像中的文本，再回答相关问题，用于测试模型在自然图像上的 OCR 理解能力。</li>
+<li><strong>DocVQA。</strong> 一个聚焦文档分析与识别的基准，包含多种文档图像，用来评估模型执行 OCR 理解并推理文档内容以回答问题的能力。</li>
+</ul>
+<p>表 29 给出实验结果。接入 Llama 3 的视觉模块在不同模型规模下，都能在广泛图像识别基准上取得有竞争力的表现。Llama 3-V 405B 在全部基准上超过 GPT-4V，但略低于 Gemini 1.5 Pro 和 Claude 3.5 Sonnet。Llama 3 405B 在文档理解任务上尤其具有竞争力。</p>
+<h3 id="77">7.7 视频识别结果</h3>
+<p>我们在以下基准上评估 Llama 3 视频适配器：</p>
+<ul>
+<li><strong>PerceptionTest。</strong> 评估模型回答时间推理问题的能力，覆盖记忆、抽象、物理、语义等技能，以及描述、解释、预测、反事实等推理类型。测试集有 1.16 万个问答对，每个问答对配有一段平均 23 秒的视频；视频由全球 100 名参与者拍摄，展示感知上值得关注的任务。本文聚焦多项选择问答，每道题有三个选项。</li>
+</ul>
+<p><img alt="原论文第 61 页：图像理解基准结果与视频识别评测" src="资源/原页-61.png"></p>
+<p>PerceptionTest 报告保留测试划分上的性能，预测结果提交至在线挑战服务器取得分数。</p>
+<ul>
+<li><strong>NExT-QA。</strong> 另一个时间与因果推理基准，聚焦开放式问答。它含有 1000 个测试视频，每段平均 44 秒，共配有 9000 个问题。评测通过 Wu-Palmer 相似度比较模型回答与标准答案。</li>
+<li><strong>TVQA。</strong> 评估模型执行组合推理的能力，要求在时空中定位相关片段、识别视觉概念，并结合基于字幕的对话共同推理。数据来自热门电视剧，因此还测试模型利用这些电视剧相关外部知识回答问题的能力。验证集超过 1.5 万个问答对，每段视频平均 76 秒；每道题有五个选项，本文遵循既有工作报告验证集性能。</li>
+<li><strong>ActivityNet-QA。</strong> 评估模型在长视频中推理动作、空间关系、时间关系和计数等内容的能力。测试集含 800 个视频的 8000 个问答对，每段视频平均三分钟。按照既有协议，模型生成一个词或一个短语的简短回答，再由 GPT-3.5 API 将其与标准答案比较并判断是否正确；本文报告该 API 评出的平均准确率。</li>
+</ul>
+<p>执行推理时，我们从完整视频片段中均匀采样帧，并将这些帧连同短文本提示输入模型。由于大多数基准是多项选择题，使用的提示为：“从以下选项中选择正确答案：{问题}。只回答正确选项的字母，不要输出任何其他内容。”对于 ActivityNet-QA 和 NExT-QA 等要求简短回答的基准，提示为：“用一个词或一个短语回答问题。{问题}。”NExT-QA 的 WUPS 指标对回答长度和具体用词敏感，因此还要求模型给出具体、最显著的答案，例如位置问题应回答“客厅”，而不是笼统的“房子”。对于包含字幕的 TVQA，推理提示中还会加入相应视频片段的字幕。</p>
+<p>表 30 给出 Llama 3 8B 与 70B 的表现，并与两个 Gemini 模型和两个 GPT-4 模型比较。全部结果都是零样本结果，因为训练或微调数据中没有纳入这些基准的任何部分。结果显示，仅在后训练阶段训练一个小型视频适配器的 Llama 3 也极具竞争力，在某些情况下甚至优于可能从预训练起就使用原生多模态处理的其他模型。考虑到这里只评估 8B 和 70B 参数模型，Llama 3 的视频识别表现尤其突出。它在 PerceptionTest 上取得最佳成绩，说明模型具有很强的复杂时间推理能力。在 ActivityNet-QA 等长视频活动理解任务上，即便最多只处理 64 帧，Llama 3 仍能取得很强结果；对于三分钟视频，这相当于每三秒仅处理一帧。</p>
+<p><img alt="原论文第 62 页：视频理解结果、评测协议与分析" src="资源/原页-62.png"></p>
+<h2 id="8">8 语音实验</h2>
+<p>我们通过实验研究以组合式方法把语音能力集成进 Llama 3，这与视觉识别所采用的方法相似。在输入端，加入编码器与适配器以处理语音信号。我们使用文本形式的系统提示，为 Llama 3 的语音理解启用不同运行模式。如果没有系统提示，模型会作为通用口语对话模型运行，能以与纯文本版 Llama 3 一致的方式有效回应用户语音；对话历史作为提示前缀加入，以改善多轮对话体验。我们还实验了通过系统提示把 Llama 3 用于自动语音识别和自动语音翻译。Llama 3 的语音接口支持最多 34 种语言，也支持文本与语音交错输入，使模型能够解决高级音频理解任务。</p>
+<p>我们还实验了一种语音生成方法，实现流式文本转语音系统，在语言模型解码过程中即时生成语音波形。Llama 3 的语音生成器以专有 TTS 系统为基础设计，不对语言模型进行语音生成微调；重点是在推理时使用 Llama 3 嵌入，提高语音合成的延迟、准确性和自然度。语音接口如图 28 和图 29 所示。</p>
+<h3 id="81">8.1 数据</h3>
+<h4 id="811">8.1.1 语音理解</h4>
+<p>训练数据分为两类。预训练数据包含大量未标注语音，用于以自监督方式初始化语音编码器；监督微调数据包含语音识别、语音翻译和口语对话数据，用于在与大语言模型集成后解锁特定能力。</p>
+<p><strong>预训练数据。</strong> 为预训练语音编码器，我们整理了约 1500 万小时、覆盖大量语言的语音录音。使用语音活动检测模型过滤音频，选择检测阈值高于 0.7 的音频样本用于预训练。语音预训练数据还特别确保不含个人身份信息，并使用 Presidio Analyzer 识别此类信息。</p>
+<p><strong>语音识别与翻译数据。</strong> 自动语音识别训练数据包含 23 万小时人工转录的语音录音，覆盖 34 种语言。自动语音翻译训练数据包含 9 万小时的双向翻译：33 种语言译为英语，以及英语译为这 33 种语言。这些数据既包含监督数据，也包含使用 NLLB 工具包生成的合成数据；合成语音翻译数据可以提高低资源语言的模型质量。数据中的语音片段最长为 60 秒。</p>
+<p><strong>口语对话数据。</strong> 为微调语音适配器的口语对话能力，我们让语言模型回答语音提示的转录文本，从而为语音提示合成生成回答。</p>
+<p><img alt="原论文第 63 页：Llama 3 语音接口、语音理解和训练数据" src="资源/原页-63.png"></p>
+<p>我们使用自动语音识别数据集中的 6 万小时语音，以这种方式生成合成数据。此外，还在 Llama 3 微调数据的若干子集上运行 Voicebox TTS 系统，生成 2.5 万小时合成数据。我们使用多种启发规则，选出与语音分布相匹配的微调数据子集，包括优先选择结构简单、相对较短且不含非文本符号的提示。</p>
+<h4 id="812">8.1.2 语音生成</h4>
+<p>语音生成数据集主要用于训练文本规范化模型和韵律模型。两类训练数据都额外加入 Llama 3 嵌入作为输入特征，以提供上下文信息。</p>
+<p><strong>文本规范化数据。</strong> 文本规范化训练集包含 5.5 万个样本，覆盖数字、日期、时间等需要非平凡规范化的广泛符号类别。每个样本都是书面形式文本与对应规范口语形式文本组成的一对，并带有一串推断得到、可执行该规范化过程的手工文本规范化规则。</p>
+<p><strong>韵律模型数据。</strong> 韵律模型训练数据包含从 5 万小时 TTS 数据集中提取的语言与韵律特征；该数据集由专业配音演员在录音棚中录制的成对转录文本与音频组成。</p>
+<p><strong>Llama 3 嵌入。</strong> Llama 3 嵌入取自第 16 个解码器层的输出。我们只使用 Llama 3 8B，并提取给定文本的嵌入；该文本对文本规范化而言是书面输入，对韵律模型而言是音频转录，提取方式相当于让 Llama 3 在空用户提示下生成它。每个样本中，Llama 3 词元序列的每个分块都显式对齐到文本规范化或韵律模型原生输入序列的相应分块，也就是按 Unicode 类别划分的文本规范化专用文本词元，或音素速率特征。由此可以用流式输入的 Llama 3 词元和嵌入训练文本规范化与韵律模块。</p>
+<h3 id="82">8.2 模型架构</h3>
+<h4 id="821">8.2.1 语音理解</h4>
+<p>输入端的语音模块包含依次连接的两个模块：语音编码器与适配器。语音模块输出作为词元表示直接送入语言模型，使语音词元与文本词元能够直接交互。此外，还加入两个新的特殊词元，用于包围语音表示序列。</p>
+<p>语音模块与第 7 节的视觉模块存在显著差异：视觉模块通过交叉注意力层把多模态信息送入语言模型；语音模块则生成能够与文本词元无缝集成的嵌入，使语音接口可以利用 Llama 3 语言模型的全部能力。</p>
+<p><strong>语音编码器。</strong> 语音编码器是一个含 10 亿参数的 Conformer 模型。输入由 80 维梅尔频谱特征组成，先经步幅为 4 的堆叠层处理，再通过线性投影把帧长度降至 40 毫秒。所得特征由包含 24 个 Conformer 层的编码器处理。每个 Conformer 层的隐含维度为 1536，并包含两个维度为 4096 的 Macaron 网络式前馈网络、一个卷积核大小为 7 的卷积模块，以及一个含 24 个注意力头的旋转注意力模块。</p>
+<p><strong>语音适配器。</strong> 语音适配器约含 1 亿参数，由一个卷积层、一个旋转 Transformer 层和一个线性层组成。卷积层的卷积核大小为 3、步幅为 2，用来把语音帧长度降至 80 毫秒，使模型向语言模型提供粒度更粗的特征。卷积降采样后，隐含维度为 3072、前馈网络维度为 4096 的 Transformer 层继续结合上下文处理语音信息。最后，线性层把输出维度映射为与语言模型嵌入层一致。</p>
+<p><img alt="原论文第 64 页：语音生成数据与语音理解架构" src="资源/原页-64.png"></p>
+<h4 id="822">8.2.2 语音生成</h4>
+<p>我们在语音生成的两个关键组件中使用 Llama 3 8B 嵌入：文本规范化和韵律建模。文本规范化模块结合上下文把书面文本转换为口语形式，以保证语义正确；韵律模块利用这些嵌入预测韵律特征，以提高自然度与表现力。二者共同实现准确、自然的语音生成。</p>
+<p><strong>文本规范化。</strong> 文本规范化模块决定生成语音在语义上是否正确。它会根据上下文把书面文本转换成相应口语形式，再由下游组件发声。例如，书面文本“123”究竟读作基数词“一百二十三”，还是逐位读作“一二三”，取决于语义上下文。文本规范化系统包含一个基于流式 LSTM 的序列标注模型，用来预测一系列手工规范化规则，并用这些规则转换输入文本。神经模型还通过交叉注意力接收 Llama 3 嵌入，利用其中编码的上下文信息，从而只需极少文本词元前瞻，并支持流式输入与输出。</p>
+<p><strong>韵律建模。</strong> 为增强合成语音的自然度和表现力，我们集成一个基于仅解码器 Transformer 的韵律模型，并把 Llama 3 嵌入作为额外输入。这种集成利用 Llama 3 的语言能力，同时使用其文本输出和词元速率的中间嵌入，改善韵律特征预测，并减少模型所需前瞻。</p>
+<p>韵律模型结合多项输入，生成完整韵律预测：前述文本规范化前端得到的语言特征、词元与嵌入。模型预测三个关键韵律特征：每个音素时长的对数、音素持续期间平均基频的对数，以及平均功率的对数。模型由单向 Transformer 和六个注意力头构成；每个块包含交叉注意力层以及两个隐含维度为 864 的全连接层。它的突出特点是双交叉注意力机制：一个层专门处理语言输入，另一个层处理 Llama 嵌入。这一设计不需要显式对齐，就能高效处理不同输入速率。</p>
+<h3 id="83">8.3 训练方案</h3>
+<h4 id="831">8.3.1 语音理解</h4>
+<p>语音模块分两个阶段训练。第一阶段是语音预训练，利用未标注数据训练能够在不同语言和声学条件下强泛化的语音编码器。第二阶段是监督微调，把适配器和预训练编码器与语言模型集成，并在 LLM 保持冻结的情况下联合训练，使模型能够回应语音输入。该阶段使用带标签的语音理解能力数据。</p>
+<p>多语言自动语音识别与自动语音翻译建模经常发生语言混淆或干扰，导致性能下降。常见缓解方法是在源端和目标端都加入语言识别信息。这能改善预先确定方向上的性能，却可能牺牲通用性。例如，如果翻译系统要求源端和目标端都给出语言标识，它就很难在训练中未见过的方向上表现出良好零样本能力。因此，我们要设计一种系统：允许在一定程度上使用语言识别信息，同时又保持足够通用，使模型能够执行未见方向的语音翻译。</p>
+<p>为此，我们设计的系统提示只包含待输出文本，也就是目标端的语言标识；提示不含语音输入端的语言标识，因此还有可能处理语码转换语音。自动语音识别使用提示：“请用{语言}复述：”，其中语言取自英语、法语等 34 种语言之一。语音翻译使用提示：“把以下句子翻译成{语言}：”。实践证明，这种设计能有效引导语言模型以目标语言回答。训练和推理使用相同的系统提示。</p>
+<p><strong>语音预训练。</strong> 我们使用自监督 BEST-RQ 算法预训练语音编码器。</p>
+<p><img alt="原论文第 65 页：语音生成架构与语音理解训练方案" src="资源/原页-65.png"></p>
+<p>输入梅尔频谱以 2.5% 的概率遮盖连续 32 帧。如果语音超过 60 秒，就随机裁剪 6000 帧，对应 60 秒语音。量化梅尔频谱特征时，先堆叠连续四帧，把 320 维向量投影到 16 维空间，再依据余弦相似度，在包含 8192 个向量的码本中执行最近邻搜索。为稳定预训练，我们使用 16 个不同码本。投影矩阵与码本随机初始化，并在整个模型训练期间保持不变。为提高效率，多 softmax 损失只计算被遮盖帧。编码器训练 50 万步，全局批大小为 2048 条语音。</p>
+<p><strong>监督微调。</strong> 监督微调阶段进一步联合优化预训练语音编码器、随机初始化的适配器与 Llama 3，语言模型在此过程中保持不变。训练数据由自动语音识别、自动语音翻译和口语对话数据混合组成。Llama 3 8B 的语音模型训练 65 万次更新，全局批大小 512 条语音，初始学习率 $10^{-4}$；Llama 3 70B 的语音模型训练 60 万次更新，全局批大小 768 条语音，初始学习率 $4\times10^{-5}$。</p>
+<h4 id="832">8.3.2 语音生成</h4>
+<p>为了支持实时处理，韵律模型采用前瞻机制：查看固定数量的未来音素和可变数量的未来词元。这样在处理不断到达的文本时可以维持一致的前瞻范围，而这一点对低延迟语音合成应用十分关键。</p>
+<p><strong>训练。</strong> 我们利用因果遮盖开发一种动态对齐策略，以实现流式语音合成。该策略包含固定数量未来音素和可变数量未来词元的前瞻机制，与文本规范化的分块过程一致。对每个音素而言，词元前瞻包含由分块大小确定的最大词元数，所以 Llama 嵌入使用可变前瞻，而音素使用固定前瞻。</p>
+<p>Llama 3 嵌入来自 Llama 3 8B，韵律模型训练期间该模型保持冻结。音素速率输入特征既包含语言特征，也包含说话人和风格可控元素。模型训练批大小为 1024 条语音，每条最长 500 个音素；采用 AdamW 优化器和 $9\times10^{-4}$ 的学习率，训练超过 100 万次更新。前 3000 次更新进行学习率预热，随后使用余弦调度。</p>
+<p><strong>推理。</strong> 推理时使用相同的前瞻机制和因果遮盖策略，确保训练与实时处理保持一致。韵律模型以流式方式处理不断到达的文本：音素速率特征逐个音素更新，词元速率特征逐块更新。只有当某一分块的第一个音素成为当前音素时，才更新该分块输入，由此保持与训练时相同的对齐和前瞻。</p>
+<p>韵律目标预测采用延迟模式方法，提高模型捕获并重现长距离韵律依赖的能力。该方法增强合成语音的自然度和表现力，同时保证低延迟与高质量输出。</p>
+<h3 id="84">8.4 语音理解结果</h3>
+<p>我们在三项任务上评估 Llama 3 语音接口的理解能力：（1）自动语音识别；（2）语音翻译；（3）口语问答。比较对象是三种先进语音理解模型：Whisper、SeamlessM4T 和 Gemini。全部评测中，Llama 3 的词元预测都采用贪心搜索。</p>
+<p><strong>语音识别。</strong> 自动语音识别评测使用 Multilingual LibriSpeech 的英语数据、LibriSpeech、VoxPopuli，以及多语言 FLEURS 数据集的一个子集。评测时用 Whisper 文本规范化器后处理解码结果，以便与其他模型的公开结果一致比较。除中文、日文、韩文和泰文报告字符错误率外，所有基准都在标准测试集上测量 Llama 3 语音接口的词错误率。</p>
+<p><img alt="原论文第 66 页：语音预训练、流式韵律训练与理解评测设置" src="资源/原页-66.png"></p>
+<p>表 31 给出自动语音识别结果，体现 Llama 3 以及更广义多模态基础模型在语音识别任务上的强劲表现：我们的模型在全部基准上都超过 Whisper 和 SeamlessM4T 等语音专用模型；在 Multilingual LibriSpeech 英语数据上，Llama 3 与 Gemini 表现相近。</p>
+<p><strong>语音翻译。</strong> 我们还评估让模型把非英语语音翻译成英语文本的任务，使用 FLEURS 与 CoVoST 2 数据集，并测量英语译文的 BLEU 分数。结果见表 32。模型的语音翻译表现突出了多模态基础模型用于此类任务的优势。</p>
+<p><strong>口语问答。</strong> Llama 3 语音接口表现出卓越的问答能力。即便此前从未接触相关数据，模型也能轻松理解语码转换语音。特别值得注意的是，虽然只使用单轮对话训练，模型仍能开展长时间、连贯的多轮对话。图 30 给出若干例子，展示这些多语言和多轮能力。</p>
+<p><strong>安全。</strong> 我们在 MuTox 上评估语音模型安全性。MuTox 是一个基于多语言音频的数据集，英语与西班牙语各含 2 万条语音，另 19 种语言各含 4000 条语音，每条都带有毒性标签。音频作为输入送入模型，清理部分特殊字符后评估输出毒性。我们使用 MuTox 分类器并与 Gemini 1.5 Pro 比较，测量两个指标：增加毒性比例，指输入安全而输出有毒；消除毒性比例，指输入有毒而回答安全。</p>
+<p>表 33 报告英语结果，以及所评测全部 21 种语言的平均值。增加毒性比例非常低：我们的语音模型在英语上的增加毒性比例最低，不到 1%，而且消除的毒性显著多于增加的毒性。</p>
+<h3 id="85">8.5 语音生成结果</h3>
+<p>语音生成评测聚焦文本规范化和韵律建模任务：评估使用 Llama 3 嵌入、以词元为单位接收流式输入的模型质量，并与不把 Llama 3 嵌入作为额外输入的模型比较。</p>
+<p><img alt="原论文第 67 页：语音识别、翻译、安全结果与生成评测开篇" src="资源/原页-67.png"></p>
+<p><strong>文本规范化。</strong> 为衡量 Llama 3 嵌入的作用，我们改变模型使用的右侧上下文数量进行实验。模型训练时使用三个文本规范化词元作为右侧上下文，词元按 Unicode 类别划分。该模型与两种不使用 Llama 3 嵌入的模型比较，后二者分别使用三个词元的右侧上下文和完整双向上下文。正如预期，表 34 显示，缺少 Llama 3 嵌入时，完整右侧上下文可以提高性能；但加入 Llama 3 嵌入的模型超过所有其他模型，因此无需依赖很长的输入上下文，也能实现词元速率的流式输入与输出。</p>
+<p><strong>韵律建模。</strong> 为评估搭配 Llama 3 8B 的韵律模型，我们开展两组人工评测，比较使用和不使用 Llama 3 嵌入的模型。评分者聆听不同模型的样本并表达偏好。生成最终语音波形时，使用内部基于 Transformer 的声学模型预测频谱特征，再用 WaveRNN 神经声码器生成最终语音波形。</p>
+<p>第一组实验直接与不使用 Llama 3 嵌入的流式基线模型比较；第二组实验将 Llama 3 8B 韵律模型与不使用 Llama 3 嵌入的非流式基线模型比较。表 35 显示，相对于流式基线，评分者有 60% 的时间偏好 Llama 3 8B 韵律模型。</p>
+<p><img alt="原论文第 68 页：口语对话、毒性、文本规范化与韵律评测" src="资源/原页-68.png"></p>
+<p>相对于非流式基线，评分者有 63.6% 的时间偏好 Llama 3 8B 韵律模型，说明感知质量得到显著改善。Llama 3 8B 韵律模型的关键优势是第 8.2.2 节所述的逐词元流式能力，它能在推理过程中维持低延迟。该能力减少模型的前瞻需求，使语音合成相较非流式基线更加灵敏，更接近实时。总体而言，Llama 3 8B 韵律模型持续优于基线，证明它能够有效增强合成语音的自然度与表现力。</p>
+<h2 id="9">9 相关工作</h2>
+<p>Llama 3 的开发建立在语言、图像、视频与语音基础模型的大量既有研究之上。对这些工作的全面综述超出本文范围，读者可参阅文中所引的相应综述。下面简要介绍直接影响 Llama 3 开发的奠基性工作。</p>
+<h3 id="91">9.1 语言</h3>
+<p><strong>规模。</strong> Llama 3 延续了基础模型领域的长期趋势：以直接方法不断扩大规模。更大的计算投入和更好的数据推动了性能提升，405B 模型使用的预训练计算预算接近 Llama 2 70B 的 50 倍。虽然最大 Llama 3 有 4050 亿参数，但受益于对缩放定律更深入的理解，它实际上仍比 PaLM 等更早、性能低得多的模型参数更少。Claude 3、GPT-4 等其他前沿模型的规模没有多少公开信息，但总体性能可以比较。</p>
+<p><strong>小模型。</strong> 小模型的发展与大模型并行。参数更少的模型可以大幅降低推理成本并简化部署。较小的 Llama 3 模型通过远远超过计算最优训练点的方式实现这一目标，实质上是用训练计算换取推理效率。另一条路径是把大模型蒸馏为小模型，Phi 即采用此方法。</p>
+<p><strong>架构。</strong> Llama 3 相较 Llama 2 只做了很少架构修改，但近期其他基础模型探索了不同设计。其中，混合专家架构能够高效增加模型容量，Mixtral 与 Arctic 都采用了这一方案。Llama 3 超过这些模型，说明稠密架构并非限制因素；不过，在训练与推理效率以及大规模模型稳定性方面，仍存在许多不同权衡。</p>
+<p><strong>开放模型。</strong> 过去一年中，开放权重基础模型迅速进步，Llama 3 405B 已能与当时最先进的闭源权重模型竞争。近期开发的模型家族包括 Mistral、Falcon、MPT、Pythia、Arctic、OpenELM、OLMo、StableLM、OpenLLaMA、Qwen、Gemma、Grok 和 Phi。</p>
+<p><strong>后训练。</strong> Llama 3 后训练遵循成熟策略：先做指令调优，再使用人类反馈进行对齐。有些研究显示轻量对齐程序也能出人意料地有效；Llama 3 则使用数百万条人工指令和偏好判断改善预训练模型，其中包括拒绝采样、监督微调和直接偏好优化。</p>
+<p><img alt="原论文第 69 页：韵律模型偏好结果与语言相关工作" src="资源/原页-69.png"></p>
+<p>为了整理这些指令与偏好样本，我们部署 Llama 3 的早期版本来过滤、重写或生成提示与回答，并在多轮后训练中反复应用这些技术。</p>
+<h3 id="92">9.2 多模态</h3>
+<p>Llama 3 的多模态能力实验属于联合建模多种模态的基础模型长期研究脉络。</p>
+<p><strong>图像。</strong> 大量研究使用海量图像—文本对训练图像识别模型。CLIP 是最早通过对比学习共同嵌入图像与文本的模型之一。更近期的一系列模型研究了与 Llama 3 相近的方法。Llama 3 结合多项研究中的思路，取得与 Gemini 1.0 Ultra 和 GPT-4 Vision 相当的结果，详见第 7.6 节。</p>
+<p><strong>视频。</strong> 虽然支持视频输入的基础模型越来越多，但视频与语言联合建模的研究体量仍不算很大。与 Llama 3 类似，目前大多数研究采用适配器方法对齐视频与语言表示，以解锁视频问答和推理。我们发现，此类方法能够达到与最先进水平相竞争的结果，详见第 7.7 节。</p>
+<p><strong>语音。</strong> 本文工作也属于语言与语音建模相结合的更广泛研究。早期文本—语音联合模型包括 AudioPaLM、VioLA、VoxtLM、SUTLM 与 Spirit-LM。我们的工作建立在既有语音—语言组合式方法上。与多数既有研究不同，我们选择不为语音任务微调语言模型本身，因为这可能与非语音任务形成竞争。实验发现，当模型规模足够大时，即使不进行这种微调也能取得很强表现，详见第 8.4 节。</p>
+<h2 id="10">10 结论</h2>
+<p>从很多方面看，高质量基础模型的发展仍处于早期阶段。开发 Llama 3 的经验表明，这些模型未来还有显著提升空间。在整个 Llama 3 模型家族的开发过程中，我们发现，持续专注于高质量数据、规模和简单性，总能产生最佳结果。前期实验曾探索更复杂的模型架构与训练方案，但这些方法带来的收益不足以抵消它们为模型开发增加的复杂性。</p>
+<p>开发 Llama 3 这样的旗舰基础模型既需要克服大量深层技术问题，也需要作出巧妙的组织决策。例如，为确保 Llama 3 不会意外过拟合常用基准，预训练数据由一个独立团队获取和处理，并以强激励机制防止外部基准污染预训练数据。另一个例子是，只有少数不参与模型开发的研究人员可以执行和访问人工评测，以保证评测可信。技术论文很少讨论这类组织决策，但我们发现，它们对 Llama 3 模型家族的成功开发至关重要。</p>
+<p>我们公开开发过程细节，是因为相信这会：（1）帮助更广泛的研究社区理解基础模型开发的关键因素；（2）推动公众围绕基础模型未来展开更充分、更知情的讨论。我们还分享了为 Llama 3 集成多模态能力的初步实验。虽然这些模型仍在积极开发、尚未达到发布条件，但我们希望尽早公开结果能够加快这一方向的研究。</p>
+<p><img alt="原论文第 70 页：多模态相关工作与结论" src="资源/原页-70.png"></p>
+<p>在本文详细安全分析得到积极结果之后，我们公开发布 Llama 3 语言模型，旨在加快面向众多社会相关用例的人工智能系统开发，并使研究社区能够审视模型、寻找让模型变得更好、更安全的方法。我们相信，公开发布基础模型对负责任地开发此类模型具有关键作用，也希望 Llama 3 的发布能够鼓励整个行业拥抱开放、负责任的通用人工智能开发道路。</p>
+<p><img alt="原论文第 71 页：结论完" src="资源/原页-71.png"></p>
+<h2 id="_2">贡献者与致谢</h2>
+<p>Llama 3 是 Meta 大量人员共同工作的成果。论文列出所有核心贡献者和贡献者：核心贡献者指在项目至少三分之二运行周期内参与 Llama 3 工作的人员；贡献者指在项目至少五分之一运行周期内参与工作的人员。全部姓名按名字的字母顺序排列。为准确保留姓名拼写与完整顺序，名单按原页截图呈现。</p>
+<h3 id="_3">核心贡献者</h3>
+<p><img alt="原论文第 72 页：核心贡献者与贡献者名单开篇" src="资源/原页-72.png"></p>
+<h3 id="_4">贡献者</h3>
+<p><img alt="原论文第 73 页：贡献者名单与致谢开篇" src="资源/原页-73.png"></p>
+<h3 id="_5">致谢</h3>
+<p>作者感谢 Mark Zuckerberg、Chris Cox、Ahmad Al-Dahle、Santosh Janardhan、Joelle Pineau、Yann LeCun、Aparna Ramani、Yee Jiun Song 与 Ash Jhaveri 对 Llama 3 提供的宝贵支持，并感谢原页所列全体人员对 Llama 3 作出的有益贡献。全部姓名按原文准确保留在截图中。</p>
+<p><img alt="原论文第 74 页：完整致谢名单" src="资源/原页-74.png"></p>
+<h2 id="_6">参考文献（原文截图）</h2>
+<p>参考文献包含作者姓名、英文题名、出版物信息、链接与标识符。为避免改写专名或破坏引文准确性，以下按原论文页序完整保留。</p>
+<p><img alt="原论文第 75 页：参考文献" src="资源/原页-75.png"></p>
+<p><img alt="原论文第 76 页：参考文献" src="资源/原页-76.png"></p>
+<p><img alt="原论文第 77 页：参考文献" src="资源/原页-77.png"></p>
+<p><img alt="原论文第 78 页：参考文献" src="资源/原页-78.png"></p>
+<p><img alt="原论文第 79 页：参考文献" src="资源/原页-79.png"></p>
+<p><img alt="原论文第 80 页：参考文献" src="资源/原页-80.png"></p>
+<p><img alt="原论文第 81 页：参考文献" src="资源/原页-81.png"></p>
+<p><img alt="原论文第 82 页：参考文献" src="资源/原页-82.png"></p>
+<p><img alt="原论文第 83 页：参考文献" src="资源/原页-83.png"></p>
+<p><img alt="原论文第 84 页：参考文献" src="资源/原页-84.png"></p>
+<p><img alt="原论文第 85 页：参考文献" src="资源/原页-85.png"></p>
+<p><img alt="原论文第 86 页：参考文献" src="资源/原页-86.png"></p>
+<p><img alt="原论文第 87 页：参考文献" src="资源/原页-87.png"></p>
+<p><img alt="原论文第 88 页：参考文献" src="资源/原页-88.png"></p>
+<p><img alt="原论文第 89 页：参考文献" src="资源/原页-89.png"></p>
+<p><img alt="原论文第 90 页：参考文献" src="资源/原页-90.png"></p>
+<p><img alt="原论文第 91 页：参考文献" src="资源/原页-91.png"></p>
+<p><img alt="原论文第 92 页：参考文献完" src="资源/原页-92.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

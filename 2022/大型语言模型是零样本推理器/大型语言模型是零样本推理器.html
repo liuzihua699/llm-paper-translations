@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>大型语言模型是零样本推理器</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">大型语言模型是零样本推理器</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#_1">大型语言模型是零样本推理器</a><ul>
+<li><a href="#_2">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 背景</a><ul>
+<li><a href="#21">2.1 大型语言模型与提示</a></li>
+<li><a href="#22">2.2 思维链提示</a></li>
+</ul>
+</li>
+<li><a href="#3">3 零样本思维链</a><ul>
+<li><a href="#31">3.1 两阶段提示</a><ul>
+<li><a href="#_3">第一个提示：抽取推理</a></li>
+<li><a href="#_4">第二个提示：抽取答案</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#4">4 实验</a><ul>
+<li><a href="#41">4.1 任务与数据集</a></li>
+<li><a href="#42">4.2 模型</a></li>
+<li><a href="#43">4.3 基线与解码</a></li>
+<li><a href="#44">4.4 答案清洗</a></li>
+<li><a href="#45">4.5 零样本思维链与零样本的比较</a></li>
+<li><a href="#46">4.6 与其他基线比较</a></li>
+<li><a href="#47">4.7 模型规模是否重要</a></li>
+<li><a href="#48">4.8 错误分析</a></li>
+<li><a href="#49">4.9 提示模板的稳健性</a></li>
+<li><a href="#410">4.10 少样本思维链的提示选择</a></li>
+</ul>
+</li>
+<li><a href="#5">5 讨论与相关工作</a><ul>
+<li><a href="#51">5.1 大型语言模型的推理能力</a></li>
+<li><a href="#52">5.2 大型语言模型的零样本能力</a></li>
+<li><a href="#53">5.3 从狭窄的任务提示到广泛的多任务提示</a></li>
+<li><a href="#54">5.4 训练数据集细节</a></li>
+<li><a href="#55">5.5 局限性与社会影响</a></li>
+</ul>
+</li>
+<li><a href="#6">6 结论</a></li>
+<li><a href="#_5">致谢</a></li>
+<li><a href="#a">附录 A：实验设置细节</a><ul>
+<li><a href="#a1">A.1 代码</a></li>
+<li><a href="#a2">A.2 数据集</a><ul>
+<li><a href="#a21">A.2.1 末字母与抛硬币数据集的创建</a></li>
+</ul>
+</li>
+<li><a href="#a3">A.3 语言模型</a></li>
+<li><a href="#a4">A.4 实现细节</a></li>
+<li><a href="#a5">A.5 答案抽取提示</a></li>
+<li><a href="#a6">A.6 答案清洗规则</a></li>
+</ul>
+</li>
+<li><a href="#b">附录 B：补充实验结果</a></li>
+<li><a href="#c">附录 C：错误分析</a><ul>
+<li><a href="#c1-commonsenseqa">C.1 CommonsenseQA</a></li>
+<li><a href="#c2-multiarith">C.2 MultiArith</a></li>
+</ul>
+</li>
+<li><a href="#dpalm-540b">附录 D：PaLM 540B 的进一步实验</a></li>
+<li><a href="#e">附录 E：模型规模研究的详细结果</a></li>
+<li><a href="#f">附录 F：可复现性与责任清单</a></li>
+<li><a href="#_6">参考文献</a></li>
+<li><a href="#_7">原论文页面归档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="_1">大型语言模型是零样本推理器</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-05-24">2022 年 5 月 24 日</time></p>
+<p><strong>作者：</strong> 小岛武志、古谢尔·沙恩·顾、马切尔·里德、松尾丰、岩澤有祐
+<strong>机构：</strong> 东京大学；Google Research 大脑团队
+<strong>论文版本：</strong> arXiv:2205.11916v4，2023 年 1 月 29 日；发表于 NeurIPS 2022</p>
+<h2 id="_2">摘要</h2>
+<p>预训练大型语言模型（LLM）已经广泛用于自然语言处理的许多子领域，通常被认为是依靠任务示例进行少样本学习的优秀模型。近期的思维链提示通过提供逐步作答示例，诱发复杂的多步推理，在算术和符号推理等困难的系统 2 任务上取得了最先进结果，而这些任务并不遵循大型语言模型通常的规模定律。人们往往把这类成功归因于模型的少样本学习能力。本文表明，只需在每个问题的答案之前加入“让我们一步一步地思考”这一短语，大型语言模型本身就是相当不错的零样本推理器。我们把这种方法称为<strong>零样本思维链</strong>。</p>
+<p>实验显示，在不为每个任务手工设计少样本示例的情况下，零样本思维链使用同一个提示模板，就能显著超过标准零样本模型，覆盖算术推理（MultiArith、GSM8K、AQUA-RAT、SVAMP）、符号推理（末字母拼接、抛硬币）以及其他逻辑推理（日期理解、追踪打乱对象）等多种基准。例如，在大型指令微调模型 text-davinci-002 上，MultiArith 准确率从 17.7% 提升到 78.7%，GSM8K 从 10.4% 提升到 40.7%；在另一个现成的 5400 亿参数 PaLM 上也观察到相近幅度的提升。一个固定提示能跨越如此不同的推理任务，说明大型语言模型中仍有大量尚未被发现和研究的零样本基础能力，甚至可能包含更高层次的通用多任务认知能力。本文希望提供困难推理基准的最简而强的零样本基线，也提醒研究者在构造微调数据或少样本示例前，先认真探索大型语言模型内部隐藏的巨大零样本知识。</p>
+<p><img alt="图 1：标准少样本、少样本思维链、标准零样本与零样本思维链的输入输出示例（原论文第 2 页截图）" src="资源/原页-02.png"></p>
+<h2 id="1">1 引言</h2>
+<p>扩大语言模型规模已经成为自然语言处理近年革命的关键。语言模型从数百万参数扩展到数亿乃至数千亿参数，并配合更大的网络文本语料，带来了更好的性能和样本效率。大型语言模型的成功通常被归因于上下文中的少样本学习或零样本学习：模型可以通过给出若干示例（少样本），或者仅给出描述任务的指令（零样本），来解决各种任务。把这种条件化文本称为提示；手工设计或自动生成提示因此成为自然语言处理的热点。</p>
+<p>然而，在直觉性、单步的系统 1 任务上表现出色的大型语言模型，即使参数达到千亿规模，在需要缓慢、多步推理的系统 2 任务上仍然经常失败。思维链提示提出了一个解决方案：把少样本示例中的直接答案改成逐步推理答案，使模型生成一条把复杂问题分解成多个简单步骤的推理路径。与 5400 亿参数 PaLM 结合时，思维链提示在多个推理基准上显著超过普通少样本提示，例如 GSM8K 的准确率从 17.9% 提升到 58.1%。</p>
+<p>以往的成功经常被解释为少样本学习能力。本文发现，模型只要收到一个简单触发语句“让我们一步一步地思考”，就能在零样本条件下生成可信的推理路径，并解决标准零样本提示无法解决的问题。零样本思维链不依赖任务特定示例，也不需要为每个任务重新设计模板；同一个提示可以用于算术、符号、常识和其他逻辑推理任务。</p>
+<p>在实验中，零样本思维链在 MultiArith 上把准确率从 17.7% 提高到 78.7%，在 GSM8K 上从 10.4% 提高到 40.7%。它虽然低于精心构造的少样本思维链，但大幅超过普通零样本和普通少样本基线。随着模型规模增大，零样本思维链的规模曲线明显变陡，与少样本思维链相近；而且提示示例类型和测试任务类型不匹配时，少样本思维链的性能会明显下降。固定提示在不同推理任务上的通用性，暗示模型中存在尚未充分研究的零样本基础能力，例如通用逻辑推理等更高层次的认知能力。</p>
+<h2 id="2">2 背景</h2>
+<h3 id="21">2.1 大型语言模型与提示</h3>
+<p>语言模型试图估计文本上的概率分布。近年来，模型规模从数百万、数亿扩展到数千亿参数，训练数据也从小型语料扩展到网络文本集合，使预训练大型语言模型能够胜任大量下游自然语言处理任务。除了经典的“预训练后微调”范式，超过千亿参数的模型还显示出适合少样本学习的性质：可以把一段文字或一个模板作为提示，强烈引导模型生成目标任务的答案，由此形成“预训练后提示”的范式。</p>
+<p>本文把显式包含少量任务示例的提示称为少样本提示，把只包含任务模板而不包含示例的提示称为零样本提示。零样本并不意味着模型没有知识，而是意味着知识不通过当前任务的示例显式提供。</p>
+<h3 id="22">2.2 思维链提示</h3>
+<p>多步算术和逻辑推理基准尤其挑战大型语言模型的规模定律。思维链提示是少样本提示的一种形式：把每个示例的答案改写为逐步答案，从而显著提升困难基准上的性能，尤其是与超大规模 PaLM 结合时。此前的工作通常默认解决这些任务必须使用少样本示例，甚至没有报告零样本基线。为与本文方法区分，本文把此前工作称为<strong>少样本思维链</strong>。</p>
+<h2 id="3">3 零样本思维链</h2>
+<p>本文提出一种基于零样本模板的思维链提示方法。它不需要逐步推理的少样本示例，也不同于多数任务专用模板：方法天然与任务无关，只用一个模板就能诱发不同任务上的多跳推理。核心做法很简单：在问题的答案部分加入“让我们一步一步地思考”或表 4 中的相近语句，让模型先生成逐步推理。</p>
+<h3 id="31">3.1 两阶段提示</h3>
+<p>零样本思维链在概念上很简单，但实际上需要两次提示，分别抽取推理和最终答案。普通零样本也会用“答案是”一类提示来抽取正确格式的答案；普通少样本和少样本思维链则通过把示例答案写成目标格式，避免单独的答案抽取提示。</p>
+<p><img alt="图 2：零样本思维链的完整两阶段流程（原论文第 4 页截图）" src="资源/原页-04.png"></p>
+<h4 id="_3">第一个提示：抽取推理</h4>
+<p>给定问题 (x)，首先用模板 <code>问：[X]。答：[T]</code> 构造提示 (x')。其中 [X] 是问题插槽，[T] 是人工选择的触发语句插槽。例如采用“让我们一步一步地思考”时，提示就是“问：[X]。答：让我们一步一步地思考。”把 (x') 输入语言模型，生成后续文本 (z)。本文为简单起见始终使用贪心解码，但方法也可以配合其他解码策略。</p>
+<h4 id="_4">第二个提示：抽取答案</h4>
+<p>第二阶段把第一阶段生成的文本和答案触发语句一起输入模型。具体地，把三个部分连接为 <code>[X'] [Z] [A]</code>：[X'] 是第一个提示，[Z] 是模型生成的推理文本，[A] 是用于抽取答案的触发语句。因此，第二阶段的提示是由模型自己生成的推理文本增强的。触发语句会根据答案格式改变：多项选择问答使用“因此，在 A 到 E 中，答案是”，要求数值答案的数学题使用“因此，答案（阿拉伯数字）是”。模型生成文本 (hat y) 后，解析其中最终答案。具体清洗规则见第 4 节“答案清洗”。</p>
+<h2 id="4">4 实验</h2>
+<h3 id="41">4.1 任务与数据集</h3>
+<p>本文在四类推理任务的 12 个数据集上评估方法。</p>
+<p><strong>算术推理。</strong> 使用 SingleEq、AddSub、MultiArith、AQUA-RAT、GSM8K 和 SVAMP。前两个数据集的问题较容易，不需要多步计算；MultiArith、AQUA-RAT、GSM8K 和 SVAMP 更具挑战性，需要多步推理。</p>
+<p><strong>常识推理。</strong> 使用 CommonsenseQA 和 StrategyQA。前者的问题语义复杂，通常需要先验知识；后者要求模型推断隐含的多跳策略。</p>
+<p><strong>符号推理。</strong> 使用末字母拼接和抛硬币。末字母拼接要求连接每个单词的最后一个字母；抛硬币要求根据若干次“翻转”或“不翻转”判断硬币最终是否正面朝上。两类任务对人类简单，但语言模型通常呈现平坦的规模曲线。</p>
+<p><strong>其他逻辑推理。</strong> 从 BIG-bench 中选择日期理解和追踪打乱对象。日期理解要求根据上下文推断日期；追踪打乱对象要求根据初始状态和对象交换序列推断最终状态。本文使用三个对象的追踪数据集。</p>
+<h3 id="42">4.2 模型</h3>
+<p>实验共使用 17 个模型。主要实验使用 InstructGPT-3（text-ada-001、text-babbage-001、text-curie-001、text-davinci-001 和 text-davinci-002）、原始 GPT-3（ada、babbage、curie、davinci）以及 PaLM（80 亿、620 亿和 5400 亿参数）。模型规模研究还使用 GPT-2、GPT-Neo、GPT-J、T0 和 OPT。模型规模从 3 亿到 5400 亿参数，既包含普通语言模型，也包含指令跟随版本。除非特别说明，实验使用 text-davinci-002。</p>
+<h3 id="43">4.3 基线与解码</h3>
+<p>主要基线是标准零样本提示，以验证思维链本身的作用。为更全面评估零样本能力，本文还与 Wei 等人的普通少样本和少样本思维链基线比较，并使用相同的上下文示例。所有方法使用贪心解码，因此零样本结果是确定性的。少样本示例的顺序可能影响结果；为公平比较，本文在所有方法和数据集上使用固定随机种子、每个实验只运行一次。</p>
+<h3 id="44">4.4 答案清洗</h3>
+<p>答案抽取后，方法只保留答案文本中第一个满足格式的片段。比如数学任务的输出是“可能是 375 或 376”，就抽取第一个数字 375；多项选择任务抽取遇到的第一个大写字母。普通零样本采用相同规则。对普通少样本和少样本思维链，先寻找“答案是”之后的文本，再用相同的清洗规则；如果没有找到该短语，就从文本末尾向前搜索第一个符合格式的片段。</p>
+<h3 id="45">4.5 零样本思维链与零样本的比较</h3>
+<p>表 1 汇总各数据集准确率。零样本思维链在六个算术任务中的四个（MultiArith、GSM8K、AQUA-RAT、SVAMP）上显著超过零样本，在全部符号推理和 BIG-bench 逻辑推理任务上也显著超过零样本。对不需要多步推理的 SingleEq 与 AddSub，两者大致相当，这是预期结果。</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>任务</th>
+<th style="text-align: right;">零样本（任务格式提示 / 统一“答案是”提示）</th>
+<th style="text-align: right;">零样本思维链（任务格式提示 / 统一提示）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>算术</td>
+<td>SingleEq</td>
+<td style="text-align: right;">74.6 / 78.7</td>
+<td style="text-align: right;">78.0 / 78.7</td>
+</tr>
+<tr>
+<td>算术</td>
+<td>AddSub</td>
+<td style="text-align: right;">72.2 / 77.0</td>
+<td style="text-align: right;">69.6 / 74.7</td>
+</tr>
+<tr>
+<td>算术</td>
+<td>MultiArith</td>
+<td style="text-align: right;">17.7 / 22.7</td>
+<td style="text-align: right;">78.7 / 79.3</td>
+</tr>
+<tr>
+<td>算术</td>
+<td>GSM8K</td>
+<td style="text-align: right;">10.4 / 12.5</td>
+<td style="text-align: right;">40.7 / 40.5</td>
+</tr>
+<tr>
+<td>算术</td>
+<td>AQUA-RAT</td>
+<td style="text-align: right;">22.4 / 22.4</td>
+<td style="text-align: right;">33.5 / 31.9</td>
+</tr>
+<tr>
+<td>算术</td>
+<td>SVAMP</td>
+<td style="text-align: right;">58.8 / 58.7</td>
+<td style="text-align: right;">62.1 / 63.7</td>
+</tr>
+<tr>
+<td>常识</td>
+<td>CommonsenseQA</td>
+<td style="text-align: right;">68.8 / 72.6</td>
+<td style="text-align: right;">64.6 / 64.0</td>
+</tr>
+<tr>
+<td>常识</td>
+<td>StrategyQA</td>
+<td style="text-align: right;">12.7 / 54.3</td>
+<td style="text-align: right;">54.8 / 52.3</td>
+</tr>
+<tr>
+<td>逻辑</td>
+<td>日期理解</td>
+<td style="text-align: right;">49.3 / 33.6</td>
+<td style="text-align: right;">67.5 / 61.8</td>
+</tr>
+<tr>
+<td>逻辑</td>
+<td>追踪打乱对象</td>
+<td style="text-align: right;">31.3 / 29.7</td>
+<td style="text-align: right;">52.4 / 52.9</td>
+</tr>
+<tr>
+<td>符号</td>
+<td>末字母（四个词）</td>
+<td style="text-align: right;">0.2 / 不适用</td>
+<td style="text-align: right;">57.6 / 不适用</td>
+</tr>
+<tr>
+<td>符号</td>
+<td>抛硬币（四次）</td>
+<td style="text-align: right;">12.8 / 53.8</td>
+<td style="text-align: right;">91.4 / 87.8</td>
+</tr>
+</tbody>
+</table>
+<p>在常识推理任务上，零样本思维链不一定带来指标上的提升。此前研究也发现，1350 亿参数 LaMDA 上的少样本思维链对常识任务帮助有限，而与更大的 PaLM 540B 结合后能改善 StrategyQA。更重要的是，许多零样本思维链本身在逻辑上是正确的，或者只包含人类容易理解的小错误，即使最终指标没有反映出来，也说明方法确实诱发了更好的常识推理。</p>
+<p><img alt="表 1：零样本与零样本思维链在各任务上的准确率（原论文第 6 页截图）" src="资源/原页-06.png"></p>
+<h3 id="46">4.6 与其他基线比较</h3>
+<p>表 2 比较 MultiArith 和 GSM8K。普通零样本在两个任务上分别只有 17.7% 和 10.4%；普通少样本即使提供 8 个示例，也只有 33.8% 和 15.6%。零样本思维链提升到 78.7% 和 40.7%；8 样本少样本思维链进一步达到 93.0% 和 48.7%。把“让我们一步一步地思考”加入少样本思维链示例后，GSM8K 达到 51.5%。PaLM 540B 的零样本思维链达到 66.1%（MultiArith）和 43.0%（GSM8K）；加入自洽性、从 40 条随机推理路径中多数投票后，达到 89.0% 和 70.1%。</p>
+<p><img alt="表 2：与少样本、少样本思维链、微调 GPT-3 和 PaLM 基线的比较（原论文第 6 页截图）" src="资源/原页-06.png"></p>
+<h3 id="47">4.7 模型规模是否重要</h3>
+<p>图 3 比较不同语言模型在 MultiArith 和 GSM8K 上的表现。没有思维链时，随着模型规模增加，性能几乎不变或增长缓慢；加入思维链后，原始 GPT-3、InstructGPT-3 和 PaLM 的性能随规模显著上升。小模型中思维链没有效果，甚至会损害性能；这与少样本思维链的规模实验一致。附录 E 进一步给出 GPT-2、GPT-Neo、GPT-J、T0 和 OPT 的结果。</p>
+<p><img alt="图 3：原始 GPT-3、InstructGPT-3 和 PaLM 的模型规模实验（原论文第 7 页截图）" src="资源/原页-07.png"></p>
+<h3 id="48">4.8 错误分析</h3>
+<p>作者人工检查了 InstructGPT-3 生成的零样本思维链。CommonsenseQA 中，即使最终预测不正确，模型也经常生成灵活且合理的推理；当难以从选项中选出一个时，模型会输出多个选项。MultiArith 中，零样本思维链和少样本思维链的错误模式不同：零样本思维链有时在已经得到正确预测后继续生成多余步骤，导致答案被改错；有时根本没有开始推理，只是重复题目。少样本思维链则容易在三元运算（例如 ((3+2)\times4)）中失败。</p>
+<h3 id="49">4.9 提示模板的稳健性</h3>
+<p>作者在 MultiArith 上测试了 16 个模板。鼓励推理的指令通常有效；最好的模板是“让我们一步一步地思考”（78.7%），其次包括“首先”（77.3%）、“让我们从逻辑上思考”（74.5%）和“让我们把问题拆成步骤来解决”（72.2%）。误导性模板（例如“不要思考，只要凭感觉”）和无关模板（例如“顺便说一句，我在附近发现了一家好餐馆”）无法改善性能，甚至会让准确率降到 13%--19%。不同句子会引导模型产生明显不同的推理表达，如何自动构造更好的模板仍是开放问题。</p>
+<p><img alt="表 4：不同零样本触发模板在 MultiArith 上的准确率（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h3 id="410">4.10 少样本思维链的提示选择</h3>
+<p>作者把 CommonsenseQA 的思维链示例迁移到 AQUA-RAT 和 MultiArith。两个迁移任务的领域不同，但前者与示例具有相同的多项选择答案格式，因此相对于零样本仍然得到一定提升；后者答案类型不同，提升明显变小。这与已有研究一致：大型语言模型常利用少样本示例推断重复的答案格式，而不是学习任务本身。两种迁移都不如任务专用的零样本思维链，说明少样本思维链仍然需要针对任务进行样例工程。</p>
+<p><img alt="表 5：少样本思维链跨任务迁移的结果（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h2 id="5">5 讨论与相关工作</h2>
+<h3 id="51">5.1 大型语言模型的推理能力</h3>
+<p>已有研究显示，预训练模型通常不擅长推理，但让模型生成逐步推理后，无论通过微调还是少样本提示，能力都能显著提高。与这些工作不同，本文集中研究零样本提示，展示一个固定触发语句就能在多种复杂多跳任务上提高零样本推理能力，尤其是在模型规模扩大时。它不需要耗时的微调或昂贵的示例工程，可以和任意预训练大型语言模型组合，作为困难推理任务的强零样本基线。</p>
+<h3 id="52">5.2 大型语言模型的零样本能力</h3>
+<p>GPT-2 已经在阅读理解、翻译和摘要等系统 1 任务上展示了很好的零样本能力；指令微调还能进一步提高这些能力。本文关注的是超越系统 1 的系统 2 任务，这些任务长期表现出平坦的规模曲线。零样本思维链与指令微调正交：它同时改善 InstructGPT-3、普通 GPT-3 和 PaLM。</p>
+<h3 id="53">5.3 从狭窄的任务提示到广泛的多任务提示</h3>
+<p>多数提示是任务专用的。少样本提示天然包含任务示例；多数零样本提示也要针对每个任务设计模板。借用智能层级模型的术语，这些提示主要诱发大型语言模型的“狭窄泛化”或任务专用技能。本文的方法是多任务提示，诱发逻辑推理或系统 2 这类“广泛泛化”和广泛认知能力。作者希望它能成为研究大型语言模型广泛认知能力的参照，并推动发现更多跨任务提示。</p>
+<h3 id="54">5.4 训练数据集细节</h3>
+<p>大型语言模型的训练数据通常缺乏公开细节，例如不同 GPT-3 API 版本之间的差异、原始 GPT-3 与 InstructGPT 的差异，以及 PaLM 的数据。尽管如此，多个最新大型模型从零样本到零样本思维链都获得大幅提升，并且算术和非算术任务都一致改善，这表明模型不太可能只是记忆答案，而是掌握了与任务无关的多步通用问题求解能力。本文的主要结果在 PaLM 上复现；InstructGPT 的训练数据说明也表明，它不是专门为多步推理设计的。</p>
+<h3 id="55">5.5 局限性与社会影响</h3>
+<p>本文依赖大型语言模型的提示方法。模型从网络中各种来源的语料训练而来，会捕捉并放大训练数据中的偏见。提示只是利用模型已经捕捉的模式，因此同样具有这些缺点。另一方面，零样本思维链直接探测预训练模型内部的复杂推理，去除了少样本方法中上下文学习这一混杂因素，有助于更少偏见地研究大型语言模型。</p>
+<h2 id="6">6 结论</h2>
+<p>本文提出零样本思维链：一个固定的零样本提示，让大型语言模型在多种推理任务上生成思维链。相比必须为每个任务手工编写少样本示例的既有方法，零样本思维链不需要示例工程。它不仅是长期难以遵循规模定律的多步系统 2 推理任务的简洁而强大的零样本基线，也说明研究者应继续寻找能够诱发广泛认知能力、而不只是狭窄任务技能的多任务提示。</p>
+<h2 id="_5">致谢</h2>
+<p>本研究得到东京大学“面向沙特—日本 2030 愿景的未来科学与技术穆罕默德·本·萨勒曼中心”支持。非 PaLM 实验使用日本产业技术综合研究所 AI Bridging Cloud Infrastructure 的计算资源。作者感谢 Jason Wei、Denny Zhou、Sharan Narang 和 Aakanksha Chowdhery 对 PaLM 实验和基础设施的支持。</p>
+<h2 id="a">附录 A：实验设置细节</h2>
+<h3 id="a1">A.1 代码</h3>
+<p>代码地址为 <code>https://github.com/kojima-takeshi188/zero_shot_cot</code>。原论文将代码、提示模板、数据处理和评估脚本一并提供。</p>
+<h3 id="a2">A.2 数据集</h3>
+<p>实验使用的数据集及其格式如下。N 表示数值答案，M 表示从多项选择中选一个，Y 表示回答是或否，F 表示自由格式。</p>
+<table>
+<thead>
+<tr>
+<th>数据集</th>
+<th style="text-align: right;">答案格式</th>
+<th style="text-align: right;">样本数</th>
+<th style="text-align: right;">问题平均词数</th>
+<th>使用划分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SingleEq</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">508</td>
+<td style="text-align: right;">27.4</td>
+<td>questions.json</td>
+</tr>
+<tr>
+<td>AddSub</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">395</td>
+<td style="text-align: right;">31.5</td>
+<td>AddSub.json</td>
+</tr>
+<tr>
+<td>MultiArith</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">31.8</td>
+<td>MultiArith.json</td>
+</tr>
+<tr>
+<td>GSM8K</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">1319</td>
+<td style="text-align: right;">46.9</td>
+<td>test.jsonl</td>
+</tr>
+<tr>
+<td>AQUA-RAT</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">51.9</td>
+<td>test.jsonl</td>
+</tr>
+<tr>
+<td>SVAMP</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">1000</td>
+<td style="text-align: right;">31.8</td>
+<td>SVAMP.json</td>
+</tr>
+<tr>
+<td>CommonsenseQA</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">1221</td>
+<td style="text-align: right;">27.8</td>
+<td>dev_rand_split.jsonl</td>
+</tr>
+<tr>
+<td>StrategyQA</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;">2290</td>
+<td style="text-align: right;">9.6</td>
+<td>task.json</td>
+</tr>
+<tr>
+<td>日期理解</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">369</td>
+<td style="text-align: right;">35.0</td>
+<td>task.json</td>
+</tr>
+<tr>
+<td>追踪打乱对象</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">750</td>
+<td style="text-align: right;">91.1</td>
+<td>three_objects/task.json</td>
+</tr>
+<tr>
+<td>末字母</td>
+<td style="text-align: right;">F</td>
+<td style="text-align: right;">500</td>
+<td style="text-align: right;">15.0</td>
+<td>作者创建</td>
+</tr>
+<tr>
+<td>抛硬币</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;">500</td>
+<td style="text-align: right;">37.0</td>
+<td>作者创建</td>
+</tr>
+</tbody>
+</table>
+<h4 id="a21">A.2.1 末字母与抛硬币数据集的创建</h4>
+<p>末字母和抛硬币数据集不是公开数据集，作者按照此前工作创建，并略微改写问题模板。末字母模板为：“取‘姓名 1 姓名 2 姓名 3 姓名 4’中每个单词的最后一个字母并拼接。”姓名从 <code>names-dataset</code> 随机抽取。抛硬币模板为：“一枚硬币正面朝上。姓名 1 翻转或不翻转硬币；姓名 2 翻转或不翻转硬币；姓名 3 翻转或不翻转硬币；姓名 4 翻转或不翻转硬币。硬币仍然正面朝上吗？注意，这里的翻转表示反面。”</p>
+<h3 id="a3">A.3 语言模型</h3>
+<p>原论文的模型规格如下：PaLM 为 80 亿、620 亿和 5400 亿参数；原始 GPT-3 为 3 亿、13 亿、67 亿和 1750 亿参数；InstructGPT-3 使用 text-ada-001、text-babbage-001、text-curie-001、text-davinci-001 和 text-davinci-002；OPT 为 130 亿参数；T0 为 110 亿参数；GPT-J 为 60 亿参数；GPT-Neo 为 27 亿参数；GPT-2 为 15 亿参数。除 PaLM 外，模型通过 OpenAI API 或 Hugging Face Transformers 调用。</p>
+<p><img alt="表 8：语言模型、参数规模、调用库和许可证（原论文第 17 页截图）" src="资源/原页-17.png"></p>
+<h3 id="a4">A.4 实现细节</h3>
+<p>原始 GPT-3 和 InstructGPT-3 使用 OpenAI API；OPT、T0、GPT-J、GPT-Neo 和 GPT-2 使用 Hugging Face Transformers。除 PaLM 外，最大生成长度设置为 128，并使用贪心解码；OpenAI API 的温度为 0。PaLM 使用 TopK=1 的确定性贪心解码，最大生成长度为 256。除 InstructGPT-3 外，所有模型把“问：”设为自定义停止序列，以避免模型重复生成问题和答案。实验在云端 V100、A100×8 和 A100×1 实例上运行，使用 PyTorch 实现。</p>
+<h3 id="a5">A.5 答案抽取提示</h3>
+<p>普通零样本根据答案格式使用“答案（阿拉伯数字）是”“在 A 到 E 中，答案是”“答案（是或否）是”等提示；零样本思维链在推理文本后使用“因此，答案（阿拉伯数字）是”“因此，在 A 到 E 中，答案是”“因此，答案（是或否）是”等提示。另一个对照实验对全部任务统一使用“答案是”或“因此，答案是”。</p>
+<p><img alt="表 9：普通零样本的答案抽取提示（原论文第 18 页截图）" src="资源/原页-18.png">
+<img alt="表 10：零样本思维链的答案抽取提示（原论文第 18 页截图）" src="资源/原页-18.png"></p>
+<h3 id="a6">A.6 答案清洗规则</h3>
+<p>数值答案：去掉千位分隔符后，抽取文本中遇到的第一个整数或小数；多项选择：抽取第一个大写选项字母；是或否：统一大小写并清除引号、换行、句点等字符，再抽取第一个“是”或“否”；自由格式：只清除不必要的标点和换行。</p>
+<p><img alt="表 11：答案清洗规则和伪代码（原论文第 18 页截图）" src="资源/原页-18.png"></p>
+<h2 id="b">附录 B：补充实验结果</h2>
+<p>附录 B 收集了不同数据集、不同推理触发模板以及不同语言模型生成的样例。原论文为了可读性对部分样例重新插入或删除换行，但没有改变其推理内容。表 12 给出各数据集的零样本思维链样例；表 13 给出不同触发模板的输出；表 14 和表 15 给出不同语言模型的输出；表 16 给出普通少样本示例；表 17--20 给出零样本思维链在常识、逻辑和符号任务上的更多例子。</p>
+<p><img alt="附录 B：各数据集的生成样例（原论文第 19 页截图）" src="资源/原页-19.png">
+<img alt="附录 B：不同模板和模型的生成样例（原论文第 20 页截图）" src="资源/原页-20.png">
+<img alt="附录 B：算术、常识与符号任务样例（原论文第 21 页截图）" src="资源/原页-21.png">
+<img alt="附录 B：补充生成样例（原论文第 22 页截图）" src="资源/原页-22.png">
+<img alt="附录 B：补充生成样例（原论文第 23 页截图）" src="资源/原页-23.png">
+<img alt="附录 B：补充生成样例（原论文第 24 页截图）" src="资源/原页-24.png">
+<img alt="附录 B：补充生成样例（原论文第 25 页截图）" src="资源/原页-25.png">
+<img alt="附录 B：补充生成样例（原论文第 26 页截图）" src="资源/原页-26.png">
+<img alt="附录 B：补充生成样例（原论文第 27 页截图）" src="资源/原页-27.png">
+<img alt="附录 B：补充生成样例（原论文第 28 页截图）" src="资源/原页-28.png">
+<img alt="附录 B：补充生成样例（原论文第 29 页截图）" src="资源/原页-29.png">
+<img alt="附录 B：补充生成样例（原论文第 30 页截图）" src="资源/原页-30.png">
+<img alt="附录 B：补充生成样例（原论文第 31 页截图）" src="资源/原页-31.png">
+<img alt="附录 B：补充生成样例（原论文第 32 页截图）" src="资源/原页-32.png"></p>
+<h2 id="c">附录 C：错误分析</h2>
+<h3 id="c1-commonsenseqa">C.1 CommonsenseQA</h3>
+<p>作者随机抽取零样本思维链在 CommonsenseQA 上的输出并分类。正确类别通常包含一条连贯的常识路径；常见错误包括无法从多个合理选项中选出一个、常识理解错误、事实错误、逻辑错误，以及在推理末尾重复或改变已得到的答案。即使答案错误，许多文本仍然展示了可理解的中间推理。</p>
+<p><img alt="表 21：CommonsenseQA 输出的错误分类统计（原论文第 34 页截图）" src="资源/原页-34.png">
+<img alt="表 22：CommonsenseQA 的正确、常识错误和逻辑错误样例（原论文第 35 页截图）" src="资源/原页-35.png">
+<img alt="表 22 续：CommonsenseQA 的补充样例（原论文第 36 页截图）" src="资源/原页-36.png">
+<img alt="表 22 续：CommonsenseQA 的补充样例（原论文第 37 页截图）" src="资源/原页-37.png"></p>
+<h3 id="c2-multiarith">C.2 MultiArith</h3>
+<p>表 23 比较零样本思维链与少样本思维链在 MultiArith 上的推理文本。对正确预测，前者 94.0% 的思维链正确，后者为 98.0%。对错误预测，零样本思维链主要是逻辑错误（68.0%），包括多余步骤、计算器错误、符号映射错误、漏掉一步以及把问题变得更复杂；少样本思维链的逻辑错误为 73.8%。零样本思维链还出现 10.0% 的常识错误、2.0% 的事实错误和 20.0% 的其他错误。</p>
+<p><img alt="表 23：MultiArith 推理链错误分类（原论文第 38 页截图）" src="资源/原页-38.png">
+<img alt="表 24：零样本思维链与少样本思维链的逐题比较（原论文第 39 页截图）" src="资源/原页-39.png">
+<img alt="表 24 续：逐题比较（原论文第 40 页截图）" src="资源/原页-40.png">
+<img alt="表 24 续：逐题比较（原论文第 41 页截图）" src="资源/原页-41.png"></p>
+<h2 id="dpalm-540b">附录 D：PaLM 540B 的进一步实验</h2>
+<p>作者在 PaLM 540B 上进一步评估零样本思维链，并加入自洽性。自洽性通过随机采样生成多条推理路径，再以多数投票决定最终答案。结果如下：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align: right;">AQUA-RAT</th>
+<th style="text-align: right;">SVAMP</th>
+<th style="text-align: right;">GSM8K</th>
+<th style="text-align: right;">MultiArith</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>零样本</td>
+<td style="text-align: right;">23.4</td>
+<td style="text-align: right;">63.1</td>
+<td style="text-align: right;">12.5</td>
+<td style="text-align: right;">25.5</td>
+</tr>
+<tr>
+<td>零样本思维链</td>
+<td style="text-align: right;">36.1</td>
+<td style="text-align: right;">63.1</td>
+<td style="text-align: right;">43.0</td>
+<td style="text-align: right;">66.1</td>
+</tr>
+<tr>
+<td>零样本思维链 + 自洽性（40 条路径）</td>
+<td style="text-align: right;">46.5</td>
+<td style="text-align: right;">80.5</td>
+<td style="text-align: right;">70.1</td>
+<td style="text-align: right;">89.0</td>
+</tr>
+<tr>
+<td>少样本思维链</td>
+<td style="text-align: right;">35.8</td>
+<td style="text-align: right;">79.0</td>
+<td style="text-align: right;">56.9</td>
+<td style="text-align: right;">不适用</td>
+</tr>
+<tr>
+<td>少样本思维链 + 自洽性（40 条路径）</td>
+<td style="text-align: right;">48.3</td>
+<td style="text-align: right;">86.6</td>
+<td style="text-align: right;">74.4</td>
+<td style="text-align: right;">不适用</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="表 25：PaLM 540B 的进一步实验结果（原论文第 42 页截图）" src="资源/原页-42.png"></p>
+<h2 id="e">附录 E：模型规模研究的详细结果</h2>
+<p>表 26 给出 MultiArith 上的完整规模实验。原始 GPT-3 的零样本准确率在 3 亿、13 亿、67 亿和 1750 亿参数上分别为 2.0%、1.3%、1.5% 和 3.3%；零样本思维链分别为 1.7%、2.2%、2.3% 和 19.0%。InstructGPT-3 从 text-ada-001 到 text-davinci-002 的零样本思维链结果为 2.0%、3.7%、3.3%、47.8% 和 78.7%。GPT-2、GPT-Neo、GPT-J、T0 和 OPT 等较小模型没有表现出稳定收益。PaLM 在 GSM8K 上的零样本结果为 2.1%、7.0% 和 12.5%，零样本思维链为 2.4%、10.5% 和 43.0%。</p>
+<p><img alt="表 26：MultiArith 上的模型规模研究（原论文第 42 页截图）" src="资源/原页-42.png">
+<img alt="表 27：PaLM 在 GSM8K 上的模型规模研究（原论文第 42 页截图）" src="资源/原页-42.png"></p>
+<h2 id="f">附录 F：可复现性与责任清单</h2>
+<p>作者报告了所有模型、数据划分、提示、实现细节、计算资源和代码地址；实验主要使用贪心解码，因此没有多随机种子误差条。使用已有数据和模型时引用其创建者并记录许可证；新创建的末字母和抛硬币数据集说明了生成方式。作者还讨论了网络语料中的个人可识别信息和冒犯性内容，以及零样本提示可能继承并放大这些偏见。</p>
+<p><img alt="附录 F：可复现性、数据、许可证和社会影响清单（原论文第 13--15 页截图）" src="资源/原页-13.png">
+<img alt="附录 F：实验设置与责任清单续页（原论文第 14--15 页截图）" src="资源/原页-14.png">
+<img alt="附录 F：实验设置与责任清单续页（原论文第 15 页截图）" src="资源/原页-15.png"></p>
+<h2 id="_6">参考文献</h2>
+<p>参考文献包含大型语言模型、GPT-3、PaLM、思维链提示、算术文字题、常识推理、提示学习、指令微调、BIG-bench、模型规模和自洽性等工作。为保证作者、年份、出版信息和链接逐项可核对，参考文献按原论文页面截图保留。</p>
+<p><img alt="参考文献第 1 页（原论文第 11 页截图）" src="资源/原页-11.png">
+<img alt="参考文献第 2 页（原论文第 12 页截图）" src="资源/原页-12.png">
+<img alt="参考文献第 3 页（原论文第 13 页截图）" src="资源/原页-13.png">
+<img alt="参考文献第 4 页（原论文第 14 页截图）" src="资源/原页-14.png">
+<img alt="参考文献第 5 页（原论文第 15 页截图）" src="资源/原页-15.png"></p>
+<h2 id="_7">原论文页面归档</h2>
+<p>下列截图按原论文顺序完整保留 42 页，用于核对本文的段落、图、表、样例、附录和参考文献。正文中的图表均在出现位置插入对应页面截图；以下页面归档用于核对页面上没有单独转写的密集表格和样例。</p>
+<p><img alt="原论文第 1 页" src="资源/原页-01.png">
+<img alt="原论文第 2 页" src="资源/原页-02.png">
+<img alt="原论文第 3 页" src="资源/原页-03.png">
+<img alt="原论文第 4 页" src="资源/原页-04.png">
+<img alt="原论文第 5 页" src="资源/原页-05.png">
+<img alt="原论文第 6 页" src="资源/原页-06.png">
+<img alt="原论文第 7 页" src="资源/原页-07.png">
+<img alt="原论文第 8 页" src="资源/原页-08.png">
+<img alt="原论文第 9 页" src="资源/原页-09.png">
+<img alt="原论文第 10 页" src="资源/原页-10.png">
+<img alt="原论文第 11 页" src="资源/原页-11.png">
+<img alt="原论文第 12 页" src="资源/原页-12.png">
+<img alt="原论文第 13 页" src="资源/原页-13.png">
+<img alt="原论文第 14 页" src="资源/原页-14.png">
+<img alt="原论文第 15 页" src="资源/原页-15.png">
+<img alt="原论文第 16 页" src="资源/原页-16.png">
+<img alt="原论文第 17 页" src="资源/原页-17.png">
+<img alt="原论文第 18 页" src="资源/原页-18.png">
+<img alt="原论文第 19 页" src="资源/原页-19.png">
+<img alt="原论文第 20 页" src="资源/原页-20.png">
+<img alt="原论文第 21 页" src="资源/原页-21.png">
+<img alt="原论文第 22 页" src="资源/原页-22.png">
+<img alt="原论文第 23 页" src="资源/原页-23.png">
+<img alt="原论文第 24 页" src="资源/原页-24.png">
+<img alt="原论文第 25 页" src="资源/原页-25.png">
+<img alt="原论文第 26 页" src="资源/原页-26.png">
+<img alt="原论文第 27 页" src="资源/原页-27.png">
+<img alt="原论文第 28 页" src="资源/原页-28.png">
+<img alt="原论文第 29 页" src="资源/原页-29.png">
+<img alt="原论文第 30 页" src="资源/原页-30.png">
+<img alt="原论文第 31 页" src="资源/原页-31.png">
+<img alt="原论文第 32 页" src="资源/原页-32.png">
+<img alt="原论文第 33 页" src="资源/原页-33.png">
+<img alt="原论文第 34 页" src="资源/原页-34.png">
+<img alt="原论文第 35 页" src="资源/原页-35.png">
+<img alt="原论文第 36 页" src="资源/原页-36.png">
+<img alt="原论文第 37 页" src="资源/原页-37.png">
+<img alt="原论文第 38 页" src="资源/原页-38.png">
+<img alt="原论文第 39 页" src="资源/原页-39.png">
+<img alt="原论文第 40 页" src="资源/原页-40.png">
+<img alt="原论文第 41 页" src="资源/原页-41.png">
+<img alt="原论文第 42 页" src="资源/原页-42.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

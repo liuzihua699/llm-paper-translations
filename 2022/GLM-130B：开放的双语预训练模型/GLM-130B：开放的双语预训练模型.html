@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GLM-130B：开放的双语预训练模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">GLM-130B：开放的双语预训练模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#glm-130b">GLM-130B：开放的双语预训练模型</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2-glm-130b">2 GLM-130B 的设计选择</a><ul>
+<li><a href="#21-glm-130b">2.1 GLM-130B 的架构</a><ul>
+<li><a href="#glm">GLM 作为骨干</a></li>
+<li><a href="#_2">层归一化</a></li>
+<li><a href="#_3">位置编码与前馈层</a></li>
+</ul>
+</li>
+<li><a href="#22-glm-130b">2.2 GLM-130B 的预训练设置</a><ul>
+<li><a href="#95">自监督空白填充（95% 词元）</a></li>
+<li><a href="#mip5">多任务指令预训练（MIP，5% 词元）</a></li>
+</ul>
+</li>
+<li><a href="#23">2.3 平台感知的并行策略与模型配置</a><ul>
+<li><a href="#_4">三维并行策略</a></li>
+<li><a href="#_5">模型配置与训练超参数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#3-glm-130b">3 GLM-130B 的训练稳定性</a><ul>
+<li><a href="#31">3.1 混合精度与损失尖峰</a></li>
+<li><a href="#32-egs">3.2 嵌入层梯度缩减（EGS）</a></li>
+</ul>
+</li>
+<li><a href="#4-glm-130b-rtx-2080-ti">4 GLM-130B 在 RTX 2080 Ti 上的推理</a><ul>
+<li><a href="#41-int4">4.1 INT4 量化</a></li>
+<li><a href="#42-glm-int4">4.2 GLM 的 INT4 权重量化缩放规律</a></li>
+</ul>
+</li>
+<li><a href="#5">5 评测结果</a><ul>
+<li><a href="#51-glm-130b">5.1 GLM-130B 中零样本学习的范围</a></li>
+<li><a href="#52">5.2 语言建模</a></li>
+<li><a href="#53-mmlu">5.3 大规模多任务语言理解（MMLU）</a></li>
+<li><a href="#54-big-bench-lite">5.4 BIG-bench-lite</a></li>
+<li><a href="#55-clue">5.5 中文语言理解（CLUE）</a></li>
+</ul>
+</li>
+<li><a href="#6">6 相关工作</a></li>
+<li><a href="#7">7 结论与经验</a></li>
+<li><a href="#_6">致谢</a></li>
+<li><a href="#_7">伦理声明</a></li>
+<li><a href="#_8">可复现性</a></li>
+<li><a href="#a">附录 A：偏差与毒性评估</a></li>
+<li><a href="#b">附录 B：技术细节</a><ul>
+<li><a href="#b1">B.1 分词</a></li>
+<li><a href="#b2">B.2 层归一化</a></li>
+<li><a href="#b3">B.3 位置编码与前馈网络</a></li>
+<li><a href="#b4">B.4 流水线并行分析</a></li>
+<li><a href="#b5">B.5 推理加速</a></li>
+<li><a href="#b6">B.6 激活异常值分析</a></li>
+<li><a href="#b7">B.7 权重量化</a></li>
+<li><a href="#b8">B.8 量化设置与跨规模结果</a></li>
+<li><a href="#b9">B.9 贡献归因消融</a></li>
+<li><a href="#b10">B.10 经验总结</a></li>
+</ul>
+</li>
+<li><a href="#c">附录 C：数据集与评测细节</a><ul>
+<li><a href="#c1-mip">C.1 多任务指令预训练（MIP）</a></li>
+<li><a href="#c2-deepstruct">C.2 DeepStruct 的数据与提示</a></li>
+<li><a href="#c3-c14">C.3--C.14 评测来源与任务实现</a></li>
+</ul>
+</li>
+<li><a href="#dglm-130b">附录 D：GLM-130B 的缩放与涌现能力</a></li>
+<li><a href="#e">附录 E：项目贡献</a></li>
+<li><a href="#fglm-130b">附录 F：GLM-130B 简史</a></li>
+<li><a href="#g">附录 G：更广泛影响</a><ul>
+<li><a href="#g1-ai">G.1 对 AI 研究的影响</a></li>
+<li><a href="#g2">G.2 对个人开发者和小公司的影响</a></li>
+<li><a href="#g3">G.3 社会影响</a></li>
+</ul>
+</li>
+<li><a href="#h">附录 H：环境影响</a></li>
+<li><a href="#_9">参考文献</a></li>
+<li><a href="#_10">原论文页面归档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="glm-130b">GLM-130B：开放的双语预训练模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-10-05">2022 年 10 月 5 日</time></p>
+<p><strong>作者：</strong> 曾昊安、刘潇、杜正晓、王子涵、赖汉宇、丁铭、杨卓毅、徐一帆、郑文迪、夏潇、谭永林、马子轩、薛宇飞、翟季冬、陈文光、张鹏、董玉晓、唐杰等
+<strong>机构：</strong> 清华大学；智谱 AI
+<strong>论文版本：</strong> arXiv:2210.02414v2，2023 年 10 月 25 日；发表于 ICLR 2023</p>
+<h2 id="_1">摘要</h2>
+<p>本文介绍 GLM-130B，一个拥有 1300 亿参数、同时支持英文和中文的预训练语言模型。它的目标是开源一个至少达到 GPT-3（davinci）水平的千亿参数模型，并公开这一规模模型如何成功预训练的工程细节。训练过程中，作者遇到了大量技术和工程问题，尤其是损失尖峰、梯度异常与训练发散。论文系统介绍 GLM-130B 的架构选择、训练效率与稳定性策略、推理加速、低成本量化和失败尝试。</p>
+<p>GLM-130B 在多项英文基准上显著超过 GPT-3 175B，在部分任务上也超过 4 倍大的 PaLM 540B；但在所有评测中并不稳定地超过 OPT-175B 和 BLOOM-176B。作为双语模型，它在中文基准上持续大幅超过最大的中文模型 ERNIE TITAN 3.0 260B。模型使用 GLM 的双向注意力与自回归空白填充目标，并采用 DeepNorm、嵌入层梯度缩减和平台感知的三维并行策略。作者进一步发现 GLM 具有独特的 INT4 权重量化缩放规律：无需量化后训练，性能几乎不下降，就能把模型部署到 4 张 RTX 3090 或 8 张 RTX 2080 Ti 上。论文同时开放模型权重、代码、训练日志、工具包和经验总结，旨在降低千亿参数模型的研究门槛。</p>
+<p><img alt="图 1：GLM-130B 的语言能力、偏差和毒性评估概览（原论文第 2 页截图）" src="资源/原页-02.png"></p>
+<h2 id="1">1 引言</h2>
+<p>超过千亿参数的大型语言模型展现出有吸引力的规模规律，零样本和少样本能力会在规模达到一定程度后突然出现。1750 亿参数的 GPT-3 首次系统研究了千亿参数模型，并展示只给出 32 个标注示例也能在多个基准上超过完全监督的 BERT-Large。然而 GPT-3 以及许多其他闭源千亿参数模型本身和训练过程都不透明。能够训练一个高质量、模型与训练流程都向公众开放的千亿参数语言模型，对研究社区具有重要价值。</p>
+<p>作者因此尝试训练一个开放且高精度的千亿参数模型，并把伦理问题纳入设计目标。实践表明，相比训练 100 亿参数模型，在千亿规模上实现高效、稳定和收敛会出现大量意外挑战。OPT-175B 和 BLOOM-176B 的并行经验也报告了相似困难，这进一步说明 GPT-3 的先驱性。</p>
+<p>本文不仅报告成功的训练配置，也记录失败的方案和经验。训练稳定性是成功的决定因素。不同于 OPT-175B 的手工调学习率和 BLOOM-176B 牺牲性能的嵌入范数方法，作者测试了多种选择，发现<strong>嵌入层梯度缩减</strong>可以显著稳定 GLM-130B 的训练。</p>
+<p>GLM-130B 是一个 1300 亿参数的双语、双向、稠密模型，在 96 台 NVIDIA DGX-A100（每台 8 张 40G GPU）组成的集群上，用超过 4000 亿词元训练。它不采用 GPT 式单向解码器，而使用通用语言模型 GLM 算法的双向注意力和自回归空白填充目标。与 GPT-3、OPT-175B、BLOOM-176B 和 PaLM 540B 的比较见表 1。</p>
+<p>在 112 项任务上，GLM-130B 的整体水平超过 GPT-3；在 LAMBADA 上的零样本准确率为 80.2%，比 GPT-3 高 5.0 个百分点、比 OPT-175B 高 6.5 个百分点、比 BLOOM-176B 高 13.0 个百分点；在 BIG-bench-lite 上约为 GPT-3 的 3 倍。MMLU 五样本准确率高于 GPT-3 0.9 个百分点，高于 BLOOM-176B 12.7 个百分点。中文方面，GLM-130B 在 7 个 CLUE 和 5 个 FewCLUE 数据集上分别比 ERNIE TITAN 3.0 260B 高 24.26% 和 12.75%。在偏差和毒性评估中，开放的 GLM-130B 也比同规模模型表现出更少的偏差和毒性。</p>
+<p>模型规模选择为 1300 亿，是因为它可以在单台 A100（8×40G）服务器上以 FP16 推理。进一步的 INT4 权重量化把显存需求降到约 70GB，支持 4 张 RTX 3090（24G）或 8 张 RTX 2080 Ti（11G）。在没有量化后训练的情况下，INT4 版本在 LAMBADA 上只下降 0.74 个百分点，在 MMLU 上反而提升 0.05 个百分点。</p>
+<p><img alt="表 1：GLM-130B 与其他千亿参数模型的架构、训练与推理比较（原论文第 2 页截图）" src="资源/原页-02.png"></p>
+<h2 id="2-glm-130b">2 GLM-130B 的设计选择</h2>
+<p>模型架构决定了模型的归纳偏置，但在千亿规模上穷举不同架构的计算成本不可承受。因此作者围绕骨干模型、层归一化、位置编码、前馈层、预训练目标和并行策略做了有针对性的选择。</p>
+<h3 id="21-glm-130b">2.1 GLM-130B 的架构</h3>
+<h4 id="glm">GLM 作为骨干</h4>
+<p>GPT-3、PaLM、OPT 和 BLOOM 等千亿模型都采用传统 GPT 式的仅解码器、自回归语言建模。GLM-130B 则探索双向的通用语言模型 GLM。给定文本序列 (x=[x_1,ldots,x_n])，GLM 随机采样若干连续文本片段，把每个片段替换为一个掩码词元，再让模型自回归地恢复这些片段。不同被掩码片段之间的可见性由随机排列决定，使模型能够在填充一个片段时与其他片段交互。</p>
+<p>未被掩码的上下文使用双向注意力，这是 GLM-130B 与 GPT 式单向注意力的核心区别。模型同时使用两种特殊掩码：<code>[MASK]</code> 用于句子中的短空白，所有空白长度合计为输入的一定比例；<code>[gMASK]</code> 用于句末的随机长度长空白，并提供前缀上下文。使用 <code>[MASK]</code> 时，模型行为类似 BERT 和 T5；使用 <code>[gMASK]</code> 时，行为类似 PrefixLM。双向上下文使 GLM-130B 在零样本 LAMBADA 上达到 80.2% 的记录准确率。通过设置注意力掩码，也可以得到与 GPT-3、OPT-175B 相近的单向变体。</p>
+<p><img alt="图 2：GLM 双向注意力与 GPT 式单向注意力的空白填充比较（原论文第 3 页截图）" src="资源/原页-03.png"></p>
+<h4 id="_2">层归一化</h4>
+<p>训练不稳定是千亿参数模型的主要难题。作者尝试 Pre-LN、Post-LN 和 Sandwich-LN，但它们都无法稳定 GLM-130B 的测试训练。最终在 Post-LN 的基础上采用 DeepNorm。设 GLM-130B 有 (N) 层，使用</p>
+<p><code>DeepNorm(x) = LayerNorm(α · x + Network(x))</code>，其中 <code>α = (2N)^(1/2)</code>，并把 ffn、v_proj 和 out_proj 的 Xavier 正态初始化缩放为 <code>(2N)^(-1/2)</code>。所有偏置初始化为零。DeepNorm 使梯度范数较小且早期不出现尖峰，显著提高训练稳定性。</p>
+<p><img alt="图 3：不同层归一化方案的训练试验，DeepNorm 最稳定（原论文第 3 页截图）" src="资源/原页-03.png"></p>
+<h4 id="_3">位置编码与前馈层</h4>
+<p>作者比较多种位置编码和前馈层改进，最终使用旋转位置编码 RoPE，而不是 ALiBi；前馈层使用带 GeLU 激活的 GLU，即 GeGLU，替换普通 Transformer 前馈网络。</p>
+<h3 id="22-glm-130b">2.2 GLM-130B 的预训练设置</h3>
+<p>预训练目标由自监督 GLM 空白填充和少量多任务学习组成。</p>
+<h4 id="95">自监督空白填充（95% 词元）</h4>
+<p>每条训练序列独立选择 <code>[MASK]</code> 或 <code>[gMASK]</code>。30% 的序列使用 <code>[MASK]</code>：连续片段长度服从参数为 3 的泊松分布，片段总长度占输入的 15%。其余 70% 的序列保留前缀上下文，用 <code>[gMASK]</code> 掩码后半部分，被掩码长度从均匀分布采样。</p>
+<p>英语数据包括 The Pile 训练集的 1.2T 词元；中文数据包括悟道语料库的 1.0T 词元和从网络抓取的 250G 中文论坛、百科与问答语料。最终语料在英语和中文之间保持大致平衡。</p>
+<h4 id="mip5">多任务指令预训练（MIP，5% 词元）</h4>
+<p>T5 和 ExT5 的结果表明，在预训练阶段加入多任务学习可能比单独微调更有帮助。GLM-130B 因而加入语言理解、生成和信息抽取等指令数据。与多任务指令微调不同，MIP 只占 5% 词元，并在预训练阶段进行，以免破坏无条件自由生成等通用能力。作者从 T0、PromptSource 和 DeepStruct 中加入 74 个提示数据集。由于这些数据集参与了预训练，使用者应按照第 5 节的标准，避免把其中数据集当作真正的零样本或少样本评测。</p>
+<h3 id="23">2.3 平台感知的并行策略与模型配置</h3>
+<p>GLM-130B 在 96 台 DGX-A100（8×40G）服务器上训练，集群使用周期为 60 天。作者希望在有限时间内处理尽可能多的词元，因为已有研究表明多数大型语言模型训练不足。</p>
+<h4 id="_4">三维并行策略</h4>
+<p>训练同时使用数据并行、张量并行和流水线并行。通过数值和经验比较，最终采用 4 路张量并行和 8 路流水线并行。全局批大小设置为 4224，硬件 FLOPs 利用率为 43.3%，考虑激活重计算后的模型 FLOPs 利用率为 32.5%。</p>
+<h4 id="_5">模型配置与训练超参数</h4>
+<p>作者以 GPT-3 的 12288 隐藏维度为基础，使模型不超过 1300 亿参数，从而可以放入一台 8×40G A100 服务器。为了平衡流水线分区，首尾额外词嵌入占用的内存通过各去掉一层来补偿，最终使用 (9×8-2=70) 个 Transformer 层。</p>
+<p>模型训练了 4000 亿词元，中英文各约 2000 亿，序列长度固定为 2048。<code>[gMASK]</code> 使用 2048 词元上下文；<code>[MASK]</code> 和多任务目标使用 512 词元上下文，再拼接四条样本填满 2048。批大小从 192 逐步预热到 4224，占前 2.5% 的样本；AdamW 的 β1=0.9、β2=0.95，权重衰减 0.1；学习率从 10^-7 预热到 8×10^-5，占前 0.5% 样本，随后按 10 倍余弦计划衰减；dropout 为 0.1，梯度裁剪值为 1.0。</p>
+<p><img alt="表 11：GLM-130B 完整训练配置（原论文第 47 页截图）" src="资源/原页-47.png"></p>
+<h2 id="3-glm-130b">3 GLM-130B 的训练稳定性</h2>
+<p>训练稳定性决定模型质量，而处理的词元数量又会影响最终性能。在计算受限时，浮点格式需要在效率和稳定性之间权衡：低精度格式如 FP16 提高计算效率，却更容易发生上溢和下溢，导致训练崩溃。</p>
+<h3 id="31">3.1 混合精度与损失尖峰</h3>
+<p>作者采用 Apex O2 混合精度：前向和反向使用 FP16，优化器状态和主权重使用 FP32，以降低显存并提高吞吐。与 OPT-175B 和 BLOOM-176B 相似，GLM-130B 在训练过程中频繁出现损失尖峰，而且随着训练推进越来越频繁。有些尖峰会自行恢复，有些会伴随梯度范数突然升高，最后出现损失尖峰甚至 NaN。</p>
+<p>作者观察到三个原因。第一，Pre-LN 会使深层主分支的数值尺度非常大，DeepNorm Post-LN 可以限制其范围。第二，模型变大后注意力分数可能超过 FP16 的表示范围。BLOOM-176B 使用 BF16 扩大表示范围，但 BF16 在作者实验中比 FP16 多占约 15% 运行时显存，并且在部分 GPU 平台上不受支持。第三，嵌入层的梯度在训练早期比其他层大数个数量级，并且波动很大。</p>
+<h3 id="32-egs">3.2 嵌入层梯度缩减（EGS）</h3>
+<p>梯度范数可以作为训练崩溃的预警指标：崩溃通常滞后于梯度范数尖峰几个训练步骤。由于不能像视觉模型那样冻结语言模型的嵌入层，作者对嵌入梯度做缩减。设缩减因子为 α，实现为：</p>
+<p><code>word_embedding = word_embedding × α + word_embedding.detach() × (1 − α)</code>。</p>
+<p>实验表明 α=0.1 可以消除大多数尖峰，几乎不增加延迟。最终 GLM-130B 训练只经历了 3 次晚期损失发散，更多失败来自硬件故障；对这 3 次异常尖峰，进一步缩小嵌入梯度仍然有助于稳定训练。</p>
+<p><img alt="图 4：嵌入层梯度缩减降低梯度尺度和方差（原论文第 5 页截图）" src="资源/原页-05.png"></p>
+<h2 id="4-glm-130b-rtx-2080-ti">4 GLM-130B 在 RTX 2080 Ti 上的推理</h2>
+<p>GLM-130B 的重要目标是降低访问千亿参数模型的硬件要求，同时保持效率和效果。1300 亿参数模型可以放入单台 8×A100 40G 服务器；作者还用 FasterTransformer 的 C++ 实现加速推理。在同一台 A100 服务器上，GLM-130B 的解码速度约为 Hugging Face PyTorch 版 BLOOM-176B 的 7--8.4 倍。</p>
+<h3 id="41-int4">4.1 INT4 量化</h3>
+<p>为支持更普及的 GPU，作者尝试尽可能压缩模型。通常权重和激活都量化到 INT8，但 GLM-130B 的激活有约 30% 维度包含异常值，不能直接采用为 OPT 和 BLOOM 设计的异常维度分解方法。因此只量化线性层权重，激活保持 FP16；推理时把量化权重动态还原为 FP16。</p>
+<table>
+<thead>
+<tr>
+<th>模型精度</th>
+<th style="text-align: right;">GLM-130B FP16</th>
+<th style="text-align: right;">GLM-130B INT8</th>
+<th style="text-align: right;">GLM-130B INT4</th>
+<th style="text-align: right;">GPT-3 FP16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MMLU 准确率</td>
+<td style="text-align: right;">44.75</td>
+<td style="text-align: right;">44.71</td>
+<td style="text-align: right;">44.80</td>
+<td style="text-align: right;">43.9</td>
+</tr>
+<tr>
+<td>LAMBADA 准确率</td>
+<td style="text-align: right;">80.21</td>
+<td style="text-align: right;">80.21</td>
+<td style="text-align: right;">79.47</td>
+<td style="text-align: right;">76.2</td>
+</tr>
+<tr>
+<td>Pile 部分测试 BPB</td>
+<td style="text-align: right;">0.634</td>
+<td style="text-align: right;">0.638</td>
+<td style="text-align: right;">0.641</td>
+<td style="text-align: right;">0.74</td>
+</tr>
+</tbody>
+</table>
+<p>INT4 相比 INT8 进一步节省一半显存，总权重约 70GB，可以在 4×RTX 3090 Ti 或 8×RTX 2080 Ti 上推理。无需任何量化后训练，INT4 版本仍保持相对 GPT-3 的性能优势。</p>
+<p><img alt="图 5：GLM 与 BLOOM 的权重分布及 INT4 量化缩放规律（原论文第 6 页截图）" src="资源/原页-06.png">
+<img alt="表 2：量化 GLM-130B 的基准结果与 FasterTransformer 推理速度（原论文第 7 页截图）" src="资源/原页-07.png"></p>
+<h3 id="42-glm-int4">4.2 GLM 的 INT4 权重量化缩放规律</h3>
+<p>分布更宽的线性层需要更大的量化区间，因而产生更大精度损失。BLOOM 的 attn-dense 和 w2 矩阵分布较宽，解释了 GPT 式 BLOOM 的 INT4 量化失败。GLM 的权重分布更窄，而且模型规模越大，INT4 与 FP16 的差距越小，形成独特的量化缩放规律。</p>
+<h2 id="5">5 评测结果</h2>
+<p>作者按照 GPT-3 和 PaLM 的常见设置评估英文能力，同时在 CLUE 与 FewCLUE 上评估中文能力。</p>
+<h3 id="51-glm-130b">5.1 GLM-130B 中零样本学习的范围</h3>
+<p>由于 GLM-130B 在 MIP 中见过部分提示数据集，“零样本”并没有一个完全统一的解释。作者采用包含未见类别标签这一标准，并据此筛选数据集：英文固定标签任务（例如自然语言推理）不报告；非固定标签任务（例如多项选择问答和主题分类）只有在与 MIP 数据存在明显领域迁移时才报告；中文任务全部可以评估，因为它们存在跨语言零样本迁移。</p>
+<p>作者还过滤潜在数据污染。LAMBADA 和 CLUE 在 13-gram 设置下与训练语料重叠极少；Pile、MMLU 和 BIG-bench 要么被留出，要么发布时间晚于语料抓取时间，因此作为评测集保留。</p>
+<h3 id="52">5.2 语言建模</h3>
+<p><strong>LAMBADA。</strong> LAMBADA 测试模型预测最后一个词的能力。双向注意力使 GLM-130B 的零样本准确率达到 80.2%，创下当时记录。</p>
+<p><strong>Pile。</strong> Pile 测试集包含 18 个共享子数据集。按加权 BPB 比较，GLM-130B 平均为 0.634，优于 Jurassic-1 的 0.650 和 GPT-3 的 0.742，表现出很强的语言建模能力。</p>
+<p><img alt="表 3：GLM-130B 在 Pile 18 个子数据集上的平均 BPB（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h3 id="53-mmlu">5.3 大规模多任务语言理解（MMLU）</h3>
+<p>MMLU 包含 57 个从高中到专家水平的人类知识多项选择任务。GLM-130B 在看到约 3000 亿词元后，五样本准确率接近 GPT-3 的 43.9%；继续训练到 4000 亿词元后达到 44.8%。性能仍在上升，说明大多数现有大型语言模型可能训练不足。</p>
+<p><img alt="图 6：GLM-130B 在 MMLU 上随训练词元变化的性能（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h3 id="54-big-bench-lite">5.4 BIG-bench-lite</h3>
+<p>BIG-bench 覆盖推理、知识和常识任务；本文报告官方 24 项 BIG-bench-lite 子集。零样本设置下，GLM-130B 超过 GPT-3 175B，甚至超过 4 倍大的 PaLM 540B。原因可能是双向上下文注意力和 MIP 改善了未见任务的零样本迁移。随着示例数增加，GLM-130B 性能继续提升并保持对 GPT-3 的优势。</p>
+<p>GLM-130B 从零样本到三样本的增幅为 13.31 到 15.12，小于 GPT-3 的 4.35 到 13.18。双向结构可能让模型的零样本性能已经接近同规模模型的少样本上限；只用零样本样例训练的 MIP 也可能偏向零样本、削弱上下文少样本能力。未来可以在 MIP 中加入不同数量的上下文示例。PaLM 的少样本增幅更大，说明高质量、多样化数据和更充分训练仍然重要。</p>
+<p><img alt="图 7：BIG-bench-lite 随模型规模的表现及 24 项任务详情（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h3 id="55-clue">5.5 中文语言理解（CLUE）</h3>
+<p>作者在 CLUE 和 FewCLUE 的部分数据集上评估中文零样本能力。MIP 没有使用任何中文下游任务。与最大的中文单语模型 ERNIE TITAN 3.0 260B 比较，GLM-130B 在 12 项任务上全部胜出；在 DRCD 和 CMRC2018 两个抽取式/生成式阅读理解数据集上至少高出 260%，可能是因为 GLM 的预训练目标天然适合抽象式阅读理解。</p>
+<p><img alt="图 8：GLM-130B 与 ERNIE TITAN 3.0 260B 的中文评测（原论文第 9 页截图）" src="资源/原页-09.png"></p>
+<h2 id="6">6 相关工作</h2>
+<p><strong>预训练。</strong> 语言建模可以是 GPT 式解码器自回归，也可以是其他文本自监督目标。Transformer 规模扩大后会出现新的能力，从 GPT-2、T5、Megatron-LM 到 GPT-3 和 PaLM，模型规模不断提升。许多千亿模型不公开或只提供有限 API，GLM-130B 与 EleutherAI、OPT-175B、BLOOM-176B 一起推动高质量开放模型。</p>
+<p><strong>迁移。</strong> 微调是传统迁移学习方式，但由于模型规模巨大，大模型评测更多依赖提示和上下文学习。参数高效学习、提示调优和 P-Tuning 是另一条路线；本文暂不系统评估这些方法，留待后续研究。</p>
+<p><strong>推理。</strong> 蒸馏、量化和剪枝可以降低模型部署成本。此前研究发现 OPT-175B 和 BLOOM-176B 可利用异常维度分布进行 INT8 量化；本文展示 GLM 独有的 INT4 权重量化规律，使模型能在 4×RTX 3090 或 8×RTX 2080 Ti 上运行。</p>
+<h2 id="7">7 结论与经验</h2>
+<p>本文介绍 GLM-130B，一个面向开放和包容性大型语言模型研究的双语预训练模型。其架构、预训练目标、训练稳定性、并行效率和低成本推理设计共同带来了 112 项语言任务上的高性能，以及偏差和毒性评估上的较好结果。作者把千亿模型训练经验总结为以下八点：</p>
+<ol>
+<li>双向注意力 GLM 是 GPT 之外的强架构选择。</li>
+<li>应根据集群和并行策略配置模型，充分利用硬件。</li>
+<li>DeepNorm 这种 Post-LN 方案反而可以稳定千亿模型。</li>
+<li>大模型训练中的意外不稳定现象可以被系统、定量地分类。</li>
+<li>FP16 虽然更不稳定，却能让模型在更多平台上训练和推理。</li>
+<li>把嵌入层梯度缩减到 0.1，可以解决大多数数值不稳定问题。</li>
+<li>GLM 具有 GPT 式 BLOOM 没有的 INT4 权重量化缩放规律。</li>
+<li>更强的大模型仍需要更多更好的数据、更好的架构和预训练目标，以及更充分的训练。</li>
+</ol>
+<h2 id="_6">致谢</h2>
+<p>本研究得到国家自然科学基金 61825602、62276148 和智谱 AI 支持。作者感谢清华大学知识工程组、移动加速与网络系统并行架构与编译技术组、清华自然语言处理组及智谱 AI 的合作伙伴。</p>
+<h2 id="_7">伦理声明</h2>
+<p>开放大型语言模型可能被用于电话营销诈骗、政治宣传和人身骚扰等有害应用。作者认为，单纯限制访问并不能保证有害应用消失；开放模型可以让更多研究者看到参数和内部状态，研究偏见、公平、隐私、真实性和有害生成，并开发检测合成文本的算法。</p>
+<p>论文在 CrowS-Pairs、StereoSet、ETHOS 和 RealToxicPrompts 上进行了偏差、仇恨言论与毒性生成评估。作者承认这些基准存在构念和文化覆盖局限，但认为它们是开放模型进行量化安全研究的起点。双语预训练与 GLM 设计在保持语言能力的同时，通常比单语英文模型产生更少偏差和毒性。</p>
+<h2 id="_8">可复现性</h2>
+<p>GLM-130B 从一开始就以开放为目标。作者公开预训练代码、超参数、集群配置、训练日志、TensorBoard 记录、评测脚本、数据处理细节、INT4 工具和低资源推理工具。虽然完整复现千亿模型仍然昂贵，但 INT4 版本可以在较普及的 GPU 上运行，个人用户还可以通过免费 API 进行测试。</p>
+<h2 id="a">附录 A：偏差与毒性评估</h2>
+<p>附录 A 详细介绍 CrowS-Pairs、StereoSet、ETHOS 和 RealToxicPrompts 的提示格式、采样方式、指标和结果。CrowS-Pairs 测量九类社会刻板印象；StereoSet 报告语言建模分数、刻板印象分数和综合 ICAT；ETHOS 测量种族主义和性别歧视识别；RealToxicPrompts 通过不同毒性提示下的生成延续评估毒性。完整表格与统计图按原论文页面截图保留。</p>
+<p><img alt="附录 A：CrowS-Pairs 与 StereoSet 评估（原论文第 21 页截图）" src="资源/原页-21.png">
+<img alt="附录 A：ETHOS 与 RealToxicPrompts 评估（原论文第 22 页截图）" src="资源/原页-22.png">
+<img alt="附录 A：偏差和毒性补充结果（原论文第 23 页截图）" src="资源/原页-23.png"></p>
+<h2 id="b">附录 B：技术细节</h2>
+<h3 id="b1">B.1 分词</h3>
+<p>GLM-130B 使用 SentencePiece 风格的 <code>icetk</code> 分词器。中文和英文共享词表，训练时对序列进行固定长度拼接，以提高 A100 内核利用率。</p>
+<h3 id="b2">B.2 层归一化</h3>
+<p>附录比较普通 Post-LN、Pre-LN、Sandwich-LN 和 DeepNorm 的梯度范数、损失曲线与下游性能。普通方案在几千步后发散，DeepNorm 在保持下游性能的同时显著提高稳定性。</p>
+<h3 id="b3">B.3 位置编码与前馈网络</h3>
+<p>RoPE、ALiBi 和绝对位置编码的比较显示，RoPE 在稳定性和下游困惑度之间最优；GeGLU 比普通 GeLU 前馈层进一步降低困惑度。详细消融表见原页截图。</p>
+<h3 id="b4">B.4 流水线并行分析</h3>
+<p>流水线并行包含前向、反向和优化器步骤。朴素顺序执行会产生大量气泡；GPipe 使用微批次降低气泡，PipeDream-Flush 交错不同阶段的前向和反向以减少激活显存。设流水线段数为 (p)、微批次数为 (m)，理想计算时间与气泡占比推导为：</p>
+<p><code>bubble-ratio = (p - 1) / (m + p - 1)</code>。</p>
+<p>在 GLM-130B 中，张量并行度 (t=4)、微批次数 (m=176)、流水线度 (p=8)，气泡占比约 3.8%，足以证明流水线并行的效率。</p>
+<p><img alt="图 11：朴素流水线、GPipe 与 PipeDream 的并行时序（原论文第 26 页截图）" src="资源/原页-26.png"></p>
+<h3 id="b5">B.5 推理加速</h3>
+<p>作者花费两个月把 GLM-130B 移植到 FasterTransformer C++ 实现，优化 GeGLU、层归一化和 SoftMax，融合多头注意力内核，提前转置权重，并使用 half2 提升 FP16 访问带宽。与 Hugging Face 的 BLOOM-176B PyTorch 实现相比，GLM-130B 解码快 7.0--8.4 倍。</p>
+<p><img alt="表 9：BLOOM-176B 与 GLM-130B 的实际解码速度（原论文第 27 页截图）" src="资源/原页-27.png"></p>
+<h3 id="b6">B.6 激活异常值分析</h3>
+<p>GLM-130B 的约 30% 隐藏维度可能出现激活异常值，而 OPT 和 BLOOM 只有极少异常维度。大多数值小于 6，但少数维度可达到 50 甚至超过 100；这些异常值可能承载固定世界知识或语言知识，删除它们会显著降低性能，因此不能简单忽略。</p>
+<p><img alt="图 12：GLM-130B 激活异常值的分布（原论文第 27 页截图）" src="资源/原页-27.png">
+<img alt="图 13：激活异常值的绝对值尺度（原论文第 28 页截图）" src="资源/原页-28.png"></p>
+<h3 id="b7">B.7 权重量化</h3>
+<p>附录定义 Absmax 对称量化和 Zeropoint 非对称量化。Absmax 把 <code>[-absmax(x), absmax(x)]</code> 映射到有限整数范围；Zeropoint 使用最小值、最大值和零点。按行或按列分组量化可以避免单个异常值降低整个矩阵的量化精度。</p>
+<h3 id="b8">B.8 量化设置与跨规模结果</h3>
+<p>实践中只量化线性层，保留输入/输出嵌入、层归一化和偏置。INT4 时两个 INT4 权重打包进一个 INT8 权重，推理时动态还原为 FP16。GLM 从 1.1 亿到 1300 亿参数在 INT4 下比 BLOOM 更能保持 LAMBADA 性能，而且随着规模增加，GLM 的量化损失继续缩小。</p>
+<p><img alt="表 10：GLM 与 BLOOM 不同规模、不同量化精度下的 LAMBADA 准确率（原论文第 29 页截图）" src="资源/原页-29.png"></p>
+<h3 id="b9">B.9 贡献归因消融</h3>
+<p>作者汇总了分散在正文中的消融：DeepNorm 对比普通 Post-LN；双向与单向注意力；嵌入层梯度缩减；位置编码与前馈层。由于从零训练千亿模型代价过高，GLM 目标与 MIP 的归因在 100 亿参数英文 GLM 上比较。GLM 目标是主要贡献，在 LAMBADA 上解释约 73% 的提升，在 MMLU 上解释约 90%；MIP 对 WiC、ReCoRD 和 Hellaswag 可能有损害，但对 WSC、BoolQ、ANLI 等文本相似度与指代任务贡献更大。</p>
+<p><img alt="图 14：GLM 目标和 MIP 的贡献归因（原论文第 30 页截图）" src="资源/原页-30.png">
+<img alt="图 15：GLM-130B 与 BLOOM-176B 线性层权重分布（原论文第 31 页截图）" src="资源/原页-31.png"></p>
+<h3 id="b10">B.10 经验总结</h3>
+<p>附录把训练经验归纳为八条，与第 7 节结论对应：双向架构、平台感知配置、DeepNorm、稳定性分类、FP16 的可访问性、嵌入梯度缩减、GLM 的 INT4 规律，以及数据、架构和训练量三个未来方向。</p>
+<h2 id="c">附录 C：数据集与评测细节</h2>
+<h3 id="c1-mip">C.1 多任务指令预训练（MIP）</h3>
+<p>MIP 占训练词元的 5%，由 PromptSource 的 T0 数据集和 DeepStruct 信息抽取数据集组成。作者曾因错误把 T0 的多任务训练部分和零样本迁移部分都加入 MIP，同时暂时遗漏 DeepStruct；在约 23000 步时修正，模型继续使用正确数据训练。每个数据集限制最大样本数，信息抽取数据使用人工编写的提示以支持未见抽取模式泛化。</p>
+<h3 id="c2-deepstruct">C.2 DeepStruct 的数据与提示</h3>
+<p>作者为对话状态追踪、槽位填充、关系抽取、实体链接、事件抽取、关系分类和文本结构化等任务手工创建 Jinja 模板。模板把自然语言指令、输入文本和目标结构连接起来，使模型在预训练阶段学习从对话或文档中抽取关系。</p>
+<h3 id="c3-c14">C.3--C.14 评测来源与任务实现</h3>
+<p>附录依次记录 GPT-3、BLOOM-176B 和 OPT-175B 的结果来源；Pile 测试集的 18 个子集与 BPB 计算；BIG-bench-lite 的 24 项任务；MMLU 的 57 项任务和提示；CLUE/FewCLUE 的中文任务；GEM 条件生成；Winograd 风格任务；Natural Questions 与 StrategyQA 闭卷问答；CommonsenseQA 与 MC-TACO 常识推理；固定标签自然语言推理；SuperGLUE；以及 GLM-130B 上的思维链提示。完整数据表、提示模板和逐任务结果按第 32--45 页原文截图保留。</p>
+<p><img alt="附录 C：MIP 组成和 DeepStruct 提示（原论文第 32--38 页截图）" src="资源/原页-32.png">
+<img alt="附录 C：评测来源与 Pile 结果（原论文第 39 页截图）" src="资源/原页-39.png">
+<img alt="附录 C：BIG-bench、MMLU 与中文评测（原论文第 40 页截图）" src="资源/原页-40.png">
+<img alt="附录 C：生成、Winograd、问答和常识任务（原论文第 41--44 页截图）" src="资源/原页-41.png">
+<img alt="附录 C：SuperGLUE 与思维链提示（原论文第 45 页截图）" src="资源/原页-45.png"></p>
+<h2 id="dglm-130b">附录 D：GLM-130B 的缩放与涌现能力</h2>
+<p>GLM-130B 的任务曲线呈现两类规模行为。第一类是<strong>对数缩放任务</strong>：性能随模型参数量平滑增长，典型包括 LAMBADA、WikiText-103、WikiText-2 和 Penn Treebank。第二类是<strong>涌现能力任务</strong>：模型规模低于阈值时性能变化不大，达到约 10B 或 100B 后突然上升，典型包括 MMLU、BIG-bench 的 hindu_knowledge、implicit_relations、modified_arithmetic 和 GRE 阅读理解。GLM-130B 复现了 GPT-3、LaMDA 和 PaLM 中类似的两种行为，为研究涌现能力提供开放模型。</p>
+<p><img alt="图 19：对数缩放能力任务（原论文第 46 页截图）" src="资源/原页-46.png">
+<img alt="图 20：涌现能力任务（原论文第 47 页截图）" src="资源/原页-47.png"></p>
+<h2 id="e">附录 E：项目贡献</h2>
+<p>GLM-130B 项目于 2021 年 12 月提出，预训练于 2022 年 7 月 3 日完成。附录按准备、模型训练、后训练、项目管理和计算赞助列出贡献：包括模型实现、自监督与多任务数据处理、架构、稳定性、三维并行、训练监控、语言建模与中文评测、伦理评测、INT4 量化、推理加速、低资源推理、演示网站和论文写作。</p>
+<p><img alt="附录 E：项目贡献列表（原论文第 52 页截图）" src="资源/原页-52.png"></p>
+<h2 id="fglm-130b">附录 F：GLM-130B 简史</h2>
+<p>项目最初在清华大学知识工程组的头脑风暴中提出，目标是训练一个中英双语、精度高、任何人都能下载并在单台服务器上使用的稠密模型。项目最初面临计算资源不足、缺少可靠的双语预训练算法和缺少低资源推理方案三项挑战。团队选择 GLM 作为骨干，并将规模定为 1300 亿，以适配单台 DGX-A100。</p>
+<p>2022 年 1 月的试验暴露了随机硬件故障、梯度爆炸、显存异常、三维流水线调试和优化器状态恢复等问题；3 月又遇到数据加载器状态、TCP 节点数量、不同硬件平台算子和多任务数据收集问题；4 月测试 RoPE/ALiBi、GeGLU/GAU、DeepNorm 与嵌入梯度缩减；5--6 月解决 FP32 SoftMax、梯度缩减和晚期损失尖峰；6--7 月完成推理迁移、评测脚本、P-Tuning、低资源异步换入换出和 INT4 量化。4 月 26 日智谱 AI 提供计算赞助，5 月 6 日在 96 台 A100 上正式训练。</p>
+<p><img alt="附录 F：项目历史与主要问题时间线（原论文第 53--54 页截图）" src="资源/原页-53.png">
+<img alt="附录 F：项目历史时间线续页（原论文第 54 页截图）" src="资源/原页-54.png"></p>
+<h2 id="g">附录 G：更广泛影响</h2>
+<h3 id="g1-ai">G.1 对 AI 研究的影响</h3>
+<p>大多数研究机构无法承担千亿模型的预训练成本，只能通过付费 API 观察黑盒输出。开放 GLM-130B 后，研究者可以检查参数、激活和内部状态，研究模型能力、理论与缺陷，也可以修改架构和权重验证新算法。INT4 量化让没有 DGX-A100 的研究者也可以在 4×RTX 3090 或 8×RTX 2080 Ti 上使用模型。</p>
+<h3 id="g2">G.2 对个人开发者和小公司的影响</h3>
+<p>个人开发者和小公司过去只能使用付费 API，成本会阻碍产品尝试。GLM-130B 可以部署在自有或云端普及硬件上，并通过蒸馏得到针对特定任务的小模型。开放权重还允许公司用自己的客服、领域和业务数据进行微调，减少通用模型与领域知识之间的差距。</p>
+<h3 id="g3">G.3 社会影响</h3>
+<p>大型语言模型可能被用于电话诈骗、政治宣传和人身骚扰。作者认为开放访问也能促进防御研究：更多研究者可以研究合成文本检测、假新闻识别、公平、偏见、隐私和真实性。开放模型不自动消除风险，但可以让风险不再只由拥有闭源模型的少数机构定义。</p>
+<p><img alt="附录 G：更广泛影响（原论文第 55--56 页截图）" src="资源/原页-55.png"></p>
+<h2 id="h">附录 H：环境影响</h2>
+<p>GLM-130B 在 60 天训练期间总耗电 442.4MWh。按照当地电网 0.5810 kg/kWh 的碳效率，预训练产生约 257.01 公吨二氧化碳，约为 GPT-3 估计碳足迹的一半，约相当于 18 个普通美国人一年的排放。作者认为，公开模型和训练经验可以减少其他团队重复训练千亿模型所需的碳排放，但模型复现仍然具有显著环境成本。</p>
+<p><img alt="附录 H：环境影响与碳排放（原论文第 56 页截图）" src="资源/原页-56.png"></p>
+<h2 id="_9">参考文献</h2>
+<p>参考文献涉及 Transformer、GPT、GLM、T5、PaLM、OPT、BLOOM、量化、提示学习、偏差与毒性、数据集和分布式训练。为保证作者、年份、出版信息和链接逐项可核对，参考文献按原论文第 11--19 页截图保留。</p>
+<p><img alt="参考文献第 1 页（原论文第 11 页截图）" src="资源/原页-11.png">
+<img alt="参考文献第 2 页（原论文第 12 页截图）" src="资源/原页-12.png">
+<img alt="参考文献第 3 页（原论文第 13 页截图）" src="资源/原页-13.png">
+<img alt="参考文献第 4 页（原论文第 14 页截图）" src="资源/原页-14.png">
+<img alt="参考文献第 5 页（原论文第 15 页截图）" src="资源/原页-15.png">
+<img alt="参考文献第 6 页（原论文第 16 页截图）" src="资源/原页-16.png">
+<img alt="参考文献第 7 页（原论文第 17 页截图）" src="资源/原页-17.png">
+<img alt="参考文献第 8 页（原论文第 18 页截图）" src="资源/原页-18.png">
+<img alt="参考文献第 9 页（原论文第 19 页截图）" src="资源/原页-19.png"></p>
+<h2 id="_10">原论文页面归档</h2>
+<p>以下截图按原论文顺序完整保留 56 页，用于核对正文段落、图表、提示模板、逐任务评测、贡献列表、项目历史和附录内容。</p>
+<p><img alt="原论文第 1 页" src="资源/原页-01.png">
+<img alt="原论文第 2 页" src="资源/原页-02.png">
+<img alt="原论文第 3 页" src="资源/原页-03.png">
+<img alt="原论文第 4 页" src="资源/原页-04.png">
+<img alt="原论文第 5 页" src="资源/原页-05.png">
+<img alt="原论文第 6 页" src="资源/原页-06.png">
+<img alt="原论文第 7 页" src="资源/原页-07.png">
+<img alt="原论文第 8 页" src="资源/原页-08.png">
+<img alt="原论文第 9 页" src="资源/原页-09.png">
+<img alt="原论文第 10 页" src="资源/原页-10.png">
+<img alt="原论文第 11 页" src="资源/原页-11.png">
+<img alt="原论文第 12 页" src="资源/原页-12.png">
+<img alt="原论文第 13 页" src="资源/原页-13.png">
+<img alt="原论文第 14 页" src="资源/原页-14.png">
+<img alt="原论文第 15 页" src="资源/原页-15.png">
+<img alt="原论文第 16 页" src="资源/原页-16.png">
+<img alt="原论文第 17 页" src="资源/原页-17.png">
+<img alt="原论文第 18 页" src="资源/原页-18.png">
+<img alt="原论文第 19 页" src="资源/原页-19.png">
+<img alt="原论文第 20 页" src="资源/原页-20.png">
+<img alt="原论文第 21 页" src="资源/原页-21.png">
+<img alt="原论文第 22 页" src="资源/原页-22.png">
+<img alt="原论文第 23 页" src="资源/原页-23.png">
+<img alt="原论文第 24 页" src="资源/原页-24.png">
+<img alt="原论文第 25 页" src="资源/原页-25.png">
+<img alt="原论文第 26 页" src="资源/原页-26.png">
+<img alt="原论文第 27 页" src="资源/原页-27.png">
+<img alt="原论文第 28 页" src="资源/原页-28.png">
+<img alt="原论文第 29 页" src="资源/原页-29.png">
+<img alt="原论文第 30 页" src="资源/原页-30.png">
+<img alt="原论文第 31 页" src="资源/原页-31.png">
+<img alt="原论文第 32 页" src="资源/原页-32.png">
+<img alt="原论文第 33 页" src="资源/原页-33.png">
+<img alt="原论文第 34 页" src="资源/原页-34.png">
+<img alt="原论文第 35 页" src="资源/原页-35.png">
+<img alt="原论文第 36 页" src="资源/原页-36.png">
+<img alt="原论文第 37 页" src="资源/原页-37.png">
+<img alt="原论文第 38 页" src="资源/原页-38.png">
+<img alt="原论文第 39 页" src="资源/原页-39.png">
+<img alt="原论文第 40 页" src="资源/原页-40.png">
+<img alt="原论文第 41 页" src="资源/原页-41.png">
+<img alt="原论文第 42 页" src="资源/原页-42.png">
+<img alt="原论文第 43 页" src="资源/原页-43.png">
+<img alt="原论文第 44 页" src="资源/原页-44.png">
+<img alt="原论文第 45 页" src="资源/原页-45.png">
+<img alt="原论文第 46 页" src="资源/原页-46.png">
+<img alt="原论文第 47 页" src="资源/原页-47.png">
+<img alt="原论文第 48 页" src="资源/原页-48.png">
+<img alt="原论文第 49 页" src="资源/原页-49.png">
+<img alt="原论文第 50 页" src="资源/原页-50.png">
+<img alt="原论文第 51 页" src="资源/原页-51.png">
+<img alt="原论文第 52 页" src="资源/原页-52.png">
+<img alt="原论文第 53 页" src="资源/原页-53.png">
+<img alt="原论文第 54 页" src="资源/原页-54.png">
+<img alt="原论文第 55 页" src="资源/原页-55.png">
+<img alt="原论文第 56 页" src="资源/原页-56.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

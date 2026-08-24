@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LLaMA：开放且高效的基础语言模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">LLaMA：开放且高效的基础语言模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#llama">LLaMA：开放且高效的基础语言模型</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 方法</a><ul>
+<li><a href="#21">2.1 预训练数据</a></li>
+<li><a href="#22">2.2 架构</a></li>
+<li><a href="#23">2.3 优化器</a></li>
+<li><a href="#24">2.4 高效实现</a></li>
+</ul>
+</li>
+<li><a href="#3">3 主要结果</a><ul>
+<li><a href="#31">3.1 常识推理</a></li>
+<li><a href="#32">3.2 闭卷问答</a></li>
+<li><a href="#33">3.3 阅读理解</a></li>
+<li><a href="#34">3.4 数学推理</a></li>
+<li><a href="#35">3.5 代码生成</a></li>
+<li><a href="#36">3.6 大规模多任务语言理解</a></li>
+<li><a href="#37">3.7 训练过程中的性能变化</a></li>
+</ul>
+</li>
+<li><a href="#4">4 指令微调</a></li>
+<li><a href="#5">5 偏差、毒性和错误信息</a><ul>
+<li><a href="#51-realtoxicityprompts">5.1 RealToxicityPrompts</a></li>
+<li><a href="#52-crows-pairs">5.2 CrowS-Pairs</a></li>
+<li><a href="#53-winogender">5.3 WinoGender</a></li>
+<li><a href="#54-truthfulqa">5.4 TruthfulQA</a></li>
+</ul>
+</li>
+<li><a href="#6">6 碳足迹</a></li>
+<li><a href="#7">7 相关工作</a></li>
+<li><a href="#8">8 结论</a></li>
+<li><a href="#_2">致谢</a></li>
+<li><a href="#_3">参考文献</a></li>
+<li><a href="#_4">附录</a></li>
+<li><a href="#_5">原论文页面归档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="llama">LLaMA：开放且高效的基础语言模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2023-02-27">2023 年 2 月 27 日</time></p>
+<p><strong>作者：</strong> Hugo Touvron、Thibaut Lavril、Gautier Izacard、Xavier Martinet、Marie-Anne Lachaux、Timothée Lacroix、Baptiste Rozière、Naman Goyal、Eric Hambro、Faisal Azhar、Aurélien Rodriguez、Armand Joulin、Edouard Grave、Guillaume Lample<br>
+<strong>机构：</strong> Meta AI<br>
+<strong>论文版本：</strong> arXiv:2302.13971v1，2023 年 2 月 27 日</p>
+<h2 id="_1">摘要</h2>
+<p>本文介绍 LLaMA，一组参数规模从 70 亿到 650 亿的基础语言模型。作者在数万亿词元上训练模型，并证明只使用公开可获得的数据集，也可以训练出接近当前最佳水平的模型，而不依赖专有或无法访问的数据。LLaMA-13B 在大多数基准上超过 1750 亿参数的 GPT-3，LLaMA-65B 与 Chinchilla-70B 和 PaLM-540B 等最佳模型具有竞争力。作者公开全部模型，希望降低大语言模型研究和使用的门槛。</p>
+<p><img alt="摘要与模型系列（原论文第 1 页截图）" src="资源/原页-01.png"></p>
+<h2 id="1">1 引言</h2>
+<p>在海量文本语料上训练的大型语言模型，能够根据文字指令或少量示例执行新任务。模型规模扩大后首先出现了这种少样本能力，随后大量研究继续扩展模型规模。传统假设是参数越多性能越好，但 Chinchilla 的缩放研究表明，在固定计算预算下，最优性能不一定来自最大的模型，而可能来自用更多数据训练的较小模型。</p>
+<p>缩放规律通常优化训练计算，却忽略部署和推理预算。实际服务时，给定目标性能，首选模型不是训练最快的模型，而是推理最快的模型；尽管大模型可能更快达到目标，较小模型如果训练更久，部署成本通常更低。例如，Chinchilla 规律建议用 2000 亿词元训练 100 亿参数模型，但作者发现 70 亿参数模型在训练超过 1 万亿词元后仍持续提升。</p>
+<p>本文的目标是在不同推理预算下取得尽可能高的性能。LLaMA 系列包含 7B、13B、33B 和 65B 四个模型，均使用公开数据训练。LLaMA-13B 只有 GPT-3 的十分之一大小，却在大多数基准上超过 GPT-3；LLaMA-65B 与 Chinchilla 和 PaLM-540B 具有竞争力。与 Chinchilla、PaLM 和 GPT-3 不同，LLaMA 完全使用公开数据，使模型可以开放发布，也便于复现和研究。作者希望小模型可以在单张 GPU 上运行，从而推动大模型研究民主化。</p>
+<h2 id="2">2 方法</h2>
+<p>训练方法与此前大型语言模型相似：使用标准优化器，在大量文本上训练 Transformer，并参考 Chinchilla 缩放规律。</p>
+<h3 id="21">2.1 预训练数据</h3>
+<p>训练语料混合了多个公开来源，总计约 1.4 万亿词元。主要数据和采样比例如下：</p>
+<table>
+<thead>
+<tr>
+<th>数据集</th>
+<th style="text-align: right;">采样比例</th>
+<th>主要处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>英文 CommonCrawl</td>
+<td style="text-align: right;">67.0%</td>
+<td>CCNet 去重、语言识别、质量过滤</td>
+</tr>
+<tr>
+<td>C4</td>
+<td style="text-align: right;">15.0%</td>
+<td>去重、语言识别和启发式质量过滤</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td style="text-align: right;">4.5%</td>
+<td>许可证筛选、文件清洗和完全去重</td>
+</tr>
+<tr>
+<td>Wikipedia</td>
+<td style="text-align: right;">4.5%</td>
+<td>2022 年 6--8 月的 20 种拉丁/西里尔文字语言</td>
+</tr>
+<tr>
+<td>Gutenberg 与 Books3</td>
+<td style="text-align: right;">4.5%</td>
+<td>公版书籍和 The Pile 的书籍，按书去重</td>
+</tr>
+<tr>
+<td>arXiv</td>
+<td style="text-align: right;">2.5%</td>
+<td>清洗 LaTeX，移除导言、注释和参考文献</td>
+</tr>
+<tr>
+<td>Stack Exchange</td>
+<td style="text-align: right;">2.0%</td>
+<td>选择 28 个最大站点，按回答得分排序</td>
+</tr>
+</tbody>
+</table>
+<p><strong>英文 CommonCrawl。</strong> 作者使用 2017--2020 年的五个 CommonCrawl 快照，通过 CCNet 按行去重，使用 fastText 线性分类器移除非英文页面，并用 (n)-gram 语言模型过滤低质量内容。另训练线性分类器识别可能被 Wikipedia 引用的页面，丢弃不属于引用页面的内容。</p>
+<p><strong>C4。</strong> 预实验显示，多样化的网页预处理方式能提升性能，因此加入公开 C4。C4 同样进行去重和语言识别，但质量过滤主要依据页面是否包含标点、词语和句子等启发式指标。</p>
+<p><strong>GitHub。</strong> 只保留 Apache、BSD 和 MIT 许可证项目。文件按行长度、字母数字比例等规则过滤，用正则表达式删除文件头等样板内容，最后按文件完全去重。</p>
+<p><strong>Wikipedia。</strong> 加入 2022 年 6--8 月的 Wikipedia 快照，覆盖 20 种使用拉丁或西里尔文字的语言，并清除超链接、评论和格式样板。</p>
+<p><strong>书籍。</strong> Gutenberg 项目提供公共领域书籍，Books3 来自公开的 The Pile。按书籍去重，删除内容重叠超过 90% 的书。</p>
+<p><strong>arXiv。</strong> 处理 arXiv 的 LaTeX 文件以加入科学内容，移除第一节之前的内容和参考文献，删除注释，并把用户定义的宏和定义展开，以提高论文之间的一致性。</p>
+<p><strong>Stack Exchange。</strong> 加入覆盖计算机科学、化学等领域的高质量问答，保留 28 个最大网站，删除 HTML 标签，并按回答得分从高到低排列。</p>
+<p><strong>分词器。</strong> 使用 SentencePiece 实现的字节对编码（BPE）算法。所有数字都切分为单独数字；未知 UTF-8 字符回退到字节级分解。Wikipedia 和书籍数据大约重复使用两次，其他数据大多只使用一次。</p>
+<p><img alt="LLaMA 预训练数据与采样比例（原论文第 2 页截图）" src="资源/原页-02.png"></p>
+<h3 id="22">2.2 架构</h3>
+<p>LLaMA 基于 Transformer，并采用后续研究提出的三项改进：</p>
+<ol>
+<li><strong>预归一化。</strong> 参考 GPT-3，在每个 Transformer 子层的输入而不是输出上做归一化，以提高训练稳定性；归一化函数使用 RMSNorm。</li>
+<li><strong>SwiGLU 激活。</strong> 参考 PaLM，用 SwiGLU 替代 ReLU，以改善性能。前馈层隐藏维度设为 (rac{2}{3}  imes4d)，而不是 PaLM 使用的 (4d)。</li>
+<li><strong>旋转位置嵌入。</strong> 参考 GPT-Neo，移除绝对位置嵌入，在网络每一层加入 RoPE。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align: right;">参数量</th>
+<th style="text-align: right;">隐藏维度</th>
+<th style="text-align: right;">注意力头</th>
+<th style="text-align: right;">层数</th>
+<th style="text-align: right;">学习率</th>
+<th style="text-align: right;">批大小</th>
+<th style="text-align: right;">训练词元</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLaMA-7B</td>
+<td style="text-align: right;">6.7B</td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">3.0e-4</td>
+<td style="text-align: right;">4M</td>
+<td style="text-align: right;">1.0T</td>
+</tr>
+<tr>
+<td>LLaMA-13B</td>
+<td style="text-align: right;">13.0B</td>
+<td style="text-align: right;">5120</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">3.0e-4</td>
+<td style="text-align: right;">4M</td>
+<td style="text-align: right;">1.0T</td>
+</tr>
+<tr>
+<td>LLaMA-33B</td>
+<td style="text-align: right;">32.5B</td>
+<td style="text-align: right;">6656</td>
+<td style="text-align: right;">52</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">1.5e-4</td>
+<td style="text-align: right;">4M</td>
+<td style="text-align: right;">1.4T</td>
+</tr>
+<tr>
+<td>LLaMA-65B</td>
+<td style="text-align: right;">65.2B</td>
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">64</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">1.5e-4</td>
+<td style="text-align: right;">4M</td>
+<td style="text-align: right;">1.4T</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23">2.3 优化器</h3>
+<p>模型使用 AdamW，(β_1=0.9,β_2=0.95)。学习率采用余弦计划，最终学习率为最大值的 10%；权重衰减为 0.1，梯度裁剪值为 1.0，预热 2000 步。模型越大，学习率和批大小会相应调整。</p>
+<h3 id="24">2.4 高效实现</h3>
+<p>作者使用高效的因果多头注意力实现，减少内存和运行时间。该实现不保存注意力权重，也不计算因果掩码已经屏蔽的键—查询分数。反向传播时使用检查点，只保存计算昂贵的激活，例如线性层输出，并手动实现 Transformer 层的反向函数。</p>
+<p>模型并行和序列并行进一步降低内存；GPU 之间的通信与激活计算尽可能重叠。训练 650 亿参数模型时，在 2048 张 A100 80GB GPU 上约达到每 GPU 每秒 380 个词元，训练 1.4 万亿词元大约需要 21 天。</p>
+<p><img alt="训练损失和高效实现说明（原论文第 3--4 页截图）" src="资源/原页-03.png"></p>
+<h2 id="3">3 主要结果</h2>
+<p>作者遵循 GPT-3 的零样本和少样本设置，在总计 20 个基准上评测 LLaMA。零样本提供任务文字描述和一个测试示例；少样本提供 1--64 个示例及一个测试示例。模型要么开放生成答案，要么对候选答案排序。比较对象包括 GPT-3、Gopher、Chinchilla、PaLM、OPT、GPT-J 和 GPT-Neo 等基础模型，并在后文简要比较指令微调模型。</p>
+<h3 id="31">3.1 常识推理</h3>
+<p>作者评估 BoolQ、PIQA、SIQA、HellaSwag、WinoGrande、ARC-easy、ARC-challenge 和 OpenBookQA。LLaMA-65B 在除 BoolQ 外的所有报告任务上超过 Chinchilla-70B，在除 BoolQ 和 WinoGrande 外的任务上超过 PaLM-540B。LLaMA-13B 虽然小十倍，仍在大多数任务上超过 GPT-3。</p>
+<p><img alt="常识推理零样本结果（原论文第 5 页截图）" src="资源/原页-05.png"></p>
+<h3 id="32">3.2 闭卷问答</h3>
+<p>在 Natural Questions 和 TriviaQA 上进行闭卷问答，即模型不能访问包含证据的文档。LLaMA-65B 在零样本和少样本设置下都取得当时最佳或接近最佳的精确匹配表现；LLaMA-13B 与 GPT-3 和 Chinchilla 相当，但推理时可以在单张 V100 GPU 上运行。</p>
+<h3 id="33">3.3 阅读理解</h3>
+<p>RACE 是从面向初高中学生的英语阅读考试中收集的理解数据集。作者遵循 GPT-3 的评测设置。LLaMA-65B 的零样本准确率与 PaLM-540B 竞争，LLaMA-13B 比 GPT-3 高出几个百分点。</p>
+<h3 id="34">3.4 数学推理</h3>
+<p>MATH 包含 1.2 万道以 LaTeX 编写的中学和高中数学题，GSM8K 包含中学数学文字题。作者与 PaLM 和在 arXiv/数学网页上继续微调的 Minerva 比较，并报告单次采样及多数投票。LLaMA 没有在数学数据上微调，但 LLaMA-65B 在 GSM8K 上超过 Minerva-62B；使用多数投票后，各规模的数学性能进一步提高。</p>
+<p><img alt="数学推理结果（原论文第 7 页截图）" src="资源/原页-07.png"></p>
+<h3 id="35">3.5 代码生成</h3>
+<p>HumanEval 和 MBPP 要求模型根据自然语言描述生成 Python 程序。HumanEval 还提供函数签名，提示中包含描述和测试。LLaMA 与 PaLM 训练时使用相近数量的代码词元；在相同规模下，LLaMA 优于未专门针对代码训练的 LaMDA 和 PaLM。LLaMA-13B 在 HumanEval 和 MBPP 上超过 137B 的 LaMDA，LLaMA-65B 也超过 PaLM-62B。</p>
+<p>代码专用微调仍能带来更大提升，例如 PaLM-Coder 把 PaLM 的 HumanEval pass@1 从 26.2% 提高到 36%。本文不研究代码词元微调。pass@1 使用温度 0.1，pass@100 和 pass@80 使用温度 0.8，并用无偏估计计算 pass@k。</p>
+<p><img alt="代码生成结果（原论文第 8 页截图）" src="资源/原页-08.png"></p>
+<h3 id="36">3.6 大规模多任务语言理解</h3>
+<p>MMLU 覆盖人文、STEM、社会科学和其他知识领域的多项选择题。作者使用基准提供的五个示例。LLaMA-65B 平均准确率落后 Chinchilla-70B 和 PaLM-540B 几个百分点，且在多数领域都落后。可能原因是 LLaMA 使用的书籍和学术论文较少：arXiv、Gutenberg 和 Books3 总计只有约 177GB，而其他模型最多使用 2TB 书籍。</p>
+<p>训练过程中，大多数问答和常识任务的性能稳步提升，并与训练困惑度相关；SIQA 波动较大，WinoGrande 与困惑度的相关性较弱，说明部分基准可能不够稳定。</p>
+<h3 id="37">3.7 训练过程中的性能变化</h3>
+<p>作者在训练期间持续跟踪问答和常识基准。LLaMA-7B、13B、33B 和 65B 的训练损失持续下降，TriviaQA、HellaSwag、Natural Questions 和 PIQA 等任务通常随训练词元增加而提升；SIQA 和 WinoGrande 的变化更不稳定。</p>
+<p><img alt="训练过程中各任务性能变化（原论文第 9--10 页截图）" src="资源/原页-09.png"></p>
+<h2 id="4">4 指令微调</h2>
+<p>少量指令数据微调就能快速改善 MMLU。LLaMA-65B 的基础版本已经能遵循简单指令，但微调后遵循指令和 MMLU 性能进一步提高。作者按照 Flan 的协议进行一次实验，得到 LLaMA-I。LLaMA-I 在 MMLU 上达到 68.9%，超过中等规模的 OPT-IML 和 Flan-PaLM 模型，但仍低于当时 GPT code-davinci-002 的 77.4%。</p>
+<p><img alt="LLaMA-I 与其他指令微调模型的 MMLU 比较（原论文第 10 页截图）" src="资源/原页-10.png"></p>
+<h2 id="5">5 偏差、毒性和错误信息</h2>
+<p>网页数据可能包含和放大偏差，也可能生成有毒或冒犯内容。因此作者使用 RealToxicityPrompts、CrowS-Pairs、WinoGender 和 TruthfulQA 评估 LLaMA-65B 的风险。作者强调，这些基准不能覆盖模型全部风险。</p>
+<h3 id="51-realtoxicityprompts">5.1 RealToxicityPrompts</h3>
+<p>RealToxicityPrompts 包含约 10 万条提示，模型需要补全提示，Perspective API 自动给生成文本计算毒性分数。作者对每条提示贪心生成并分别评估普通提示和“以礼貌、尊重、不偏见的方式完成句子”的提示。LLaMA 得分与文献中的模型大体相当，但第三方 API、采样方式和提示数量存在差异，不能简单横向比较。作者观察到毒性通常随模型规模增大而上升，尤其是在尊重式提示上。</p>
+<h3 id="52-crows-pairs">5.2 CrowS-Pairs</h3>
+<p>CrowS-Pairs 用九类偏差的刻板句和反刻板句组成最小句对：性别、宗教、族裔/肤色、性取向、年龄、国籍、残障、外貌和社会经济地位。作者比较模型对两句话的困惑度偏好，偏好刻板句的比例越高，表示偏差越强。</p>
+<p>LLaMA-65B 的平均偏差略低于 GPT-3 和 OPT-175B，但宗教类别比 OPT 高约 10%，年龄和性别也比较突出。作者认为，多步 CommonCrawl 过滤仍无法完全去除来源语料中的社会偏见。</p>
+<h3 id="53-winogender">5.3 WinoGender</h3>
+<p>WinoGender 测试模型能否根据句子上下文解决职业和代词的共指关系。句子包含职业、参与者和代词，模型需要判断代词指向谁。LLaMA 在 <code>their/them/someone</code> 上明显优于 <code>her/her/she</code> 和 <code>his/him/he</code>，这可能意味着模型依靠职业的多数性别而不是句子证据解决共指。对“陷阱”样例（代词性别与职业多数性别相反），性能明显下降，显示职业和性别的社会偏见仍被模型捕获。</p>
+<h3 id="54-truthfulqa">5.4 TruthfulQA</h3>
+<p>TruthfulQA 测量模型识别真实世界陈述的能力，问题覆盖 38 个类别并具有对抗性。LLaMA 相比 GPT-3 在“真实”和“真实且有信息”两个指标上都更高，但绝对正确率仍然偏低，说明模型仍可能生成幻觉和错误答案。</p>
+<p><img alt="毒性、CrowS-Pairs、WinoGender 和 TruthfulQA（原论文第 11--14 页截图）" src="资源/原页-11.png"></p>
+<h2 id="6">6 碳足迹</h2>
+<p>作者估计训练不同模型所需的总能耗和碳排放，并假设所有模型在同一数据中心训练。耗电量按照 GPU 小时、GPU 功耗和数据中心电能使用效率（PUE）计算；碳排放使用美国全国平均碳强度 0.385 kg CO₂e/kWh。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th style="text-align: right;">GPU 小时</th>
+<th style="text-align: right;">总耗电</th>
+<th style="text-align: right;">碳排放</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OPT-175B</td>
+<td style="text-align: right;">809472</td>
+<td style="text-align: right;">356 MWh</td>
+<td style="text-align: right;">137 tCO₂e</td>
+</tr>
+<tr>
+<td>BLOOM-175B</td>
+<td style="text-align: right;">1082880</td>
+<td style="text-align: right;">475 MWh</td>
+<td style="text-align: right;">183 tCO₂e</td>
+</tr>
+<tr>
+<td>LLaMA-7B</td>
+<td style="text-align: right;">82432</td>
+<td style="text-align: right;">36 MWh</td>
+<td style="text-align: right;">14 tCO₂e</td>
+</tr>
+<tr>
+<td>LLaMA-13B</td>
+<td style="text-align: right;">135168</td>
+<td style="text-align: right;">59 MWh</td>
+<td style="text-align: right;">23 tCO₂e</td>
+</tr>
+<tr>
+<td>LLaMA-33B</td>
+<td style="text-align: right;">530432</td>
+<td style="text-align: right;">233 MWh</td>
+<td style="text-align: right;">90 tCO₂e</td>
+</tr>
+<tr>
+<td>LLaMA-65B</td>
+<td style="text-align: right;">1022362</td>
+<td style="text-align: right;">449 MWh</td>
+<td style="text-align: right;">173 tCO₂e</td>
+</tr>
+</tbody>
+</table>
+<p>LLaMA 全系列研发预计使用 2048 张 A100 80GB GPU 约 5 个月，能耗约 2638 MWh，排放约 1015 tCO₂e。公开模型可以避免其他研究团队重复训练；其中小模型可以单 GPU 运行，也有助于降低未来排放。</p>
+<p><img alt="碳足迹估算与比较（原论文第 15--16 页截图）" src="资源/原页-15.png"></p>
+<h2 id="7">7 相关工作</h2>
+<p>语言模型把词、词元或字符序列建模为概率分布。早期方法使用 (n)-gram 统计和各种平滑技术；随后出现前馈网络、循环网络和 LSTM。Transformer 依靠自注意力改善长距离依赖建模，推动 BERT、GPT-2、Megatron-LM、T5、GPT-3、Jurassic-1、Gopher、Chinchilla、PaLM、OPT 和 GLM 等模型发展。</p>
+<p>语言模型缩放研究从统计 (n)-gram 延伸到神经 Transformer，揭示模型规模、数据规模与性能之间的幂律关系；Chinchilla 进一步调整数据和模型的比例，LLaMA 则研究在较小模型上使用更多公开数据的效果。</p>
+<h2 id="8">8 结论</h2>
+<p>本文介绍了 LLaMA 系列开放基础模型。LLaMA-13B 超过 GPT-3，但参数量小十倍以上；LLaMA-65B 与 Chinchilla-70B 和 PaLM-540B 具有竞争力。与此前工作不同，LLaMA 完全使用公开数据，并公开模型以便研究社区使用。作者希望发布模型能加速大语言模型研究、改善鲁棒性并缓解毒性和偏差等问题。指令微调已经显示出有希望的效果，未来还会训练更大模型和更大公开语料。</p>
+<h2 id="_2">致谢</h2>
+<p>作者感谢 xformers、数据去重、训练稳定性、基础设施、评测和数据收集团队的帮助。</p>
+<h2 id="_3">参考文献</h2>
+<p>参考文献涉及语言模型、Transformer、缩放规律、数据集、代码生成、偏差与毒性评测。为保留作者、年份、标题、出版信息和链接，参考文献按原论文截图归档。</p>
+<p><img alt="参考文献（原论文第 17--23 页截图）" src="资源/原页-17.png">
+<img alt="参考文献续页（原论文第 18--24 页截图）" src="资源/原页-18.png"></p>
+<h2 id="_4">附录</h2>
+<p>附录包含训练和评测的完整表格，包括各模型在 MMLU 57 个任务上的结果、训练过程中各任务曲线、WinoGender 和 TruthfulQA 细分数据，以及模型卡和许可证信息。表格保留原页截图，便于与正文数字逐项核对。</p>
+<p><img alt="附录完整结果（原论文第 20--27 页截图）" src="资源/原页-20.png">
+<img alt="附录完整结果续页（原论文第 21--27 页截图）" src="资源/原页-21.png"></p>
+<h2 id="_5">原论文页面归档</h2>
+<p>以下截图按 PDF 顺序完整保留 27 页，用于核对正文、数据表、训练曲线、偏差评测、碳排放、参考文献和附录。</p>
+<p><img alt="原论文第 1 页" src="资源/原页-01.png">
+<img alt="原论文第 2 页" src="资源/原页-02.png">
+<img alt="原论文第 3 页" src="资源/原页-03.png">
+<img alt="原论文第 4 页" src="资源/原页-04.png">
+<img alt="原论文第 5 页" src="资源/原页-05.png">
+<img alt="原论文第 6 页" src="资源/原页-06.png">
+<img alt="原论文第 7 页" src="资源/原页-07.png">
+<img alt="原论文第 8 页" src="资源/原页-08.png">
+<img alt="原论文第 9 页" src="资源/原页-09.png">
+<img alt="原论文第 10 页" src="资源/原页-10.png">
+<img alt="原论文第 11 页" src="资源/原页-11.png">
+<img alt="原论文第 12 页" src="资源/原页-12.png">
+<img alt="原论文第 13 页" src="资源/原页-13.png">
+<img alt="原论文第 14 页" src="资源/原页-14.png">
+<img alt="原论文第 15 页" src="资源/原页-15.png">
+<img alt="原论文第 16 页" src="资源/原页-16.png">
+<img alt="原论文第 17 页" src="资源/原页-17.png">
+<img alt="原论文第 18 页" src="资源/原页-18.png">
+<img alt="原论文第 19 页" src="资源/原页-19.png">
+<img alt="原论文第 20 页" src="资源/原页-20.png">
+<img alt="原论文第 21 页" src="资源/原页-21.png">
+<img alt="原论文第 22 页" src="资源/原页-22.png">
+<img alt="原论文第 23 页" src="资源/原页-23.png">
+<img alt="原论文第 24 页" src="资源/原页-24.png">
+<img alt="原论文第 25 页" src="资源/原页-25.png">
+<img alt="原论文第 26 页" src="资源/原页-26.png">
+<img alt="原论文第 27 页" src="资源/原页-27.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

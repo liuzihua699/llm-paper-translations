@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PaLM：用 Pathways 扩展语言建模</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">PaLM：用 Pathways 扩展语言建模</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#palm-pathways">PaLM：用 Pathways 扩展语言建模</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1. 引言</a></li>
+<li><a href="#2">2. 模型架构</a><ul>
+<li><a href="#21-swiglu">2.1 SwiGLU 激活</a></li>
+<li><a href="#22">2.2 并行层</a></li>
+<li><a href="#23">2.3 多查询注意力</a></li>
+<li><a href="#24-rope">2.4 RoPE 位置编码</a></li>
+<li><a href="#25">2.5 共享输入输出嵌入与无偏置</a></li>
+<li><a href="#26">2.6 词表</a></li>
+<li><a href="#27">2.7 模型规模超参数</a></li>
+<li><a href="#28">2.8 模型卡</a></li>
+</ul>
+</li>
+<li><a href="#3">3. 训练数据集</a></li>
+<li><a href="#4">4. 训练基础设施</a><ul>
+<li><a href="#41-pathways-pod">4.1 Pathways 的跨 Pod 执行</a></li>
+<li><a href="#42">4.2 训练效率</a></li>
+</ul>
+</li>
+<li><a href="#5">5. 训练设置</a><ul>
+<li><a href="#51">5.1 参数初始化与优化器</a></li>
+<li><a href="#52">5.2 损失、序列与批大小</a></li>
+<li><a href="#53">5.3 训练不稳定性</a></li>
+</ul>
+</li>
+<li><a href="#6">6. 评估</a><ul>
+<li><a href="#61-nlp">6.1 英语 NLP 任务</a><ul>
+<li><a href="#611-mmlu">6.1.1 大规模多任务语言理解（MMLU）</a></li>
+<li><a href="#612">6.1.2 微调</a></li>
+</ul>
+</li>
+<li><a href="#62-big-bench">6.2 BIG-bench</a></li>
+<li><a href="#63">6.3 推理</a><ul>
+<li><a href="#631">6.3.1 思维链提示</a></li>
+</ul>
+</li>
+<li><a href="#64">6.4 代码任务</a></li>
+<li><a href="#65">6.5 翻译</a></li>
+<li><a href="#66">6.6 多语言自然语言生成</a></li>
+<li><a href="#67">6.7 多语言问答</a></li>
+<li><a href="#68">6.8 分析</a></li>
+</ul>
+</li>
+<li><a href="#7">7. 记忆</a></li>
+<li><a href="#8">8. 数据集污染</a></li>
+<li><a href="#9">9. 探索解释</a></li>
+<li><a href="#10">10. 表征偏差分析</a><ul>
+<li><a href="#101">10.1 社会群体分布偏差</a><ul>
+<li><a href="#1011">10.1.1 性别与职业偏差</a></li>
+<li><a href="#1012">10.1.2 毒性与偏差</a></li>
+</ul>
+</li>
+<li><a href="#102">10.2 开放式生成中的毒性</a></li>
+<li><a href="#103">10.3 局限性</a></li>
+</ul>
+</li>
+<li><a href="#11">11. 伦理考量</a></li>
+<li><a href="#12">12. 相关工作</a></li>
+<li><a href="#13">13. 扩展中的开放问题</a></li>
+<li><a href="#14">14. 结论</a></li>
+<li><a href="#15">15. 致谢</a></li>
+<li><a href="#a">附录 A：贡献</a></li>
+<li><a href="#b">附录 B：计算使用与环境影响</a></li>
+<li><a href="#c">附录 C：数据集分析</a></li>
+<li><a href="#d">附录 D：数据表</a></li>
+<li><a href="#e">附录 E：模型卡</a></li>
+<li><a href="#f">附录 F：更长训练</a></li>
+<li><a href="#g">附录 G：模型输出样例</a></li>
+<li><a href="#h">附录 H：补充结果</a></li>
+<li><a href="#_2">参考文献</a></li>
+<li><a href="#_3">原论文逐页截图存档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="palm-pathways">PaLM：用 Pathways 扩展语言建模</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-04-05">2022 年 4 月 5 日</time></p>
+<p><strong>作者：</strong> Aakanksha Chowdhery、Sharan Narang、Jacob Devlin、Maarten Bosma、Gaurav Mishra、Adam Roberts、Paul Barham、Hyung Won Chung、Charles Sutton、Sebastian Gehrmann、Parker Schuh、Kensen Shi、Sasha Tsvyashchenko、Joshua Maynez、Abhishek Rao、Parker Barnes、Yi Tay、Noam Shazeer、Vinodkumar Prabhakaran、Emily Reif、Nan Du、Ben Hutchinson、Reiner Pope、James Bradbury、Jacob Austin、Michael Isard、Guy Gur-Ari、Pengcheng Yin、Toju Duke、Anselm Levskaya、Sanjay Ghemawat、Sunipa Dev、Henryk Michalewski、Xavier Garcia、Vedant Misra、Kevin Robinson、Liam Fedus、Denny Zhou、Daphne Ippolito、David Luan、Hyeontaek Lim、Barret Zoph、Alexander Spiridonov、Ryan Sepassi、David Dohan、Shivani Agrawal、Mark Omernick、Andrew M. Dai、Thanumalayan Sankaranarayana Pillai、Marie Pellat、Aitor Lewkowycz、Erica Moreira、Rewon Child、Oleksandr Polozov、Katherine Lee、Zongwei Zhou、Xuezhi Wang、Brennan Saeta、Mark Diaz、Orhan Firat、Michele Catasta、Jason Wei、Kathy Meier-Hellstern、Douglas Eck、Jeff Dean、Slav Petrov、Noah Fiedel
+<strong>机构：</strong> Google Research
+<strong>论文版本：</strong> arXiv:2204.02311v5，2022 年 10 月 5 日</p>
+<h2 id="_1">摘要</h2>
+<p>大型语言模型已经证明，少样本学习能够在几乎不增加任务专属标注数据的情况下完成多种自然语言任务。为了进一步理解规模对少样本学习的影响，本文训练了一个 5400 亿参数、稠密激活的 Transformer 语言模型，称为 Pathways 语言模型（PaLM）。PaLM 使用 Pathways 这一机器学习系统，在 6144 个 TPU v4 芯片上训练；该系统可以把一个模型高效地扩展到多个 TPU Pod。作者在数百项语言理解、语言生成、代码和数学推理基准上进行评估，发现规模扩展带来的收益尚未饱和。PaLM 540B 在许多任务上达到当时最佳少样本结果，并在一系列多步推理任务上超过经过微调的最佳系统；在新发布的 BIG-bench 上，模型的平均表现超过了参与测试的人类平均成绩。约四分之一的 BIG-bench 任务呈现出随规模增长的非连续跃迁：从 62B 到 540B 时，准确率出现远超幂律外推的突然提升。PaLM 还在多语言理解、机器翻译、摘要、问答和源代码生成上表现出很强能力。论文同时系统分析训练数据记忆、数据集污染、性别与社会群体偏差、开放式生成毒性，并讨论大型语言模型的伦理风险和缓解措施。</p>
+<h2 id="1">1. 引言</h2>
+<p>过去几年，用于语言理解和生成的大型神经网络在大量任务上取得了惊人的结果。BERT 和 T5 等模型通常采用仅编码器或编码器—解码器架构，以填空式目标（掩码语言模型或跨度破坏）在大规模文本上预训练，然后通过微调适配到具体任务。它们在数千项自然语言任务上接近或达到最佳结果，但缺点是需要大量任务专属样本，而且必须更新至少一部分参数，增加了微调和部署复杂度。</p>
+<p>GPT-3 展示了极大规模的自回归语言模型能够进行少样本预测：模型只需看到自然语言任务描述，以及可选的少量示例，就能完成任务。此类模型使用仅解码器架构，按从左到右的语言建模目标训练，即根据上下文预测下一个词元。少样本评估不需要大规模任务数据收集和参数更新，却可以达到很强结果。</p>
+<p>继 GPT-3 之后，GLaM、Gopher、Chinchilla、Megatron–Turing NLG 和 LaMDA 等模型继续推进少样本性能。它们都是 Transformer 的变体，主要通过四类方式改进：增加模型的深度和宽度；增加训练词元数；使用来源更广、质量更高的数据；使用稀疏激活模块，在不同比例增加计算量的情况下提升模型容量。</p>
+<p>本文沿着规模扩展路线训练了一个 5400 亿参数的稠密自回归 Transformer。模型在 7800 亿个高质量词元上训练，借助 Pathways 系统跨多个 TPU v4 Pod 高效运行。模型名为 PaLM（Pathways Language Model），在数百项自然语言、代码和数学推理任务上达到当时最佳少样本结果。</p>
+<p>本文的主要结论如下。</p>
+<ul>
+<li><strong>高效扩展。</strong> PaLM 是 Pathways 的首次大规模应用。540B 模型在 6144 个 TPU v4 芯片上训练，模型 FLOPs 利用率达到 46.2%，硬件 FLOPs 利用率达到 57.8%。与以往依赖单一 TPU 系统、流水线并行或最多 4096 个 TPU v3 芯片的训练相比，Pathways 使无流水线训练跨两个 Pod 运行成为可能。</li>
+<li><strong>规模仍然有效。</strong> 在 29 项广泛使用的英语语言基准中，PaLM 540B 在少样本设置下有 28 项超过此前最佳结果。PaLM 62B 甚至在平均自然语言理解和生成成绩上超过 GPT-3 175B，说明数据、训练策略和实际看到的词元数同样重要。</li>
+<li><strong>推理能力跃迁。</strong> 当规模与思维链提示结合时，简单的少样本评估可以在多项数学和常识推理任务上超过或追平需要微调、专用架构和任务验证器的最佳系统。</li>
+<li><strong>非连续改进。</strong> 在多数任务上，性能随参数量近似对数线性增长；但约 25% 的 BIG-bench 任务在 62B 到 540B 之间出现明显跃迁，提示某些能力要到足够规模才会出现。</li>
+<li><strong>多语言能力。</strong> 训练数据中非英语文本仅约占 22%，但 PaLM 仍在机器翻译、摘要和问答任务上接近或超过此前经过监督微调的结果。</li>
+<li><strong>偏差与毒性。</strong> Winogender 共指准确率随规模提高，但提示延续仍可能强化与宗教、种族和性别相关的刻板印象；较大模型的整体毒性略高，而且模型生成毒性强烈受提示文本毒性影响。</li>
+</ul>
+<p><img alt="图 1：用思维链提示让 PaLM 生成笑话解释和逻辑推理（原页截图）" src="资源/原页-2.png"></p>
+<p>图 1 中的示例使用两个少样本示例，引导 PaLM 先写出自然语言推理链，再给出结论。所有输出均由 PaLM 540B 贪心解码得到，完整提示和更多示例在第 9 节给出。</p>
+<h2 id="2">2. 模型架构</h2>
+<p>PaLM 使用标准 Transformer 的仅解码器形式，每个时间步只能关注当前词元和过去词元。作者在标准结构上做了以下修改。</p>
+<h3 id="21-swiglu">2.1 SwiGLU 激活</h3>
+<p>多层感知器使用 SwiGLU 激活 <code>Swish(xW) · xV</code>，而不是 ReLU、GeLU 或普通 Swish。已有研究表明，在计算量相当的情况下，SwiGLU 能显著改善质量。代价是 MLP 中需要三次矩阵乘法而不是两次，但标准 ReLU 版本可以按比例扩大中间维度，因此总体比较仍然公平。</p>
+<h3 id="22">2.2 并行层</h3>
+<p>每个 Transformer 块使用并行形式，而不是把注意力和 MLP 串行执行。串行形式可写为：</p>
+<div class="math-block">$$
+y=x+\operatorname{MLP}(\operatorname{LayerNorm}(x+\operatorname{Attention}(\operatorname{LayerNorm}(x))))
+$$</div>
+<p>并行形式为：</p>
+<div class="math-block">$$
+y=x+\operatorname{MLP}(\operatorname{LayerNorm}(x))+\operatorname{Attention}(\operatorname{LayerNorm}(x))
+$$</div>
+<p>并行形式可以融合 MLP 和注意力的输入矩阵乘法，在大规模训练中使速度提高约 15%。8B 消融实验有轻微质量下降，62B 未观察到下降，因此作者推断 540B 上的影响可以忽略。</p>
+<h3 id="23">2.3 多查询注意力</h3>
+<p>标准多头注意力为每个头分别投影查询、键和值。PaLM 在所有头之间共享键和值投影，只保留每个头独立的查询投影。该设计对训练速度和模型质量基本无影响，却显著降低自回归解码的成本，因为解码时只生成一个词元，键和值缓存不必为每个头重复保存。</p>
+<h3 id="24-rope">2.4 RoPE 位置编码</h3>
+<p>PaLM 使用旋转位置嵌入（RoPE），而不是绝对或相对位置嵌入。此前工作表明，RoPE 在长序列上表现更好。</p>
+<h3 id="25">2.5 共享输入输出嵌入与无偏置</h3>
+<p>输入和输出嵌入矩阵共享。所有稠密核和层归一化都不使用偏置；作者发现这一设置可以提高大模型训练稳定性。</p>
+<h3 id="26">2.6 词表</h3>
+<p>模型使用包含 256K 个词元的 SentencePiece 词表，以覆盖训练语料中的大量语言并减少过度切分。词表从训练数据生成，可以提高训练效率；它是完全无损且可逆的，空白字符会被保留，这对代码尤其重要。词表外的 Unicode 字符会按 UTF-8 字节切分，数字总是按单个数字切分，例如 <code>123.5</code> 会变成 <code>1 2 3 . 5</code>。</p>
+<h3 id="27">2.7 模型规模超参数</h3>
+<p>本文比较 8B、62B 和 540B 三种规模。由于它们都是稠密 Transformer，每个词元的 FLOPs 大致等于参数量。三个模型使用相同数据和词表、几乎相同的训练设置（批大小除外）。</p>
+<p><img alt="表 1：PaLM 三种规模的层数、宽度、注意力头和批大小（原页截图）" src="资源/原页-5.png"></p>
+<p>表 1 中，PaLM 8B 有 32 层、16 个头、<code>dmodel=4096</code>，实际参数量 86.3 亿；PaLM 62B 有 64 层、32 个头、<code>dmodel=8192</code>，参数量 625 亿；PaLM 540B 有 118 层、48 个头、<code>dmodel=18432</code>，参数量 5403.5 亿。所有模型的前馈层宽度为 <code>4 × dmodel</code>，注意力头维度为 256。</p>
+<h3 id="28">2.8 模型卡</h3>
+<p>PaLM 的模型卡位于附录 E，概括了架构、训练设置、数据、预期用途、限制和风险。</p>
+<h2 id="3">3. 训练数据集</h2>
+<p>PaLM 的预训练语料包含约 7800 亿词元，覆盖多种自然语言使用场景，由经过过滤的网页、书籍、Wikipedia、新闻、源代码和社交媒体对话组成。数据集建立在 LaMDA 和 GLaM 使用的数据基础上。三个规模的模型都只训练一个数据轮次，并使用相同的随机顺序；混合比例经过选择，以避免子数据集重复出现。</p>
+<p>代码数据来自 GitHub 开源仓库。作者按照仓库许可筛选文件，排除传染性开源许可证；再按扩展名限制为 24 种常见编程语言，包括 Java、HTML、JavaScript、Python、PHP、C#、XML、C++ 和 C，共约 196GB 源代码。作者还根据文件之间的 Levenshtein 距离去重，因为代码仓库中重复文件很常见。</p>
+<p><img alt="表 2：PaLM 训练数据来源比例（原页截图）" src="资源/原页-6.png"></p>
+<p>最终混合数据中，多语言社交媒体对话占 50%，多语言过滤网页占 27%，英文书籍占 13%，GitHub 代码占 5%，多语言 Wikipedia 占 4%，英文新闻占 1%。多语言语料覆盖 100 多种语言，语言比例见附录数据表。</p>
+<h2 id="4">4. 训练基础设施</h2>
+<p>训练和评估代码基于 JAX 与 T5X，所有模型都在 TPU v4 Pod 上训练。PaLM 540B 使用两个通过数据中心网络连接的 TPU v4 Pod，每个 Pod 有 3072 个 TPU v4 芯片和 768 台主机；模型并行和数据并行结合使用，不需要流水线并行。</p>
+<p>传统流水线并行会把一个批次切成微批次，并在阶段之间传递激活。它存在两个主要缺点：流水线填充和排空时会出现设备空闲的“气泡”；每个微批次都可能需要从内存重新加载权重，增加内存带宽压力。PaLM 通过 Pathways 的 Pod 级双向数据并行绕开了这些问题。</p>
+<p>每个 Pod 保存完整模型参数副本，权重在 3072 个芯片上使用 12 路模型并行和 256 路完全分片数据并行。前向传播时在数据并行轴上聚合权重，反向传播时重新计算部分激活，以便在大批次下获得更高吞吐。</p>
+<h3 id="41-pathways-pod">4.1 Pathways 的跨 Pod 执行</h3>
+<p>单个 Python 客户端把一半批次发送到每个 Pod。两个 Pod 分别执行前向和反向传播，并在本地完成梯度归约；随后互换梯度，两个 Pod 各自累积本地和远端梯度并更新参数，因此下一步的参数逐位一致。</p>
+<p><img alt="图 2：Pathways 在两个 TPU v4 Pod 上进行双向数据并行（原页截图）" src="资源/原页-8.png"></p>
+<p>跨 Pod 梯度交换是系统的主要通信难点。每对对应主机每一步约交换 1.3GB 梯度，所有主机同时交换时总突发带宽约 81Tbps。Pathways 将梯度切成更小的块，并通过多条分散路径传输，以减轻数据中心网络拥塞。最终，双 Pod 吞吐约为单 Pod 的 1.95 倍，相当于理想弱扩展的 97%。剩余差距主要来自反向传播和跨 Pod 梯度归约无法完全重叠。</p>
+<h3 id="42">4.2 训练效率</h3>
+<p>过去常用硬件 FLOPs 利用率（HFU）衡量加速器效率，但 HFU 依赖具体实现和 FLOPs 统计方法，而且会把为节省内存而重复计算激活的 FLOPs 也算进去。作者提出模型 FLOPs 利用率（MFU）：实际词元吞吐量除以系统峰值 FLOPs 下、只计算必要前向与反向操作时的理论最大吞吐量。MFU 与实现无关，更适合比较不同系统。</p>
+<p>PaLM 540B 的平均吞吐约为每秒 238.3K 词元，MFU 约 46.2%，HFU 约 57.8%。在相近规模的模型中，PaLM 的 MFU 明显高于 Megatron–Turing NLG 和 Gopher。</p>
+<p><img alt="表 3：PaLM 与此前大型模型的模型 FLOPs 利用率（原页截图）" src="资源/原页-10.png"></p>
+<h2 id="5">5. 训练设置</h2>
+<h3 id="51">5.1 参数初始化与优化器</h3>
+<p>除嵌入和层归一化尺度外，核权重使用 fan-in 方差缩放初始化：<code>W ~ N(0, 1/nin)</code>。输入嵌入从 <code>N(0,1)</code> 初始化；输入输出嵌入共享，因此 softmax 前的 logits 再除以嵌入维度平方根。</p>
+<p>模型使用未分解的 Adafactor 优化器，相当于带参数缩放的 Adam。前 10000 步学习率为 <code>10^-2</code>，之后按步数平方根倒数衰减；动量 <code>β1=0.9</code>，二阶矩插值使用 <code>β2=1-k^-0.8</code>。所有模型使用全局范数梯度裁剪，阈值为 1.0；权重衰减动态设置为当前学习率的平方。</p>
+<h3 id="52">5.2 损失、序列与批大小</h3>
+<p>损失是所有词元对数概率的平均值，不使用标签平滑；另外加入 <code>z loss = 10^-4 log^2 Z</code>，使 softmax 归一化项接近 0，从而提高稳定性。所有模型的序列长度为 2048。样本先连接后切成固定长度，不使用填充；样本边界用特殊 <code>[eod]</code> 词元区分。</p>
+<p>540B 模型先以 512 的批大小（约 100 万词元）训练到 5 万步，再增至 1024（约 200 万词元），最后在 11.5 万步增至 2048（约 400 万词元），训练至 25.5 万步结束。较小模型采用类似日程。小批次在训练早期具有更高样本效率，大批次在后期提供更准确的梯度估计，也能提高 TPU 矩阵乘法效率。</p>
+<p>训练框架、数据管线和检查点均具有逐位确定性：从任何检查点恢复训练都会得到与连续运行完全相同的结果。预训练不使用 dropout；多数微调实验使用 0.1 的 dropout。</p>
+<h3 id="53">5.3 训练不稳定性</h3>
+<p>540B 训练期间出现约 20 次损失尖峰，间隔高度不规则，有些发生在训练后期；较小模型没有出现此现象。作者采用实用的恢复策略：从尖峰前约 100 步的检查点重启，并跳过尖峰前后约 200--500 个批次。相同批次从更早的不同参数状态重新训练时不会再次尖峰，说明问题不是某个“坏数据”单独造成的，而是特定数据批次与特定参数状态的组合。如何系统缓解超大模型损失尖峰仍是开放问题。</p>
+<h2 id="6">6. 评估</h2>
+<h3 id="61-nlp">6.1 英语 NLP 任务</h3>
+<p>作者沿用 GLaM 和 GPT-3 的 29 项英语基准，覆盖封闭书本问答、完形填空、Winograd 风格任务、常识推理、上下文阅读理解、SuperGLUE 和对抗自然语言推理。只比较预训练模型的单检查点结果，不纳入微调或多任务适配结果。</p>
+<p>PaLM 540B 在 1-shot 设置下超过此前最佳结果的 24/29 项任务，在少样本设置下超过 28/29 项。它在若干阅读理解和自然语言推理任务上领先超过 10 个百分点，并在所有基准上超过参数量相近的 Megatron–Turing NLG 530B。这表明数据集质量、训练策略和训练词元数与模型规模同样关键。</p>
+<p><img alt="表 4：PaLM 540B 在 29 项英语基准上的零样本、单样本和少样本结果（原页截图）" src="资源/原页-12.png">
+<img alt="表 5：29 项任务的平均自然语言生成与理解成绩（原页截图）" src="资源/原页-13.png"></p>
+<p>PaLM 540B 的 1-shot 平均 NLG 得分为 63.9，平均 NLU 得分为 74.7；PaLM 62B 的两项成绩分别为 57.7 和 67.3，均超过 GPT-3 175B 的 52.9 和 65.4。</p>
+<h4 id="611-mmlu">6.1.1 大规模多任务语言理解（MMLU）</h4>
+<p>MMLU 包含数学、历史、法律等 57 项选择题任务。PaLM 540B 五样本平均分为 69.3%，比当时 Chinchilla 70B 的 67.5% 高约 2 个百分点；除 Other 类别外，PaLM 540B 在各类别都超过 Chinchilla。人文学科、社会科学和其他类别的成绩分别为 77.0%、81.0% 和 69.6%，STEM 类别为 55.6%。</p>
+<p><img alt="表 6：PaLM 三种规模与 Chinchilla 的 MMLU 五样本结果（原页截图）" src="资源/原页-14.png"></p>
+<h4 id="612">6.1.2 微调</h4>
+<p>在 SuperGLUE 上，作者使用学习率 <code>5×10^-5</code>、Adafactor 和批大小 32 进行微调，通常少于 1.5 万步收敛。PaLM 540B 在验证集上的平均分为 92.6，接近 T5-11B 的 89.9 和 ST-MoE-32B 的 93.2；在测试集上平均分为 90.4，显著超过此前最佳仅解码器模型的 71.8。结果说明规模能够缩小仅解码器模型与编码器—解码器模型在分类微调上的差距，但少样本结果与微调结果之间仍存在明显间隔。</p>
+<p><img alt="表 7--9：SuperGLUE 验证集、少样本对比和测试集结果（原页截图）" src="资源/原页-15.png"></p>
+<h3 id="62-big-bench">6.2 BIG-bench</h3>
+<p>BIG-bench 是面向大型语言模型的协作式挑战基准，包含 150 多项逻辑推理、翻译、问答、数学和其他任务。本文只评估文本任务，并在 58 项与 GPT-3、Gopher、Chinchilla 都有结果的任务上进行可比分析。人类参与者看到与模型类似的任务说明和示例，可以使用搜索引擎、计算器等外部工具；“人类最佳”取每个样例中得分最高的人类回答，“人类平均”取所有回答的平均值。</p>
+<p>PaLM 540B 五样本结果超过 Gopher、GPT-3 和 Chinchilla，在 58 项共同任务中有 44 项超过此前最佳；在 150 项文本任务上，PaLM 540B 的平均成绩高于人类平均成绩。性能总体随规模呈对数线性增长，但部分任务呈现离散跃迁。</p>
+<p><img alt="图 3：BIG-bench 58 项共同任务和 150 项文本任务的规模曲线（原页截图）" src="资源/原页-17.png">
+<img alt="图 4：PaLM 540B 与此前最佳结果的逐任务差异（原页截图）" src="资源/原页-18.png"></p>
+<p>作者重点分析了六项任务：根据目标—步骤关系清理银器、从叙述选择逻辑结论、选择最匹配的英语谚语、按逻辑排序事件、执行导航指令，以及遵循给定前提进行数学归纳。英语谚语任务从 PaLM 62B 的 25% 跃升到 540B 的 87%，逻辑序列任务从 25% 跃升到 87%。在 150 项任务中，约 25% 的任务相对于低规模对数线性外推出现超过 10 个百分点的正跃迁，约 15% 超过 20 个百分点。另一方面，导航和数学归纳随规模提升很小，且仍显著低于人类，说明规模并不能解决所有困难。</p>
+<p><img alt="图 5--6：BIG-bench 中代表性任务的非连续规模改进与人类对比（原页截图）" src="资源/原页-19.png"></p>
+<h3 id="63">6.3 推理</h3>
+<h4 id="631">6.3.1 思维链提示</h4>
+<p>思维链提示要求模型在给出最终答案前，先生成一串中间自然语言推理步骤。作者在 GSM8K、数学文字题、常识推理和符号操作任务上比较标准少样本提示与思维链提示。提示中的推理过程不是额外参数或梯度更新，而是通过上下文示例教会模型输出“计算步骤—结论”的格式。</p>
+<p>在 GSM8K 数学题上，PaLM 540B 的思维链少样本准确率达到 56.9%，超过此前经过微调的最佳结果；在 BIG-bench 的算术任务和复杂常识任务上也有明显收益。模型规模越大，思维链的收益越明显；小模型常在中间步骤发生算术错误或遗漏一步，而 540B 更能保持完整推理链。</p>
+<p><img alt="图 8：思维链提示提升多步推理任务性能（原页截图）" src="资源/原页-20.png">
+<img alt="图 9：GSM8K 中 PaLM 62B 的错误类型分析（原页截图）" src="资源/原页-21.png"></p>
+<p>作者还研究了“自洽性”式多次采样：对同一问题生成多条推理链，再选择最终答案的多数票。该方法在若干数学任务上进一步提升准确率，但增加推理成本。结果说明，语言模型的生成能力不仅用于解释预测，也能直接作为分类或回归任务的中间计算空间。</p>
+<h3 id="64">6.4 代码任务</h3>
+<p>PaLM 的预训练包含约 5% GitHub 代码。作者在 HumanEval、MBPP、GSM8K-Python、TransCoder 和 DeepFix 上评估代码生成、翻译和修复能力。PaLM 540B 在 HumanEval 上达到 67.6% 的 pass@100，在 MBPP 上达到 65.6% 的 pass@80；代码专门微调后的 PaLM-Coder 540B 分别提升到 88.4% 和 80.8%。性能从 8B 到 62B 再到 540B 持续增长，没有显示出饱和迹象。</p>
+<p>PaLM-Coder 在 DeepFix 代码修复任务上的编译率为 82.1%，超过此前 71.7% 的结果。模型不仅修复未声明变量、缺失花括号等编译错误，还会进行变量合并、循环逻辑修正等风格和逻辑改动。提示示例中只改变一次变量声明格式，就能让模型减少不期望的合并操作，说明少量提示设计可以控制编辑风格。</p>
+<p><img alt="图 11：PaLM-Coder 的代码生成和数学代码示例（原页截图）" src="资源/原页-25.png">
+<img alt="表 11--13：代码数据规模、代码生成与 DeepFix 修复结果（原页截图）" src="资源/原页-26.png">
+<img alt="图 12--14：代码任务规模曲线和 DeepFix 修复示例（原页截图）" src="资源/原页-27.png"></p>
+<p>代码建议仍有严重风险。基准通常只用少量测试判断功能正确性，可能高估真实正确率；生成代码还必须可读、健壮、快速且安全。DeepFix 中看似修复成功的程序可能依赖输入格式和大小等隐含假设，在一般软件环境中并不安全。开发者应审查和测试所有建议，如何让开发者理解并信任模型生成代码仍是开放问题。</p>
+<h3 id="65">6.5 翻译</h3>
+<p>作者评估英语中心语言对、直接非英语语言对和极低资源语言对。英语中心实验包括 WMT14 英法、WMT16 英德和英罗；直接翻译实验使用 WMT19 法德；极低资源实验使用 WMT19 英哈萨克语。PaLM 未使用显式平行语料训练，只有预训练语料中自然存在的平行文本。</p>
+<p>在传统语言对上，PaLM 540B 五样本 BLEU 分数为：英法 44.0、英德 37.4、英罗 28.7、法英 42.8、德英 47.5、罗英 43.8。多数结果超过此前大型模型的少样本成绩，并接近有监督系统。直接法德翻译和英哈萨克语也明显优于 GPT-3 等模型，说明多语言语料和模型规模能够支持不依赖英语中转的翻译。</p>
+<p><img alt="表 14：WMT 英语中心语言对翻译 BLEU（原页截图）" src="资源/原页-29.png">
+<img alt="图 15：大模型和不同 PaLM 规模的零样本翻译对比（原页截图）" src="资源/原页-30.png">
+<img alt="表 15：直接翻译和极低资源翻译结果（原页截图）" src="资源/原页-31.png"></p>
+<h3 id="66">6.6 多语言自然语言生成</h3>
+<p>作者在 GEM 数据到文本与摘要任务上评估多语言生成，并比较零样本、少样本和微调。训练语料中非英语比例较低，但 PaLM 540B 在德语、法语、西班牙语、俄语、土耳其语等语言上取得较强 ROUGE-2 分数。少样本提示能让模型在未见过的任务格式上完成摘要和结构化文本生成；微调仍然可以带来进一步提升。</p>
+<p><img alt="表 16：GEM 多语言数据到文本和摘要 ROUGE-2 结果（原页截图）" src="资源/原页-34.png"></p>
+<h3 id="67">6.7 多语言问答</h3>
+<p>在 TyDiQA-GoldP 上，PaLM 以少样本方式回答 11 种语言的问题。540B 模型在英语之外的语言上显著超过 8B 和 62B，尤其是在训练语料较少的语言中，规模带来的收益更明显。由于问题和答案均需在目标语言中生成，结果同时反映理解、检索式记忆和跨语言生成能力。</p>
+<p><img alt="表 17：TyDiQA-GoldP 多语言问答结果（原页截图）" src="资源/原页-38.png"></p>
+<h3 id="68">6.8 分析</h3>
+<p>综合英语、多语言、代码和推理结果，PaLM 540B 的优势来自多个因素共同作用：模型规模、7800 亿词元的高质量混合语料、代码比例、确定性训练管线、Pathways 的高吞吐以及思维链提示。论文没有进行足够的全规模消融，因此不能把所有提升简单归因于参数量。噪声分析显示，少样本示例的选择会造成明显方差；在报告绝对分数时，应同时报告不同示例集合上的不确定性。</p>
+<h2 id="7">7. 记忆</h2>
+<p>语言模型可能记住训练数据中的逐字片段。作者从三个角度研究 PaLM 的记忆：对随机训练片段进行前缀续写测试；寻找模型输出与训练语料的长匹配；比较 8B、62B、540B 的记忆率。模型规模越大，准确复现长序列的概率越高；但记忆不仅取决于规模，也取决于片段在训练数据中的重复次数、独特性和上下文可预测性。</p>
+<p>论文展示了模型逐字复现网页、书籍和代码的例子，并强调这可能泄露个人信息、版权文本或秘密。评估记忆需要报告提示长度、匹配长度、数据重复程度和抽样策略，单一“是否记住”指标并不足以描述风险。</p>
+<p><img alt="第 7 节记忆实验与样例（原页截图）" src="资源/原页-40.png"></p>
+<h2 id="8">8. 数据集污染</h2>
+<p>作者将 PaLM 训练数据与评估基准进行 n-gram 和字符串重叠检查，识别可能出现在训练语料中的测试题。对部分污染的英语任务，论文构造“干净子集”重新评估。污染会使语言建模和问答成绩被高估，但在大多数任务上，PaLM 在去除高重叠样例后仍保持明显优势。</p>
+<p><img alt="表 18：去除部分污染样例后的英语任务结果（原页截图）" src="资源/原页-41.png"></p>
+<h2 id="9">9. 探索解释</h2>
+<p>思维链提示不仅提高答案准确率，也让模型输出可读的中间解释。作者给出解释笑话、判断故事中人物位置、执行多步逻辑推断等示例。模型有时能把隐含常识拆成多个步骤，例如先识别地点，再把地点与地理知识连接，最后回答问题；这类解释有助于用户检查模型是否真正理解问题。</p>
+<p>但解释不一定忠实反映模型内部计算。模型可能生成听起来合理、实际上错误的推理链，或者先猜答案再事后编造理由。因此，思维链应被视为可审查的外部工作记录，而不是内部因果过程的直接读出。</p>
+<p><img alt="图 1 与第 9 节完整提示和解释样例（原页截图）" src="资源/原页-42.png"></p>
+<h2 id="10">10. 表征偏差分析</h2>
+<h3 id="101">10.1 社会群体分布偏差</h3>
+<p>作者围绕性别、职业、种族、族裔和宗教进行英语偏差分析。分析只覆盖少数社会维度和英语输出，不能代表公平性评估的完整范围。结果显示，规模增长可以提升某些任务的准确率，但不会自动消除刻板印象。</p>
+<h4 id="1011">10.1.1 性别与职业偏差</h4>
+<p>Winogender 要求模型根据代词和职业描述判断共指对象。PaLM 540B 的整体准确率高于 8B 和 62B，且在女性、中性代词和与职业刻板印象冲突的“gotcha”样例上也有所改善。作者同时用职业提示续写分析模型最常与不同性别代词联系的描述词，发现某些关联仍带有明显性别刻板印象。</p>
+<p><img alt="图 20--21：Winogender 准确率与不同群体的分解结果（原页截图）" src="资源/原页-48.png"></p>
+<h4 id="1012">10.1.2 毒性与偏差</h4>
+<p>在包含种族、宗教和性别词语的提示上，模型延续文本的共现词可能强化社会刻板印象。例如与穆斯林相关的续写更容易出现“恐怖主义”“极端主义”和“暴力”等词。该现象在三种模型规模上都存在，说明仅扩大规模不能解决表示偏差。</p>
+<h3 id="102">10.2 开放式生成中的毒性</h3>
+<p>作者使用 Perspective API 对提示和模型延续计算毒性概率。540B 和 62B 的平均毒性略高于 8B，但差异不大；更重要的是，模型延续的毒性与提示文本毒性高度相关，而人类续写的相关性较弱。这表明模型比人类更容易沿用提示的语言风格：有毒提示更可能诱发有毒延续，低毒提示则通常保持低毒。</p>
+<p><img alt="图 22：不同宗教提示下的毒性概率分布（原页截图）" src="资源/原页-51.png">
+<img alt="图 23：延续毒性与提示毒性的关系（原页截图）" src="资源/原页-52.png">
+<img alt="表 20：不同模型规模生成毒性评论的概率（原页截图）" src="资源/原页-53.png"></p>
+<h3 id="103">10.3 局限性</h3>
+<p>评估只覆盖英语，未覆盖性取向、残障、种姓等其他社会差异维度，也未充分覆盖非西方文化语境。网页质量过滤可能排除口语、方言、代码混用和非主流英语变体；训练数据跨越古代文本到 2021 年，模型可能无法稳定反映不断变化的俚语和语言规范。基准任务存在构念效度不足的问题，基准分数不能保证在真实应用中同样可靠。</p>
+<h2 id="11">11. 伦理考量</h2>
+<p>PaLM 具有高质量语言生成能力，因此可能被用于信息操纵、定向骚扰、自动化垃圾内容和冒充。训练数据含有个人信息、偏见和有毒语言；模型的记忆能力可能泄露训练文本。缓解策略包括改进数据过滤和文档化、在具体应用场景进行风险评估、限制模型访问、加入安全微调和拒答机制、监控实际部署中的伤害，并让受影响群体参与评估。</p>
+<p>公平性分析必须与目标场景相结合。用于毒性检测的模型需要见过毒性文本，但用于对话生成的模型则应避免复制这些模式。任何部署都不能只依据离线基准分数；应持续测试非英语语言、不同方言、不同群体和对抗性输入。PaLM-Coder 还需要额外验证代码的功能正确性、可读性、性能、依赖安全和输入边界安全。</p>
+<h2 id="12">12. 相关工作</h2>
+<p>本文将 PaLM 放在大型语言模型的发展脉络中：Transformer 提供了适合加速器的高效架构；BERT、GPT 和 T5 分别推动了编码器预训练、生成式预训练和统一文本到文本迁移；GPT-3、Gopher、Chinchilla、Megatron–Turing NLG、Switch Transformer、GLaM 和 LaMDA 展示了规模、数据和稀疏性带来的能力提升。检索增强、混合专家、长序列稀疏注意力、张量并行、流水线并行和数据并行是进一步扩展模型的互补路线。PaLM 使用 Pathways 把模型并行和数据并行扩展到多个 Pod。</p>
+<h2 id="13">13. 扩展中的开放问题</h2>
+<p>大型语言模型能力提升主要来自四个轴：模型深度和宽度、训练词元数、训练语料质量，以及在不增加每词元计算量的情况下提高模型容量。PaLM 重点研究了第一条轴，但 PaLM 62B 超过 GPT-3 175B 的结果表明，数据质量和训练策略同样重要。</p>
+<p>一个关键问题是：在相同训练 FLOPs 下，较小模型训练更多词元是否优于较大模型训练较少词元？例如，62B 模型训练 7 万亿词元、120B 模型训练 3.6 万亿词元或 240B 模型训练 1.8 万亿词元，都可能与 PaLM 540B 的训练成本相近；如果下游能力相当，较小模型的推理成本会更低。Chinchilla 的结果支持“更小模型、更多数据”路线，但 PaLM 与 Chinchilla 使用不同语料，不能仅凭现有结果完全分离规模和数据质量的影响。</p>
+<p>进一步实验还受到三个约束：全规模训练成本极高；相同 FLOPs 下较小模型可能需要更长墙钟时间；高质量文本并非无限，重复数据的价值也不清楚。PaLM 62B 在刷新数据后继续训练可以提升性能，但简单重复部分旧数据没有同样收益。未来需要联合研究架构、数据、优化器、预训练目标与数据重复之间的权衡。</p>
+<h2 id="14">14. 结论</h2>
+<p>本文训练了 5400 亿参数的稠密 PaLM，在 7800 亿个高质量、多来源词元上训练，并通过 Pathways 跨 6144 个 TPU v4 芯片高效扩展。PaLM 540B 在 29 项英语 NLP 任务中的 28 项达到此前大型语言模型的最佳少样本结果；在 150 多项任务的 BIG-bench 上，五样本平均表现超过人类平均成绩；在代码、翻译、多语言生成和问答上也取得先进结果。</p>
+<p>论文最重要的能力发现是思维链提示与规模的组合：模型被要求先生成自然语言推理链，再输出答案，就能在多项数学和常识推理任务上达到或超过微调最佳结果。PaLM 还显示出随规模出现的非连续能力跃迁，说明部分复杂能力在小模型中并非平滑存在。</p>
+<p>这些成果同时伴随记忆、数据污染、偏差、毒性、隐私和恶意使用风险。规模扩展不能替代负责任的数据治理和部署评估。未来工作应在更广泛语言、更真实场景和更严格的安全标准下继续研究模型能力与风险。</p>
+<h2 id="15">15. 致谢</h2>
+<p>作者感谢 Google Research、JAX、XLA、T5X、Pathways 和 TPU 团队，以及参与数据、基础设施、评估、安全和论文审阅的所有研究者。作者贡献、计算使用、环境影响、数据分析、数据表、模型卡和完整实验结果见附录。</p>
+<h2 id="a">附录 A：贡献</h2>
+<p>PaLM 项目持续一年以上，贡献覆盖准备、模型训练、后训练评估和全项目生命周期。作者分别负责模型架构与优化器选择、规模验证、低精度微调、训练效率、Pod 级数据并行、T5X 模型并行、确定性数据管线、检查点、Pathways 系统、数据集和词表；后训练工作覆盖英语 NLP、BIG-bench、推理、代码、翻译、多语言生成、多语言问答、偏差、污染、记忆、解释和伦理分析。完整贡献者名单与署名顺序见原页截图。</p>
+<p><img alt="附录 A：项目贡献与署名顺序（原页截图）" src="资源/原页-64.png">
+<img alt="附录 A：项目贡献续页（原页截图）" src="资源/原页-65.png"></p>
+<h2 id="b">附录 B：计算使用与环境影响</h2>
+<p>MFU 定义为实际词元吞吐量与峰值矩阵乘法吞吐量下理论最大词元吞吐量的比值。稠密仅解码器模型每个词元约需 <code>6N</code> 次非注意力 FLOPs，注意力项为 <code>6LH(2QT)</code>，其中 <code>L</code> 是层数、<code>H</code> 是头数、<code>Q</code> 是头维度、<code>T</code> 是序列长度。PaLM 540B 训练约使用 <code>2.56×10^24</code> FLOPs，约 29600 petaFLOP/s-days。按俄克拉何马数据中心的功耗、PUE 和碳强度估计，训练 PaLM 540B 的有效排放约为 271.43 吨二氧化碳当量；实验所用能源以可再生能源补偿。</p>
+<p><img alt="附录 B：MFU 公式、训练计算量与环境影响（原页截图）" src="资源/原页-66.png"></p>
+<h2 id="c">附录 C：数据集分析</h2>
+<p>作者使用 Know Your Data 对训练数据进行事后分析。分类器发现约 1.75% 的数据点包含地址、0.7% 包含电子邮件、32% 包含人名、1.5% 包含电话号码，但这些匹配不一定构成个人身份信息。分层主题模型显示，数据涵盖在线媒体、DIY 内容、电子游戏、视觉艺术等大量主题。附录还统计性别代词、宗教、族裔与职业的共现词，并提醒这些统计不能代表身份群体的完整复杂性。</p>
+<p><img alt="附录 C：数据集描述统计与主题模型（原页截图）" src="资源/原页-67.png">
+<img alt="附录 C：性别、宗教和族裔共现词统计（原页截图）" src="资源/原页-68.png"></p>
+<h2 id="d">附录 D：数据表</h2>
+<p>数据表记录数据来源、语言比例、代码语言比例、过滤规则、去重方式和可能的个人信息。多语言语料覆盖 100 多种语言；代码数据包含 Java、Python、C++、JavaScript 等 24 种语言。完整数据表、语言分布和代码分布保留在原页截图中。</p>
+<p><img alt="附录 D：数据表与语言分布（原页截图）" src="资源/原页-69.png">
+<img alt="附录 D：代码语言比例和数据筛选信息（原页截图）" src="资源/原页-70.png"></p>
+<h2 id="e">附录 E：模型卡</h2>
+<p>模型卡描述 PaLM 的预期用途、非预期用途、训练数据、架构、评估、限制和伦理风险。PaLM 是研究模型，不应直接用于高风险决策；实际应用必须单独进行安全、隐私、公平性和可靠性评估。</p>
+<p><img alt="附录 E：PaLM 模型卡（原页截图）" src="资源/原页-74.png">
+<img alt="附录 E：PaLM 模型卡续页（原页截图）" src="资源/原页-75.png"></p>
+<h2 id="f">附录 F：更长训练</h2>
+<p>作者比较继续重复旧数据与刷新数据后继续训练的效果。简单重复部分数据在 PaLM 62B 上没有明显收益；使用刷新后的数据继续训练则能改善验证损失和下游任务，说明数据新颖性与数据质量会影响长时间训练的价值。</p>
+<p><img alt="附录 F：更长训练与刷新数据实验（原页截图）" src="资源/原页-76.png">
+<img alt="附录 F：更长训练补充结果（原页截图）" src="资源/原页-77.png"></p>
+<h2 id="g">附录 G：模型输出样例</h2>
+<p>附录给出推理、偏差与毒性、记忆的完整提示和模型输出。由于这些内容包含长段提示、逐词续写和上下文格式，以下使用原论文逐页截图保留全部内容。</p>
+<p><img alt="附录 G：推理样例（原页截图）" src="资源/原页-78.png">
+<img alt="附录 G：偏差与毒性样例（原页截图）" src="资源/原页-79.png">
+<img alt="附录 G：记忆样例（原页截图）" src="资源/原页-82.png"></p>
+<h2 id="h">附录 H：补充结果</h2>
+<p>附录 H 包含 8B 与 62B 的英语 NLP 完整结果、BIG-bench 补充任务、多语言生成的细粒度指标、翻译与代码结果，以及模型规模曲线。数值密集表格保留为原论文截图，以便逐项核对。</p>
+<p><img alt="附录 H：英语 NLP 和 BIG-bench 补充结果（原页截图）" src="资源/原页-83.png">
+<img alt="附录 H：多语言生成与翻译补充结果（原页截图）" src="资源/原页-86.png">
+<img alt="附录 H：补充结果续页（原页截图）" src="资源/原页-87.png"></p>
+<h2 id="_2">参考文献</h2>
+<p>参考文献包括 Transformer、GPT、BERT、T5、GPT-3、Gopher、Chinchilla、LaMDA、GLaM、Switch Transformer、Pathways、BIG-bench、MMLU、思维链提示、代码生成、偏差与毒性评估等工作。为避免遗漏作者、年份、卷期、页码和链接，参考文献原页按页截图保留。</p>
+<p><img alt="参考文献第 1 页（原页截图）" src="资源/原页-54.png">
+<img alt="参考文献第 2 页（原页截图）" src="资源/原页-55.png">
+<img alt="参考文献第 3 页（原页截图）" src="资源/原页-56.png">
+<img alt="参考文献第 4 页（原页截图）" src="资源/原页-57.png">
+<img alt="参考文献第 5 页（原页截图）" src="资源/原页-58.png">
+<img alt="参考文献第 6 页（原页截图）" src="资源/原页-59.png">
+<img alt="参考文献第 7 页（原页截图）" src="资源/原页-60.png">
+<img alt="参考文献第 8 页（原页截图）" src="资源/原页-61.png">
+<img alt="参考文献第 9 页（原页截图）" src="资源/原页-62.png">
+<img alt="参考文献第 10 页（原页截图）" src="资源/原页-63.png"></p>
+<h2 id="_3">原论文逐页截图存档</h2>
+<p>以下截图按 PDF 页码顺序排列，包含正文中的全部图表、表格、提示、完整模型输出、数据表和附录内容。它们与上述中文译文按章节顺序对应，可用于逐句、逐项核对。</p>
+<p><img alt="原论文第 1 页" src="资源/原页-1.png">
+<img alt="原论文第 2 页" src="资源/原页-2.png">
+<img alt="原论文第 3 页" src="资源/原页-3.png">
+<img alt="原论文第 4 页" src="资源/原页-4.png">
+<img alt="原论文第 5 页" src="资源/原页-5.png">
+<img alt="原论文第 6 页" src="资源/原页-6.png">
+<img alt="原论文第 7 页" src="资源/原页-7.png">
+<img alt="原论文第 8 页" src="资源/原页-8.png">
+<img alt="原论文第 9 页" src="资源/原页-9.png">
+<img alt="原论文第 10 页" src="资源/原页-10.png">
+<img alt="原论文第 11 页" src="资源/原页-11.png">
+<img alt="原论文第 12 页" src="资源/原页-12.png">
+<img alt="原论文第 13 页" src="资源/原页-13.png">
+<img alt="原论文第 14 页" src="资源/原页-14.png">
+<img alt="原论文第 15 页" src="资源/原页-15.png">
+<img alt="原论文第 16 页" src="资源/原页-16.png">
+<img alt="原论文第 17 页" src="资源/原页-17.png">
+<img alt="原论文第 18 页" src="资源/原页-18.png">
+<img alt="原论文第 19 页" src="资源/原页-19.png">
+<img alt="原论文第 20 页" src="资源/原页-20.png">
+<img alt="原论文第 21 页" src="资源/原页-21.png">
+<img alt="原论文第 22 页" src="资源/原页-22.png">
+<img alt="原论文第 23 页" src="资源/原页-23.png">
+<img alt="原论文第 24 页" src="资源/原页-24.png">
+<img alt="原论文第 25 页" src="资源/原页-25.png">
+<img alt="原论文第 26 页" src="资源/原页-26.png">
+<img alt="原论文第 27 页" src="资源/原页-27.png">
+<img alt="原论文第 28 页" src="资源/原页-28.png">
+<img alt="原论文第 29 页" src="资源/原页-29.png">
+<img alt="原论文第 30 页" src="资源/原页-30.png">
+<img alt="原论文第 31 页" src="资源/原页-31.png">
+<img alt="原论文第 32 页" src="资源/原页-32.png">
+<img alt="原论文第 33 页" src="资源/原页-33.png">
+<img alt="原论文第 34 页" src="资源/原页-34.png">
+<img alt="原论文第 35 页" src="资源/原页-35.png">
+<img alt="原论文第 36 页" src="资源/原页-36.png">
+<img alt="原论文第 37 页" src="资源/原页-37.png">
+<img alt="原论文第 38 页" src="资源/原页-38.png">
+<img alt="原论文第 39 页" src="资源/原页-39.png">
+<img alt="原论文第 40 页" src="资源/原页-40.png">
+<img alt="原论文第 41 页" src="资源/原页-41.png">
+<img alt="原论文第 42 页" src="资源/原页-42.png">
+<img alt="原论文第 43 页" src="资源/原页-43.png">
+<img alt="原论文第 44 页" src="资源/原页-44.png">
+<img alt="原论文第 45 页" src="资源/原页-45.png">
+<img alt="原论文第 46 页" src="资源/原页-46.png">
+<img alt="原论文第 47 页" src="资源/原页-47.png">
+<img alt="原论文第 48 页" src="资源/原页-48.png">
+<img alt="原论文第 49 页" src="资源/原页-49.png">
+<img alt="原论文第 50 页" src="资源/原页-50.png">
+<img alt="原论文第 51 页" src="资源/原页-51.png">
+<img alt="原论文第 52 页" src="资源/原页-52.png">
+<img alt="原论文第 53 页" src="资源/原页-53.png">
+<img alt="原论文第 54 页" src="资源/原页-54.png">
+<img alt="原论文第 55 页" src="资源/原页-55.png">
+<img alt="原论文第 56 页" src="资源/原页-56.png">
+<img alt="原论文第 57 页" src="资源/原页-57.png">
+<img alt="原论文第 58 页" src="资源/原页-58.png">
+<img alt="原论文第 59 页" src="资源/原页-59.png">
+<img alt="原论文第 60 页" src="资源/原页-60.png">
+<img alt="原论文第 61 页" src="资源/原页-61.png">
+<img alt="原论文第 62 页" src="资源/原页-62.png">
+<img alt="原论文第 63 页" src="资源/原页-63.png">
+<img alt="原论文第 64 页" src="资源/原页-64.png">
+<img alt="原论文第 65 页" src="资源/原页-65.png">
+<img alt="原论文第 66 页" src="资源/原页-66.png">
+<img alt="原论文第 67 页" src="资源/原页-67.png">
+<img alt="原论文第 68 页" src="资源/原页-68.png">
+<img alt="原论文第 69 页" src="资源/原页-69.png">
+<img alt="原论文第 70 页" src="资源/原页-70.png">
+<img alt="原论文第 71 页" src="资源/原页-71.png">
+<img alt="原论文第 72 页" src="资源/原页-72.png">
+<img alt="原论文第 73 页" src="资源/原页-73.png">
+<img alt="原论文第 74 页" src="资源/原页-74.png">
+<img alt="原论文第 75 页" src="资源/原页-75.png">
+<img alt="原论文第 76 页" src="资源/原页-76.png">
+<img alt="原论文第 77 页" src="资源/原页-77.png">
+<img alt="原论文第 78 页" src="资源/原页-78.png">
+<img alt="原论文第 79 页" src="资源/原页-79.png">
+<img alt="原论文第 80 页" src="资源/原页-80.png">
+<img alt="原论文第 81 页" src="资源/原页-81.png">
+<img alt="原论文第 82 页" src="资源/原页-82.png">
+<img alt="原论文第 83 页" src="资源/原页-83.png">
+<img alt="原论文第 84 页" src="资源/原页-84.png">
+<img alt="原论文第 85 页" src="资源/原页-85.png">
+<img alt="原论文第 86 页" src="资源/原页-86.png">
+<img alt="原论文第 87 页" src="资源/原页-87.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

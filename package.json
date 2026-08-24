@@ -1,0 +1,27 @@
+{
+  "name": "llm-paper-translations",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "78 篇大语言模型论文中文译文的可部署阅读站点",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173",
+    "start": "node scripts/server.mjs",
+    "share": "node scripts/share.mjs",
+    "build": "vite build && node scripts/copy-published-content.mjs && node scripts/check-site.mjs dist",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "content:dates": "node scripts/update-article-dates.mjs",
+    "content:organizations": "node scripts/update-index-organizations.mjs",
+    "check": "node scripts/check-site.mjs",
+    "cf:login": "wrangler login",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "cloudflared": "0.7.3",
+    "vite": "8.2.1",
+    "wrangler": "4.124.0"
+  }
+}

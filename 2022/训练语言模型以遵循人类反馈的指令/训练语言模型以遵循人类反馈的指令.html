@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>训练语言模型以遵循人类反馈的指令</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">训练语言模型以遵循人类反馈的指令</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#_1">训练语言模型以遵循人类反馈的指令</a><ul>
+<li><a href="#_2">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 相关工作</a><ul>
+<li><a href="#21">2.1 对齐与从人类反馈中学习</a></li>
+<li><a href="#22">2.2 训练语言模型遵循指令</a></li>
+<li><a href="#23">2.3 评估语言模型的危害</a></li>
+<li><a href="#24">2.4 改变模型行为以降低危害</a></li>
+</ul>
+</li>
+<li><a href="#3">3 方法与实验细节</a><ul>
+<li><a href="#31">3.1 总体方法</a></li>
+<li><a href="#32">3.2 数据集</a></li>
+<li><a href="#33">3.3 任务</a></li>
+<li><a href="#34">3.4 人类数据收集</a></li>
+<li><a href="#35">3.5 模型</a><ul>
+<li><a href="#351">3.5.1 监督微调</a></li>
+<li><a href="#352">3.5.2 奖励模型</a></li>
+<li><a href="#353">3.5.3 强化学习</a></li>
+<li><a href="#354">3.5.4 基线</a></li>
+</ul>
+</li>
+<li><a href="#36">3.6 评估</a></li>
+</ul>
+</li>
+<li><a href="#4">4 结果</a><ul>
+<li><a href="#41-api">4.1 API 提示分布上的结果</a></li>
+<li><a href="#42-nlp">4.2 公开 NLP 数据集上的结果</a></li>
+<li><a href="#43">4.3 定性结果</a></li>
+</ul>
+</li>
+<li><a href="#5">5 讨论</a><ul>
+<li><a href="#51">5.1 对对齐研究的启示</a></li>
+<li><a href="#52">5.2 我们究竟在与谁对齐？</a></li>
+<li><a href="#53">5.3 局限性</a></li>
+<li><a href="#54">5.4 开放问题</a></li>
+<li><a href="#55">5.5 更广泛的影响</a></li>
+</ul>
+</li>
+<li><a href="#_3">结论</a></li>
+<li><a href="#_4">附录：数据、模型、评估和样例</a></li>
+<li><a href="#_5">参考文献</a></li>
+<li><a href="#_6">原论文附录页面存档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="_1">训练语言模型以遵循人类反馈的指令</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-03-04">2022 年 3 月 4 日</time></p>
+<p><strong>作者：</strong> Long Ouyang、Jeff Wu、Xu Jiang、Diogo Almeida、Carroll L. Wainwright、Pamela Mishkin、Chong Zhang、Sandhini Agarwal、Katarina Slama、Alex Ray、John Schulman、Jacob Hilton、Fraser Kelton、Luke Miller、Maddie Simens、Amanda Askell、Peter Welinder、Paul Christiano、Jan Leike、Ryan Lowe<br>
+<strong>机构：</strong> OpenAI<br>
+<strong>论文版本：</strong> arXiv:2203.02155v1，2022 年 3 月 4 日</p>
+<h2 id="_2">摘要</h2>
+<p>增大语言模型规模，并不会天然让模型更擅长遵循用户意图。大型语言模型仍可能生成不真实、有毒或对用户毫无帮助的内容，也就是说，它们没有与用户对齐。本文展示了一条通过人类反馈微调模型、使其在广泛任务上更符合用户意图的路径。我们先收集标注者编写的提示，以及通过 OpenAI API 提交的提示；随后收集标注者示范的理想行为，用监督学习微调 GPT-3。接着收集模型输出的人工排序数据，并以此训练奖励模型，再使用从人类反馈中强化学习的方法进一步微调监督模型。我们把得到的模型称为 InstructGPT。</p>
+<p>在针对真实提示分布的人类评估中，只有 13 亿参数的 InstructGPT 输出比 1750 亿参数的 GPT-3 更受偏好，参数少了约两个数量级。InstructGPT 在真实性方面有所改善，生成有毒内容的比例下降，同时在公开 NLP 数据集上的性能回退很小。尽管 InstructGPT 仍会犯简单错误，结果说明利用人类反馈进行微调，是让语言模型与人类意图对齐的一条有前景路线。</p>
+<p><img alt="图 1：不同模型相对于 175B 监督微调模型的人工偏好（原页截图）" src="资源/原页-2.png"></p>
+<h2 id="1">1 引言</h2>
+<p>大型语言模型可以通过提示完成各种自然语言处理任务，但它们经常表现出非预期行为：编造事实、生成带偏见或有毒的文本，或者根本不遵循用户指令。这是因为语言模型通常优化的是“根据互联网网页预测下一个词元”，而不是“有帮助且安全地遵循用户指令”。因此，语言建模目标与用户真正想要的行为并不一致。对于已经部署在数百种应用中的语言模型，避免这些非预期行为尤其重要。</p>
+<p>本文尝试让语言模型按照用户意图行动。这里既包括显式意图，例如遵循指令，也包括隐式意图，例如保持真实、不带偏见、不产生有毒或其他有害内容。按照相关工作的表述，我们希望模型做到：<strong>有帮助</strong>，能够协助用户完成任务；<strong>诚实</strong>，不编造信息或误导用户；<strong>无害</strong>，不对人类或环境造成身体、心理或社会伤害。</p>
+<p>我们聚焦于通过微调实现对齐，具体采用从人类反馈中强化学习的方法微调 GPT-3，使其遵循广泛的书面指令。流程如下：先雇用约 40 名承包标注者，在主要为英语的 API 提示上收集理想输出示范，用监督学习训练基线；再收集标注者对模型输出的比较排序，训练奖励模型；最后把奖励模型作为奖励函数，使用近端策略优化算法（PPO）微调监督模型。第 2 图给出了完整流程。该过程对齐的是一组特定人员的偏好，主要是标注者和研究人员，并不等同于对齐到普遍的“人类价值观”。</p>
+<p>我们主要让标注者在留出的客户提示上评价输出质量，同时在一系列公开 NLP 数据集上进行自动评估。我们训练 13 亿、60 亿和 1750 亿参数的三个 GPT-3 架构模型。主要发现如下：</p>
+<ol>
+<li><strong>标注者显著偏好 InstructGPT。</strong> 在测试集上，13 亿参数的 InstructGPT 输出优于 1750 亿参数 GPT-3；1750 亿参数 InstructGPT 相对于 GPT-3 的胜率为 85%±3%，相对于加入少样本提示的 GPT-3 胜率为 71%±4%。InstructGPT 更适合客户助手场景，也更可靠地遵守指令中的明确约束。</li>
+<li><strong>真实性提高。</strong> 在 TruthfulQA 基准上，InstructGPT 生成真实且有信息量答案的比例约为 GPT-3 的两倍。在封闭领域任务中，InstructGPT 编造输入中不存在信息的比例约为 21%，GPT-3 约为 41%。</li>
+<li><strong>毒性略有改善，偏见没有明显改善。</strong> 当提示模型保持尊重时，InstructGPT 的有毒输出比 GPT-3 少约 25%；在 Winogender 和 CrowS-Pairs 上没有显著优势。</li>
+<li><strong>可以降低对公共任务的性能回退。</strong> 普通 PPO 微调会在 SQuAD、DROP、HellaSwag 和法英翻译上产生“对齐税”；把预训练数据梯度混入 PPO，即 PPO-ptx，可以在不牺牲人工偏好分数的情况下显著减小回退。</li>
+<li><strong>能泛化到未参与训练的标注者。</strong> 留出标注者偏好 InstructGPT 的比例与训练标注者相近，但对更广泛用户群体的泛化仍需研究。</li>
+<li><strong>公开 NLP 数据集并不能代表真实使用。</strong> 在 API 提示分布上，FLAN 和 T0 模型略逊于监督微调基线，明显逊于 InstructGPT。</li>
+<li><strong>能泛化到微调分布之外的指令。</strong> InstructGPT 可以总结代码、回答代码问题，有时还能遵循其他语言的指令，尽管这些样本在微调数据中极少。</li>
+<li><strong>仍会犯简单错误。</strong> 模型可能不遵循指令、编造事实、对简单问题给出冗长的含糊回答，或接受带有错误前提的指令。</li>
+</ol>
+<p><img alt="图 2：监督微调、奖励模型训练和 PPO 强化学习三步流程（原页截图）" src="资源/原页-3.png"></p>
+<h2 id="2">2 相关工作</h2>
+<h3 id="21">2.1 对齐与从人类反馈中学习</h3>
+<p>本文建立在让模型与人类意图对齐的研究之上，尤其是从人类反馈中强化学习的方法。该方法最初用于模拟环境和 Atari 游戏中的机器人训练，后来被用于文本摘要等语言模型任务。相近的工作还把人类反馈作为对话、机器翻译、语义解析、故事生成、评论生成和证据抽取中的奖励信号。本文可以看作把 RLHF 直接应用于广泛语言任务上的模型对齐。</p>
+<p>近期研究也开始讨论语言模型“对齐”究竟意味着什么，并系统整理了有害内容、目标投机等失配行为。语言助手还被用作对齐研究的实验平台，研究者分析了简单基线及其规模效应。</p>
+<h3 id="22">2.2 训练语言模型遵循指令</h3>
+<p>另一条相关路线研究跨任务泛化：在大量公开 NLP 数据集上用自然语言指令微调模型，再在未见任务上进行零样本或少样本评估。不同工作在训练数据、指令格式、预训练模型规模和评估细节上有所差异，但共同发现是：带指令的多任务微调能够提升模型对留出任务的性能。导航领域也有训练模型遵循自然语言指令、在模拟环境中行动的研究。</p>
+<h3 id="23">2.3 评估语言模型的危害</h3>
+<p>改变语言模型行为的目标之一，是减轻模型部署到现实世界后可能造成的危害。已有工作记录了偏见输出、隐私泄露、错误信息和恶意使用风险，并建立了评估毒性、刻板印象和社会偏见的基准。但干预可能产生副作用，例如降低毒性也可能削弱模型对边缘群体语言的建模能力。</p>
+<h3 id="24">2.4 改变模型行为以降低危害</h3>
+<p>改变生成行为的方法包括过滤训练数据、在生成时屏蔽词或词元序列、加入安全控制码、收集人在环数据、正则化词嵌入、数据增强、改变目标函数、因果中介分析，以及使用第二个语言模型引导生成。本文采用人类反馈微调，并把帮助性、真实性与无害性作为主要评估维度。</p>
+<h2 id="3">3 方法与实验细节</h2>
+<h3 id="31">3.1 总体方法</h3>
+<p>我们从一个预训练语言模型、一组希望模型输出对齐结果的提示分布，以及一支受过训练的人类标注团队开始，然后执行三步流程。</p>
+<p><strong>步骤 1：收集示范数据，训练监督策略。</strong> 标注者在提示分布上提供理想行为示范。我们用监督学习在这些示范上微调预训练 GPT-3，得到监督微调策略（SFT）。</p>
+<p><strong>步骤 2：收集比较数据，训练奖励模型。</strong> 对同一个输入收集多个模型输出，让标注者指出更喜欢哪个。用这些比较训练奖励模型，使其预测人类偏好的输出。</p>
+<p><strong>步骤 3：用 PPO 针对奖励模型优化策略。</strong> 奖励模型输出一个标量奖励；我们使用近端策略优化算法微调监督策略，使它最大化该奖励。</p>
+<p>步骤 2 和步骤 3 可以循环进行：在当前最优策略上收集新的比较数据，训练新的奖励模型，再训练新的策略。实际实验中，大多数比较来自监督策略，也有一部分来自 PPO 策略。</p>
+<h3 id="32">3.2 数据集</h3>
+<p>提示数据主要来自 OpenAI API 上一版 InstructGPT 模型的 Playground 用户提交。用户每次切换到 InstructGPT 模型时都会收到通知，提示数据可能用于训练后续模型；本文不使用生产环境客户的 API 数据。我们通过检查长公共前缀去重，并限制每个用户 ID 最多保留 200 条提示。训练、验证和测试按用户 ID 划分，确保验证和测试用户不出现在训练集中。为避免模型学习客户敏感信息，我们过滤训练集中的个人可识别信息。</p>
+<p>为了训练最初的 InstructGPT，我们还请标注者自行编写三类提示：</p>
+<ul>
+<li><strong>普通提示：</strong> 任意提出一个任务，同时保证任务具有足够多样性。</li>
+<li><strong>少样本提示：</strong> 编写一条指令以及多组查询—回答对；用其中若干对作为上下文，构造少样本训练示例。</li>
+<li><strong>用户场景提示：</strong> 根据 API 等候名单申请中写出的使用场景，编写对应提示。</li>
+</ul>
+<p>这些提示形成三个数据集：SFT 数据集包含用于监督微调的示范；RM 数据集包含用于训练奖励模型的排序；PPO 数据集不含人工标签，只作为 RLHF 微调输入。SFT 约有 1.3 万条训练提示，RM 约 3.3 万条，PPO 约 3.1 万条。API 提示的使用类别以生成式任务为主：生成 45.6%、开放问答 12.4%、头脑风暴 11.2%、聊天 8.4%、改写 6.6%、摘要 4.2%、分类 3.5%、封闭问答 2.6%、抽取 1.9%。</p>
+<p><img alt="表 1：API 提示的使用类别分布（原页截图）" src="资源/原页-6.png">
+<img alt="表 2：API 提示示例（原页截图）" src="资源/原页-6.png"></p>
+<h3 id="33">3.3 任务</h3>
+<p>训练任务来自标注者编写的提示和早期 InstructGPT API 提示，覆盖文本生成、问答、对话、摘要、抽取和其他自然语言任务。数据集超过 96% 为英语，但第 4.3 节还会探测模型对其他语言指令和代码任务的能力。</p>
+<p>大多数任务由自然语言指令直接指定，例如“写一个关于聪明青蛙的故事”；也可以通过少样本示例间接指定，或通过给出故事开头要求模型继续。标注者需要尽力推断提示作者的意图，对任务很不清楚的输入可以跳过；同时还要考虑真实性以及有害、偏见或有毒输出等隐含要求。</p>
+<h3 id="34">3.4 人类数据收集</h3>
+<p>我们通过 Upwork 和 ScaleAI 雇用约 40 名承包标注者，用于收集示范、比较数据和进行主要评估。与早期只做摘要的人类偏好数据相比，本文输入覆盖更广泛的任务，还可能包含争议或敏感主题。我们希望标注者能够理解不同人口群体的偏好，并识别潜在有害输出，因此设计筛选测试，选择表现良好的人员。训练阶段和最终评估阶段的对齐标准可能冲突：训练时优先帮助用户完成请求，最终评估时则要求标注者优先真实性和无害性。</p>
+<p>研究团队为标注者提供入职培训、每项任务的详细说明，并在共享聊天室中回答问题。为测试偏好泛化，我们另聘一组不产生训练数据的留出标注者。尽管任务复杂，训练标注者之间的一致率为 72.6%±1.5%，留出标注者的一致率为 77.3%±1.3%。</p>
+<h3 id="35">3.5 模型</h3>
+<p>我们从 GPT-3 预训练模型开始。它们在广泛互联网数据上训练，能适应许多下游任务，但行为特征并不清晰。基于 GPT-3，我们训练三类模型。</p>
+<h4 id="351">3.5.1 监督微调</h4>
+<p>在标注者示范上进行监督学习，训练 16 个轮次，采用余弦学习率衰减和 0.2 的残差 dropout。最终模型选择依据验证集上的奖励模型分数。模型在验证损失上训练 1 个轮次后会过拟合，但继续训练反而能提升奖励分数和人工偏好。</p>
+<h4 id="352">3.5.2 奖励模型</h4>
+<p>从去掉最终解嵌入层的 SFT 模型开始，输入提示和回答，输出一个标量奖励。本文只使用 60 亿参数奖励模型，因为 1750 亿参数奖励模型训练不稳定，不适合作为强化学习中的价值函数。</p>
+<p>标注者一次对 K=4 至 K=9 个回答排序，这会产生 K 个回答之间的成对比较。由于同一任务中的比较高度相关，我们把同一提示产生的全部比较作为一个批次训练，避免奖励模型在单次遍历数据时过拟合。奖励模型损失为：</p>
+<div class="math-block">$$
+L(\theta)=-\frac{1}{\binom{K}{2}}\mathbb{E}_{(x,y_w,y_l)\sim D}\left[\log\sigma\left(r_\theta(x,y_w)-r_\theta(x,y_l)\right)\right]
+$$</div>
+<p>其中，<code>rθ(x, y)</code> 是奖励模型对提示 <code>x</code> 和回答 <code>y</code> 输出的标量，<code>yw</code> 是偏好的回答，<code>yl</code> 是较不偏好的回答，<code>D</code> 是人工比较数据集。由于损失对奖励整体平移不敏感，强化学习前我们把奖励模型校准为：标注者示范的平均分为 0。</p>
+<h4 id="353">3.5.3 强化学习</h4>
+<p>我们使用 PPO 在环境中微调 SFT 模型。环境每次给出一个随机客户提示，模型生成回答；奖励模型根据提示和回答给出奖励，随后回合结束。为抑制对奖励模型的过度优化，在每个词元上加入相对于 SFT 模型的 KL 惩罚，价值函数从奖励模型初始化。得到的模型称为 PPO。</p>
+<p>为修复公共 NLP 数据集上的性能回退，我们把预训练梯度混入 PPO 梯度，得到 PPO-ptx。训练目标为：</p>
+<div class="math-block">$$
+J(\phi)=\mathbb{E}_{(x,y)\sim D_{\pi}}\left[r_\theta(x,y)-\beta\log\frac{\pi^{RL}_\phi(y|x)}{\pi^{SFT}(y|x)}\right]+\gamma\mathbb{E}_{x\sim D_{pretrain}}\left[\log\pi^{RL}_\phi(x)\right]
+$$</div>
+<p>其中 <code>β</code> 控制 KL 惩罚强度，<code>γ</code> 控制预训练梯度强度；PPO 模型的 <code>γ=0</code>。除非另有说明，本文所说的 InstructGPT 指 PPO-ptx 模型。</p>
+<h4 id="354">3.5.4 基线</h4>
+<p>我们比较 PPO、SFT 和 GPT-3，也比较在 GPT-3 前面加入少样本前缀、把它引导到指令遵循模式的 GPT-3（GPT-3-prompted）。此外，还把 InstructGPT 与在 FLAN 和 T0 数据集上微调的 1750 亿参数 GPT-3 比较。这两个数据集都把多种 NLP 任务与自然语言指令结合起来；各自使用约 100 万个示例，并选择验证集奖励模型分数最高的检查点。</p>
+<h3 id="36">3.6 评估</h3>
+<p>要评估模型是否“对齐”，首先需要说明对齐在这里的含义。本文遵循“符合用户意图”的定义，并在实际语言任务中采用“有帮助、诚实、无害”的框架。</p>
+<p>有帮助意味着遵循指令，也能从少样本提示或 <code>Q: 问题 / A:</code> 等可解释模式中推断意图。由于提示意图可能模糊，我们依赖标注者判断，主要指标是人工偏好；但标注者并非提示的真实用户，因此可能与用户实际意图不同。</p>
+<p>纯生成模型的诚实性难以直接测量，因为需要比较输出与模型对正确答案的“信念”，而模型是黑箱。我们改为测量真实性：一是统计封闭领域任务中的幻觉，二是使用 TruthfulQA。无害性同样依赖部署语境，因此我们使用一组具体代理指标：是否适合客户助手、是否贬低受保护群体、是否含性或暴力内容，并在 RealToxicityPrompts 和 CrowS-Pairs 等基准上评估。</p>
+<p>量化评估分为两部分：</p>
+<ol>
+<li><strong>API 分布评估。</strong> 在与训练来源相同、但用户未出现在训练集的留出提示上，主要测量相对于 1750 亿参数 SFT 基线的偏好胜率，并收集 1--7 分 Likert 质量评分及多项输出元数据。由于 InstructGPT API 提示本身偏向指令遵循，也额外评估提交给 GPT-3 的提示。</li>
+<li><strong>公开 NLP 数据集评估。</strong> 一类数据集测量真实性、毒性和偏见，另一类测量问答、阅读理解和摘要等传统任务的零样本性能；同时在人类标注下评估 RealToxicityPrompts。</li>
+</ol>
+<h2 id="4">4 结果</h2>
+<h3 id="41-api">4.1 API 提示分布上的结果</h3>
+<p>标注者显著偏好 InstructGPT。GPT-3 输出最差；加入精心设计的少样本前缀后有所改善；监督微调进一步改善；使用比较数据进行 PPO 后再次改善。混入预训练数据不会显著改变人工偏好。1750 亿参数 InstructGPT 相对于 GPT-3 的直接胜率为 85%±3%，相对于少样本 GPT-3 为 71%±4%。在提交给 GPT-3 的提示上，结论总体不变，只是大模型 PPO-ptx 略差。</p>
+<p><img alt="图 3：模型相对于 175B SFT 的偏好胜率（原页截图）" src="资源/原页-11.png"></p>
+<p>InstructGPT 在更具体的元数据指标上也更好：更适合客户助手场景，更常遵守“答案不超过两段”等明确约束，更少完全偏离指令，也更少在封闭领域任务中编造事实。留出标注者的偏好与训练标注者相近，说明模型并非只是在过拟合训练标注者的偏好。奖励模型在留出标注者上的预测准确率为 69.6%±0.9%，训练标注者上为 72.4%±0.4%。</p>
+<p><img alt="图 4：API 分布上的行为元数据（原页截图）" src="资源/原页-12.png"></p>
+<p>公开 NLP 数据集不能充分代表 API 用户使用方式。FLAN 和 T0 的表现优于默认 GPT-3，与加入少样本前缀的 GPT-3 相近，但低于 SFT。原因有二：公开数据集主要覆盖自动指标易评估的分类、问答、摘要和翻译，而分类与问答只占 API 提示约 18%；开放式生成和头脑风暴约占 57%。此外，公开数据集输入多样性不足。理想的通用指令模型应同时结合公开任务数据和真实用户提示。</p>
+<p><img alt="图 5：InstructGPT、FLAN 和 T0 的 Likert 质量评分（原页截图）" src="资源/原页-12.png"></p>
+<h3 id="42-nlp">4.2 公开 NLP 数据集上的结果</h3>
+<p><strong>真实性提高。</strong> TruthfulQA 人工评估显示，PPO 模型生成真实且有信息量答案的比例显著高于 GPT-3。即使只评估没有专门针对 GPT-3 选择的题目，PPO 仍更真实，只是绝对提升缩小。加入“如果不确定就回答‘我无法评论’”的指令后，PPO 更倾向于诚实但缺少信息，而 GPT-3 更容易自信地给出错误答案。API 分布上的封闭领域幻觉率也支持这一结论。</p>
+<p><img alt="图 6：TruthfulQA 真实性与信息量（原页截图）" src="资源/原页-13.png"></p>
+<p><strong>毒性略有改善，但偏见没有改善。</strong> 在 RealToxicityPrompts 上，我们同时使用 Perspective API 自动评分和人工评分；样本按输入毒性均匀抽取，因此绝对毒性数值高于标准采样。当明确要求输出安全、尊重的内容时，InstructGPT 的毒性低于 GPT-3；去掉尊重提示后优势消失，明确要求生成有毒内容时，InstructGPT 反而比 GPT-3 更有毒。人工评估得到相同结论：尊重提示下更少有毒，无提示时相近。SFT 的毒性最低，但连续性和总体偏好也最低，可能是因为它生成了很短或退化的回答。</p>
+<p>在 Winogender 和 CrowS-Pairs 上，我们计算成对句子的相对生成概率和二元分布熵。完全无偏的模型应当不偏好任一句子、熵最大。按这一指标，InstructGPT 并不比 GPT-3 更无偏；PPO-ptx 与 GPT-3 相近，而在要求尊重时熵降低，偏见反而升高。模型在被要求尊重时往往对输出更有把握，但这种确定性并不保证输出没有刻板印象。</p>
+<p><img alt="图 7：RealToxicityPrompts 上的人工与自动毒性评估（原页截图）" src="资源/原页-14.png"></p>
+<p><strong>减少公共任务的性能回退。</strong> 直接在 API 分布上训练 PPO 会产生“对齐税”，在 DROP、SQuAD、HellaSwag 和法英翻译等任务上低于 GPT-3。PPO-ptx 把预训练数据更新混入 PPO，能在所有数据集上减轻回退，并在 HellaSwag 上超过 GPT-3；在 DROP、SQuADv2 和翻译上仍有差距。增加 KL 系数的简单方法不如混入预训练更新，因为它会明显降低验证奖励，且不能完全恢复 DROP 和 SQuAD 性能。</p>
+<h3 id="43">4.3 定性结果</h3>
+<p>InstructGPT 对 RLHF 微调分布之外的指令表现出有前景的泛化能力。它能遵循非英语指令、总结代码并回答代码问题；这些任务在微调数据中只占很小比例。1750 亿参数 PPO-ptx 模型通常能回答代码问题，也能执行其他语言的指令，但有时仍用英语回答。GPT-3 也能完成这些任务，却需要更谨慎的提示，而且通常不会自动进入相应模式。</p>
+<p><img alt="图 8：非英语指令与代码问答的泛化示例（原页截图）" src="资源/原页-16.png"></p>
+<p>模型仍会犯简单错误：带错误前提的指令可能被当成真实；对简单问题可能过度保留、列出一堆可能性而不直接回答；包含多个明确约束时性能下降，例如要求列出 10 部 20 世纪 30 年代、且以法国为背景的电影，或要求用指定句数写摘要。作者推测，标注者被要求奖励认识论上的谦逊，可能促使奖励模型偏好含糊回答；错误前提样本稀少，也使模型难以泛化。</p>
+<p><img alt="图 9：InstructGPT 仍会犯的简单错误（原页截图）" src="资源/原页-17.png"></p>
+<h2 id="5">5 讨论</h2>
+<h3 id="51">5.1 对对齐研究的启示</h3>
+<p>本文是更广泛的“让 AI 系统符合人类意图”研究计划的一部分。我们采用迭代式路线：先改善当前系统，而不是抽象地讨论尚不存在的超级智能。这样做的缺点是不会直接面对只有超人系统才会出现的对齐问题；优点是拥有清晰的经验反馈回路，能够不断检验方法的效果和局限。RLHF 也是多种超级智能对齐方案中的重要构件。</p>
+<p>本文得到四点经验：</p>
+<ol>
+<li><strong>提高对齐程度的成本相对预训练很小。</strong> 训练 175B SFT 模型需要 4.9 petaflops/s-days，175B PPO-ptx 需要 60 petaflops/s-days，而 GPT-3 预训练需要 3640 petaflops/s-days。RLHF 对改善用户帮助性的效果超过增加 100 倍模型规模，现阶段投资已有模型的对齐可能比训练更大模型更划算。</li>
+<li><strong>“遵循指令”能够泛化。</strong> 模型在非英语和代码任务上几乎没有直接监督，却表现出一定能力。这很重要，因为不可能让人类监督模型将执行的每一项任务。</li>
+<li><strong>大部分性能退化可以缓解。</strong> 如果性能回退无法消除，就会形成对齐税，鼓励人们继续使用能力更强但未对齐的模型。PPO-ptx 说明 RLHF 可以成为低对齐税的方法。</li>
+<li><strong>把对齐研究放到真实系统中验证。</strong> 过去的工作常在理论、小型合成环境或公开 NLP 数据集上进行；本文将方法应用到真实客户使用的生产系统，提供了对实际效果和局限性的反馈。</li>
+</ol>
+<h3 id="52">5.2 我们究竟在与谁对齐？</h3>
+<p>模型最终行为由基础模型及其训练数据、微调数据和对齐方法共同决定。本文并没有对齐到抽象的“人类偏好”或“人类价值”，而是对齐到一组标注者的偏好；这些偏好受任务说明、付费工作环境和研究人员影响。</p>
+<p>第一，我们对齐的是训练标注者提供的示范和偏好。他们主要是通过 Upwork 或 Scale AI 招募的英语使用者，居住在美国或东南亚，不同标注者在许多示例上存在分歧。</p>
+<p>第二，我们也在对齐研究人员的偏好。研究人员编写标注说明，指导示范写作和偏好选择，并在聊天室中回答边界案例问题。不同说明和界面设计会如何影响数据与模型行为，仍需研究。</p>
+<p>第三，训练数据由 OpenAI 客户提交的提示决定，因而隐含地对齐到客户认为有价值的用途。有些客户的目标可能与最终用户福祉不一致，例如希望最大化用户在其平台上的停留时间；标注者通常看不到提示和回答将被如何使用。</p>
+<p>第四，OpenAI 客户并不代表所有潜在用户和受影响群体，等候名单最初还受到 OpenAI 员工网络的影响。公平、透明且具备问责机制的对齐过程很难设计。本文只证明该方法能够针对特定应用对齐到特定人群，并不声称研究人员、标注者或 API 客户就是正确的偏好来源。</p>
+<p>一种可能的方向是训练可以按不同群体偏好进行条件化的模型，或让不同群体能够轻易微调、提示模型表达自己的偏好。但这些模型仍会影响更广泛社会，谁的偏好应被纳入、如何让群体退出有害过程，都是困难的治理问题。</p>
+<h3 id="53">5.3 局限性</h3>
+<p><strong>方法。</strong> InstructGPT 的行为部分由承包标注者的反馈决定，价值判断可能受其身份、信念、文化背景和个人经历影响。约 40 名标注者并不能代表所有使用和受模型影响的人。大多数比较出于成本原因只由一名承包者标注，多次标注有助于发现分歧；当输出会不成比例地影响少数群体时，也许应提高属于该群体的标注者偏好的权重。</p>
+<p><strong>模型。</strong> InstructGPT 既不完全对齐，也不完全安全。它仍可能生成有毒、带偏见、虚构事实、色情或暴力内容，并在某些输入上产生不合理回答。更大的局限是：模型在多数情况下会遵循用户指令，即使这样做可能在现实中造成伤害。例如，当提示要求模型表现得极端偏见时，InstructGPT 会比同规模 GPT-3 生成更多有毒内容。</p>
+<h3 id="54">5.4 开放问题</h3>
+<p>未来可以通过对抗性数据收集，让标注者主动寻找模型最坏行为，再把这些样例加入训练集；也可以过滤预训练数据，或结合 WebGPT 等提高真实性的方法。本文允许模型在用户要求时生成潜在有害或不诚实输出，但让模型在所有语境下保持无害非常困难，因为危害取决于部署环境。RLHF 还可以与控制码、采样时的小模型引导、专家迭代、行为克隆和约束优化结合。</p>
+<p>比较排序并不一定是最高效的对齐信号。标注者可以直接编辑回答，或用自然语言写批评；如何设计更好的标注界面，也是一个重要的人机交互问题。把预训练数据混入 RLHF 虽然能降低对齐税，却可能让预训练数据中的不良行为重新出现；过滤预训练混合数据或加入合成指令是可行方向。</p>
+<p>对齐对象还可区分为指令、意图、显露偏好、理想偏好、利益和价值。本文为了简化，选择对齐推断出的用户意图，但仍需要研究一种透明、能代表受影响人群、并在不同群体间形成广泛共识的对齐过程。</p>
+<h3 id="55">5.5 更广泛的影响</h3>
+<p>本文希望通过训练模型去做特定人群希望它做的事情，提升大型语言模型的正面影响。结果表明，相关技术有望让模型更有帮助、更真实、更无害；但随着规模继续扩大，必须更加重视模型是否符合人类意图。</p>
+<p>让模型更擅长遵循用户意图，也会让滥用更容易，例如生成有说服力的错误信息、仇恨或辱骂内容。对齐技术不是解决大型语言模型安全问题的万能药，而应作为更广泛安全生态中的一个工具。医疗诊断、依据受保护属性分类人员、信贷或就业资格判断、住房审批、政治广告和执法等高风险领域，都需要谨慎部署，甚至不应部署。</p>
+<p>开源模型会增加限制有害应用的难度；只允许少数组织访问则会造成技术集中。通过 API 统一部署可以实施用例限制、滥用监控、撤销权限和速率限制，但代价是透明度下降、权力更集中。最终，模型究竟与谁对齐，将显著影响其净社会影响是正面还是负面。</p>
+<h2 id="_3">结论</h2>
+<p>本文展示了使用人类示范、奖励模型和 PPO 强化学习训练 InstructGPT 的完整流程。与单纯扩大 GPT-3 相比，人类反馈微调显著改善了遵循指令、人工偏好、真实性和尊重性；PPO-ptx 还减轻了 RLHF 在公共 NLP 任务上的性能回退。模型仍存在幻觉、偏见、毒性、错误前提和过度保留等问题，且训练偏好只代表有限群体。总体而言，RLHF 是把通用语言模型调整到人类意图的一条有效但不充分的路径。</p>
+<h2 id="_4">附录：数据、模型、评估和样例</h2>
+<p>论文附录包含标注者编写提示、API 用户提示、数据规模与多样性、标注者筛选与人口统计、完整标注说明、网页标注界面、SFT/RM/RLHF 训练细节、FLAN 与 T0 模型、自动评估数据集结构、额外实验结果、奖励系数消融、学习率实验以及模型样例。为了保持原论文中表格、图形、示例对话和代码的逐页对应，以下保留原论文截图；正文已翻译这些附录的用途与主要结论。</p>
+<p><img alt="表 3：标注者收集的 API 元数据（原页截图）" src="资源/原页-9.png">
+<img alt="表 6：数据集规模（原页截图）" src="资源/原页-26.png">
+<img alt="表 7：数据集标注项（原页截图）" src="资源/原页-27.png">
+<img alt="表 8--11：提示数量和长度统计（原页截图）" src="资源/原页-28.png">
+<img alt="表 12：标注者人口统计（原页截图）" src="资源/原页-32.png">
+<img alt="表 13：标注者满意度调查（原页截图）" src="资源/原页-33.png">
+<img alt="图 10--12：标注说明与标注界面（原页截图）" src="资源/原页-31.png">
+<img alt="图 13：FLAN 与 T0 调优（原页截图）" src="资源/原页-35.png">
+<img alt="图 14--27：自动评估数据集的提示结构和特征（原页截图）" src="资源/原页-36.png">
+<img alt="表 14：自动评估结果（原页截图）" src="资源/原页-40.png">
+<img alt="图 28--41：额外实验结果、消融和参数分析（原页截图）" src="资源/原页-41.png">
+<img alt="图 42--50：模型样例（原页截图）" src="资源/原页-52.png"></p>
+<h2 id="_5">参考文献</h2>
+<p>参考文献涵盖从人类偏好强化学习、语言模型对齐、指令微调、模型安全、偏见与毒性评估，到摘要、问答、翻译、TruthfulQA、WebGPT 和公共 NLP 基准的相关工作。作者、年份、论文题目、会议、页码和链接按原论文完整保留在以下原页截图中。</p>
+<p><img alt="参考文献第 21 页（原页截图）" src="资源/原页-21.png">
+<img alt="参考文献第 22 页（原页截图）" src="资源/原页-22.png">
+<img alt="参考文献第 23 页（原页截图）" src="资源/原页-23.png">
+<img alt="参考文献第 24 页（原页截图）" src="资源/原页-24.png">
+<img alt="参考文献第 25 页（原页截图）" src="资源/原页-25.png"></p>
+<h2 id="_6">原论文附录页面存档</h2>
+<p>附录中的长提示、完整数据表、图 28--50 的曲线与模型输出，以及论文版本中的全部原始细节，均保留在资源目录的逐页截图中。截图编号与 PDF 页码一一对应，可用于核对译文中的数值、示例和表格顺序。</p>
+<p><img alt="附录页面 26（原页截图）" src="资源/原页-26.png">
+<img alt="附录页面 27（原页截图）" src="资源/原页-27.png">
+<img alt="附录页面 28（原页截图）" src="资源/原页-28.png">
+<img alt="附录页面 29（原页截图）" src="资源/原页-29.png">
+<img alt="附录页面 30（原页截图）" src="资源/原页-30.png">
+<img alt="附录页面 31（原页截图）" src="资源/原页-31.png">
+<img alt="附录页面 32（原页截图）" src="资源/原页-32.png">
+<img alt="附录页面 33（原页截图）" src="资源/原页-33.png">
+<img alt="附录页面 34（原页截图）" src="资源/原页-34.png">
+<img alt="附录页面 35（原页截图）" src="资源/原页-35.png">
+<img alt="附录页面 36（原页截图）" src="资源/原页-36.png">
+<img alt="附录页面 37（原页截图）" src="资源/原页-37.png">
+<img alt="附录页面 38（原页截图）" src="资源/原页-38.png">
+<img alt="附录页面 39（原页截图）" src="资源/原页-39.png">
+<img alt="附录页面 40（原页截图）" src="资源/原页-40.png">
+<img alt="附录页面 41（原页截图）" src="资源/原页-41.png">
+<img alt="附录页面 42（原页截图）" src="资源/原页-42.png">
+<img alt="附录页面 43（原页截图）" src="资源/原页-43.png">
+<img alt="附录页面 44（原页截图）" src="资源/原页-44.png">
+<img alt="附录页面 45（原页截图）" src="资源/原页-45.png">
+<img alt="附录页面 46（原页截图）" src="资源/原页-46.png">
+<img alt="附录页面 47（原页截图）" src="资源/原页-47.png">
+<img alt="附录页面 48（原页截图）" src="资源/原页-48.png">
+<img alt="附录页面 49（原页截图）" src="资源/原页-49.png">
+<img alt="附录页面 50（原页截图）" src="资源/原页-50.png">
+<img alt="附录页面 51（原页截图）" src="资源/原页-51.png">
+<img alt="附录页面 52（原页截图）" src="资源/原页-52.png">
+<img alt="附录页面 53（原页截图）" src="资源/原页-53.png">
+<img alt="附录页面 54（原页截图）" src="资源/原页-54.png">
+<img alt="附录页面 55（原页截图）" src="资源/原页-55.png">
+<img alt="附录页面 56（原页截图）" src="资源/原页-56.png">
+<img alt="附录页面 57（原页截图）" src="资源/原页-57.png">
+<img alt="附录页面 58（原页截图）" src="资源/原页-58.png">
+<img alt="附录页面 59（原页截图）" src="资源/原页-59.png">
+<img alt="附录页面 60（原页截图）" src="资源/原页-60.png">
+<img alt="附录页面 61（原页截图）" src="资源/原页-61.png">
+<img alt="附录页面 62（原页截图）" src="资源/原页-62.png">
+<img alt="附录页面 63（原页截图）" src="资源/原页-63.png">
+<img alt="附录页面 64（原页截图）" src="资源/原页-64.png">
+<img alt="附录页面 65（原页截图）" src="资源/原页-65.png">
+<img alt="附录页面 66（原页截图）" src="资源/原页-66.png">
+<img alt="附录页面 67（原页截图）" src="资源/原页-67.png">
+<img alt="附录页面 68（原页截图）" src="资源/原页-68.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

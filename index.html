@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>中文译文索引</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: #202124; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif; line-height: 1.72; }
+    a { color: inherit; text-decoration: none; }
+    header { border-bottom: 1px solid #e5e7eb; }
+    .header-inner, main { width: min(1080px, calc(100% - 48px)); margin: 0 auto; }
+    .header-inner { padding: 64px 0 34px; }
+    h1 { margin: 0; color: #111827; font-size: 34px; line-height: 1.25; font-weight: 720; letter-spacing: 0; }
+    .intro { max-width: 680px; margin: 14px 0 0; color: #6b7280; font-size: 15px; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 30px; }
+    nav a { color: #475569; font-size: 13px; border-bottom: 1px solid transparent; }
+    nav a:hover { color: #0f766e; border-color: #0f766e; }
+    main { padding: 18px 0 92px; }
+    .year { display: grid; grid-template-columns: 120px minmax(0, 1fr); padding: 46px 0 12px; border-bottom: 1px solid #eef0f2; scroll-margin-top: 12px; }
+    .year:last-child { border-bottom: 0; }
+    h2 { position: sticky; top: 20px; align-self: start; margin: 0; color: #9ca3af; font-size: 23px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+    .paper { display: grid; grid-template-columns: 94px minmax(0, 1fr); gap: 24px; padding: 0 0 42px; }
+    .paper:last-child { padding-bottom: 34px; }
+    time { padding-top: 5px; color: #9ca3af; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .paper-content { min-width: 0; padding-left: 24px; border-left: 2px solid #e5e7eb; }
+    h3 { margin: 0 0 10px; color: #111827; font-size: 19px; line-height: 1.45; letter-spacing: 0; }
+    h3 a:hover { color: #0f766e; }
+    .paper p { max-width: 790px; margin: 0; color: #4b5563; font-size: 14.5px; text-align: justify; }
+    .paper .organization { display: flex; align-items: baseline; gap: 8px; max-width: none; margin: -2px 0 11px; color: #69707a; font-size: 11.5px; line-height: 1.5; text-align: left; }
+    .organization span { flex: 0 0 auto; color: #9ca3af; font-weight: 650; }
+    .links { display: flex; gap: 8px; margin-top: 12px; color: #64748b; font-size: 12px; }
+    .links a:hover { color: #0f766e; }
+    .links span { color: #cbd5e1; }
+    @media (max-width: 720px) {
+      .header-inner, main { width: min(100% - 32px, 1080px); }
+      .header-inner { padding: 42px 0 28px; }
+      h1 { font-size: 28px; }
+      .year { display: block; padding-top: 36px; }
+      h2 { position: static; margin-bottom: 26px; }
+      .paper { display: block; padding-bottom: 38px; }
+      time { display: block; padding: 0 0 8px; }
+      .paper-content { padding-left: 16px; }
+      .paper p { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>中文译文索引</h1>
+      <p class="intro">当前共收录 78 篇完整中文译文。论文按首次公开时间排列，每篇均提供带分级目录的网页版、Markdown 文档与原论文链接。</p>
+      <nav aria-label="按年份跳转"><a href="#2017">2017</a><a href="#2018">2018</a><a href="#2019">2019</a><a href="#2020">2020</a><a href="#2021">2021</a><a href="#2022">2022</a><a href="#2023">2023</a><a href="#2024">2024</a><a href="#2025">2025</a><a href="#2026">2026</a></nav>
+    </div>
+  </header>
+  <main><section class="year" id="2017">
+        <h2>2017</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2017-06-12">2017.06.12</time>
+          <div class="paper-content">
+            <h3><a href="2017/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87.html">注意力机制就是一切</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>主流的序列转换模型建立在复杂的循环神经网络或卷积神经网络之上，并包含编码器和解码器。表现最好的模型还通过注意力机制连接编码器与解码器。我们提出一种新的简单网络架构 Transformer，它完全基于注意力机制，彻底摆脱循环和卷积。针对两项机器翻译任务的实验表明，这些模型在质量上优于既有方法，同时更易并行化，训练所需时间也显著更少。在 WMT 2014 英译德任务上，我们的模型取得 28.4 的 BLEU 分数，比包括集成模型在内的既有最佳结果高出 2 分以上。在 WMT 2014 英译法任务上，我们的模型在 8 块 GPU 上训练 3.5 天后取得 41.8 的单模型最新最佳 BLEU 分数，训练成本只是文献中最佳模型的一小部分。</p>
+            <div class="links"><a href="2017/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87.html">阅读网页版</a><span>·</span><a href="2017/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87/%E6%B3%A8%E6%84%8F%E5%8A%9B%E6%9C%BA%E5%88%B6%E5%B0%B1%E6%98%AF%E4%B8%80%E5%88%87.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2018">
+        <h2>2018</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2018-06-11">2018.06.11</time>
+          <div class="paper-content">
+            <h3><a href="2018/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.html">通过生成式预训练改进语言理解</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI</p>
+            <p>自然语言理解包含众多不同任务，例如文本蕴含、问答、语义相似性评估和文档分类。虽然大规模无标注文本语料非常丰富，但用于学习这些特定任务的标注数据十分稀缺，因此以判别方式训练的模型很难获得足够好的表现。我们证明，先在多样化无标注文本语料上对语言模型进行生成式预训练，再针对每项具体任务进行判别式微调，可以在这些任务上取得大幅提升。与以往方法不同，我们在微调期间采用任务感知的输入变换，在只需对模型架构进行极少改动的情况下实现有效迁移。我们在广泛的自然语言理解基准上证明了这一方法的有效性。这个通用、与任务无关的模型超过了针对各任务专门设计架构的判别式模型，在研究的 12 项任务中有 9 项显著刷新了先进水平。</p>
+            <div class="links"><a href="2018/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.html">阅读网页版</a><span>·</span><a href="2018/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/%E9%80%9A%E8%BF%87%E7%94%9F%E6%88%90%E5%BC%8F%E9%A2%84%E8%AE%AD%E7%BB%83%E6%94%B9%E8%BF%9B%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.md">Markdown</a><span>·</span><a href="https://openai.com/research/language-unsupervised" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2018-10-11">2018.10.11</time>
+          <div class="paper-content">
+            <h3><a href="2018/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83.html">BERT：面向语言理解的深度双向变换器预训练</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>我们提出一种新的语言表示模型 BERT，即“来自变换器的双向编码器表示”。不同于近期的语言表示模型，BERT 通过在所有层中联合依据左、右两侧上下文，对无标注文本预训练深层双向表示。因此，只需增加一个输出层，就可以对预训练的 BERT 模型进行微调，在问答、语言推理等广泛任务上建立达到当前最佳水平的模型，而无需大幅修改任务专用架构。BERT 在概念上简单、在经验上强大。在十一项自然语言处理任务上取得新的最佳结果，包括将 GLUE 得分提升到 80.5%（绝对提升 7.7 个百分点）、将 MultiNLI 准确率提升到 86.7%（绝对提升 4.6 个百分点）、将 SQuAD 1.1 问答测试集 F1 提升到 93.2（提升 1.5 个百分点），以及将 SQuAD 2.0 测试集 F1 提升到 83.1（提升 5.1 个百分点）。</p>
+            <div class="links"><a href="2018/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83.html">阅读网页版</a><span>·</span><a href="2018/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83/BERT%EF%BC%9A%E9%9D%A2%E5%90%91%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%8F%8C%E5%90%91%E5%8F%98%E6%8D%A2%E5%99%A8%E9%A2%84%E8%AE%AD%E7%BB%83.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/1810.04805" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2019">
+        <h2>2019</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2019-02-14">2019.02.14</time>
+          <div class="paper-content">
+            <h3><a href="2019/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8.html">语言模型是无监督多任务学习器</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI</p>
+            <p>问答、机器翻译、阅读理解和摘要生成等自然语言处理任务，通常采用任务专用数据集上的监督学习方法。我们证明：当语言模型在一个名为 WebText、包含数百万网页的新数据集上训练时，即使没有任何显式监督，也会开始学习这些任务。当以文档和问题作为条件时，语言模型在 CoQA 数据集上生成的答案达到 55 F1；在没有使用 127,000 多个训练样例的情况下，这一结果达到或超过四个基线系统中的三个。语言模型容量是零样本任务迁移成功的关键；随着容量增加，各项任务的表现以对数线性方式提升。我们最大的模型 GPT-2 是一个拥有 15 亿参数的 Transformer，在零样本设置下，于八个受测语言建模数据集中的七个达到当前最佳结果，但对 WebText 仍然欠拟合。模型样例体现了这些改进，能够生成由连贯段落组成的文本。</p>
+            <div class="links"><a href="2019/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8.html">阅读网页版</a><span>·</span><a href="2019/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%97%A0%E7%9B%91%E7%9D%A3%E5%A4%9A%E4%BB%BB%E5%8A%A1%E5%AD%A6%E4%B9%A0%E5%99%A8.md">Markdown</a><span>·</span><a href="https://openai.com/research/better-language-models" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2019-10-23">2019.10.23</time>
+          <div class="paper-content">
+            <h3><a href="2019/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90.html">使用统一文本到文本变换器探索迁移学习的极限</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>迁移学习先让模型在数据丰富的任务上进行预训练，再在下游任务上微调，如今已经成为自然语言处理（NLP）中的一种强大技术。迁移学习的有效性催生了多种多样的方法、方法论和实践。本文提出一个把所有基于文本的语言问题都转换为文本到文本格式的统一框架，以此探索 NLP 迁移学习技术的全貌。我们的系统研究在数十项语言理解任务上比较了预训练目标、架构、无标注数据集、迁移方法及其他因素。我们把这项探索得出的见解与规模扩展及新建的“超大规模清洗抓取语料库”结合起来，在涵盖摘要生成、问答、文本分类等任务的众多基准上取得了当时最佳结果。为推动 NLP 迁移学习的后续研究，我们公开了数据集、预训练模型和代码。1</p>
+            <div class="links"><a href="2019/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90.html">阅读网页版</a><span>·</span><a href="2019/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90/%E4%BD%BF%E7%94%A8%E7%BB%9F%E4%B8%80%E6%96%87%E6%9C%AC%E5%88%B0%E6%96%87%E6%9C%AC%E5%8F%98%E6%8D%A2%E5%99%A8%E6%8E%A2%E7%B4%A2%E8%BF%81%E7%A7%BB%E5%AD%A6%E4%B9%A0%E7%9A%84%E6%9E%81%E9%99%90.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/1910.10683" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2020">
+        <h2>2020</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2020-01-23">2020.01.23</time>
+          <div class="paper-content">
+            <h3><a href="2020/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B.html">神经语言模型的缩放定律</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI · 约翰斯·霍普金斯大学</p>
+            <p>我们研究语言模型在交叉熵损失上的经验缩放定律。损失随模型规模、数据集规模和训练所用计算量呈幂律缩放，其中一些趋势跨越七个以上数量级。在很宽的范围内，网络宽度或深度等其他架构细节的影响很小。若干简单方程刻画了过拟合对模型规模和数据集规模的依赖，以及训练速度对模型规模的依赖。利用这些关系，我们能够确定固定计算预算的最优分配方式。大模型的样本效率显著更高，因此，计算效率最优的训练方式，是在相对适量的数据上训练非常大的模型，并在远未收敛时停止训练。</p>
+            <div class="links"><a href="2020/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B.html">阅读网页版</a><span>·</span><a href="2020/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B/%E7%A5%9E%E7%BB%8F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%A9%E6%94%BE%E5%AE%9A%E5%BE%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2020-05-28">2020.05.28</time>
+          <div class="paper-content">
+            <h3><a href="2020/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8.html">语言模型是少样本学习器</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI</p>
+            <p>近期工作表明，先在大规模文本语料库上进行预训练，再针对具体任务微调，能够在许多自然语言处理任务和基准上取得巨大收益。这种方法的架构通常与任务无关，但它仍需要包含数千乃至数万个样例的任务专用微调数据集。相比之下，人类通常只需看到少数几个样例，或收到简单指令，就能执行一项新的语言任务，而当前的自然语言处理系统对此仍普遍感到困难。本文表明，扩大语言模型能够大幅改善与任务无关的少样本性能，有时甚至能够与先前最先进的微调方法相竞争。具体而言，我们训练了 GPT-3，这是一个拥有 1750 亿参数的自回归语言模型，其参数量是以往任何非稀疏语言模型的 10 倍；然后，我们在少样本设置下测试了它的性能。在所有任务上，GPT-3 都不进行任何梯度更新或微调，任务及少样本演示纯粹通过与模型的文本交互指定。</p>
+            <div class="links"><a href="2020/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8.html">阅读网页版</a><span>·</span><a href="2020/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8/%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E5%B0%91%E6%A0%B7%E6%9C%AC%E5%AD%A6%E4%B9%A0%E5%99%A8.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2021">
+        <h2>2021</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2021-01-11">2021.01.11</time>
+          <div class="paper-content">
+            <h3><a href="2021/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B.html">Switch Transformer：用简单高效的稀疏性扩展到万亿参数模型</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>在深度学习中，模型通常对所有输入重复使用同一组参数。混合专家（Mixture of Experts，MoE）模型打破了这一做法，为每个输入样例选择不同的参数。由此得到的是一种稀疏激活模型：它拥有数量惊人的参数，但计算成本保持不变。然而，尽管 MoE 已取得若干显著成果，其复杂性、通信成本和训练不稳定性阻碍了广泛采用。本文通过提出 Switch Transformer 处理这些问题。我们简化 MoE 路由算法，设计了更直观、通信和计算成本更低的改进模型；提出的训练技术能够缓解不稳定性，并首次展示可以用较低精度的 bfloat16 格式训练大型稀疏模型。我们以 T5-Base 和 T5-Large（Raffel 等，2019）为基础设计模型，在相同计算资源下将预训练速度最高提升 7 倍。</p>
+            <div class="links"><a href="2021/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2021/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B/Switch%20Transformer%EF%BC%9A%E7%94%A8%E7%AE%80%E5%8D%95%E9%AB%98%E6%95%88%E7%9A%84%E7%A8%80%E7%96%8F%E6%80%A7%E6%89%A9%E5%B1%95%E5%88%B0%E4%B8%87%E4%BA%BF%E5%8F%82%E6%95%B0%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2101.03961" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2021-08-16">2021.08.16</time>
+          <div class="paper-content">
+            <h3><a href="2021/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9.html">论基础模型的机遇与风险</a></h3>
+            <p class="organization"><span>发布主体</span>Stanford CRFM</p>
+            <p>随着在广泛数据上训练、通常以大规模自监督方式训练，并能够适配到众多下游任务的模型兴起，人工智能正在经历一次范式转变；BERT、DALL-E 和 GPT-3 都是其中的例子。我们把这些模型称为“基础模型”，以强调它们既处于关键中心位置、又仍不完整的特征。本报告全面梳理基础模型的机遇与风险，范围包括它们的能力，例如语言、视觉、机器人操控、推理和人机交互；技术原理，例如模型架构、训练流程、数据、系统、安全、评估和理论；应用，例如法律、医疗保健和教育；以及社会影响，例如不平等、滥用、经济与环境影响、法律与伦理问题。基础模型虽然建立在标准深度学习和迁移学习之上，但其规模会产生新的涌现能力，而它们在众多任务上的有效性又形成了同质化激励。同质化能够提供强大杠杆，却也要求我们保持谨慎，因为基础模型的缺陷会被所有下游适配模型继承。</p>
+            <div class="links"><a href="2021/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9.html">阅读网页版</a><span>·</span><a href="2021/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9/%E8%AE%BA%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%9C%BA%E9%81%87%E4%B8%8E%E9%A3%8E%E9%99%A9.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2108.07258" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2021-12-08">2021.12.08</time>
+          <div class="paper-content">
+            <h3><a href="2021/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81.html">扩展语言模型：训练 Gopher 的方法、分析与洞见</a></h3>
+            <p class="organization"><span>发布主体</span>DeepMind</p>
+            <p>语言建模通过利用大量人类书面知识，更好地预测和理解世界，为智能通信系统迈出了一步。本文分析了基于 Transformer 的语言模型在多种规模下的表现，模型参数量从数千万一直扩展到名为 Gopher 的 2800 亿参数模型。我们在 152 项多样任务上评估这些模型，发现它们在绝大多数任务上都取得了当时的最佳结果。规模带来的收益在阅读理解、事实核查和有毒语言识别等领域最为明显，而逻辑推理和数学推理得到的改善较小。我们还对训练数据集和模型行为进行了整体分析，考察模型规模与偏见、毒性之间的交叉关系。最后，我们讨论语言模型在人工智能安全中的应用，以及缓解下游伤害的方法。</p>
+            <div class="links"><a href="2021/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81.html">阅读网页版</a><span>·</span><a href="2021/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81/%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E8%AE%AD%E7%BB%83%20Gopher%20%E7%9A%84%E6%96%B9%E6%B3%95%E3%80%81%E5%88%86%E6%9E%90%E4%B8%8E%E6%B4%9E%E8%A7%81.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2112.11446" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2022">
+        <h2>2022</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2022-01-20">2022.01.20</time>
+          <div class="paper-content">
+            <h3><a href="2022/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">LaMDA：面向对话应用的语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>我们提出 LaMDA（面向对话应用的语言模型）。LaMDA 是一组专门用于对话的 Transformer 神经语言模型，参数量最高达到 1370 亿，在 1.56 万亿个公开对话数据和网页文本词语上进行预训练。单纯扩大模型规模可以提升质量，但对安全性和事实依据性的改善较小。我们证明，使用带标注数据进行微调，并让模型能够查询外部知识源，可以显著缓解安全性和事实依据性这两个核心挑战。第一个挑战是安全性，即确保模型回答符合一组人类价值观，例如避免有害建议和不公平偏见。我们用一组示例性人类价值观定义安全指标，并发现：用少量众包标注数据微调 LaMDA 分类器，对候选回答进行过滤，是改善安全性的有前景方法。第二个挑战是事实依据性，即让模型能够查询外部知识源，包括信息检索系统、语言翻译器和计算器。</p>
+            <div class="links"><a href="2022/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LaMDA%EF%BC%9A%E9%9D%A2%E5%90%91%E5%AF%B9%E8%AF%9D%E5%BA%94%E7%94%A8%E7%9A%84%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2201.08239" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-01-28">2022.01.28</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B.html">思维链提示激发大型语言模型的推理能力</a></h3>
+            <p class="organization"><span>发布主体</span>Google Research</p>
+            <p>本文研究生成“思维链”如何显著提升大型语言模型完成复杂推理的能力。思维链是一系列通向最终答案的中间推理步骤。我们提出一种简单的方法：在少样本提示的示例中，除了输入和输出，还提供若干思维链示范，让模型模仿这种逐步推理方式。对三个大型语言模型的实验表明，思维链提示能够改善算术推理、常识推理和符号推理任务的表现，而且收益可能非常显著。例如，仅用八个思维链示例提示 5400 亿参数的 PaLM，就在 GSM8K 数学文字题基准上取得当时最佳准确率，超过了带验证器微调的 1750 亿参数 GPT-3。进一步分析发现，思维链能力具有规模涌现特征：小模型往往生成流畅但不合逻辑的推理链，只有模型达到约千亿参数规模后，逐步推理才稳定地产生收益。思维链还提供了可解释的中间过程，有助于定位错误，并能把同一模型的能力扩展到更长的推理序列。</p>
+            <div class="links"><a href="2022/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B.html">阅读网页版</a><span>·</span><a href="2022/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B/%E6%80%9D%E7%BB%B4%E9%93%BE%E6%8F%90%E7%A4%BA%E6%BF%80%E5%8F%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8E%A8%E7%90%86%E8%83%BD%E5%8A%9B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2201.11903" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-03-04">2022.03.04</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4.html">训练语言模型以遵循人类反馈的指令</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI</p>
+            <p>增大语言模型规模，并不会天然让模型更擅长遵循用户意图。大型语言模型仍可能生成不真实、有毒或对用户毫无帮助的内容，也就是说，它们没有与用户对齐。本文展示了一条通过人类反馈微调模型、使其在广泛任务上更符合用户意图的路径。我们先收集标注者编写的提示，以及通过 OpenAI API 提交的提示；随后收集标注者示范的理想行为，用监督学习微调 GPT-3。接着收集模型输出的人工排序数据，并以此训练奖励模型，再使用从人类反馈中强化学习的方法进一步微调监督模型。我们把得到的模型称为 InstructGPT。在针对真实提示分布的人类评估中，只有 13 亿参数的 InstructGPT 输出比 1750 亿参数的 GPT-3 更受偏好，参数少了约两个数量级。InstructGPT 在真实性方面有所改善，生成有毒内容的比例下降，同时在公开 NLP 数据集上的性能回退很小。</p>
+            <div class="links"><a href="2022/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4.html">阅读网页版</a><span>·</span><a href="2022/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4/%E8%AE%AD%E7%BB%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%BB%A5%E9%81%B5%E5%BE%AA%E4%BA%BA%E7%B1%BB%E5%8F%8D%E9%A6%88%E7%9A%84%E6%8C%87%E4%BB%A4.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-03-29">2022.03.29</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">训练计算最优的大型语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>DeepMind</p>
+            <p>本文研究：在给定训练计算预算下，Transformer 语言模型的最优参数量和训练词元数应如何分配。作者发现，当时的大型语言模型普遍训练不足，原因是社区倾向于不断扩大模型规模，却基本维持训练数据量不变。通过训练 400 多个模型，参数规模从 7000 万到超过 160 亿、训练词元从 50 亿到 5000 亿，研究发现计算最优训练应让模型大小和训练词元数以相同速率扩展：模型参数每翻倍，训练词元数也应翻倍。作者用这一规律训练 Chinchilla：它与 Gopher 使用相同训练算力，但只有 700 亿参数，并用四倍更多的数据训练。Chinchilla 在大范围下游评估上稳定且显著超过 Gopher（2800 亿）、GPT-3（1750 亿）、Jurassic-1（1780 亿）和 MT-NLG（5300 亿）。</p>
+            <div class="links"><a href="2022/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%AE%AD%E7%BB%83%E8%AE%A1%E7%AE%97%E6%9C%80%E4%BC%98%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-04-05">2022.04.05</time>
+          <div class="paper-content">
+            <h3><a href="2022/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1.html">PaLM：用 Pathways 扩展语言建模</a></h3>
+            <p class="organization"><span>发布主体</span>Google Research</p>
+            <p>大型语言模型已经证明，少样本学习能够在几乎不增加任务专属标注数据的情况下完成多种自然语言任务。为了进一步理解规模对少样本学习的影响，本文训练了一个 5400 亿参数、稠密激活的 Transformer 语言模型，称为 Pathways 语言模型（PaLM）。PaLM 使用 Pathways 这一机器学习系统，在 6144 个 TPU v4 芯片上训练；该系统可以把一个模型高效地扩展到多个 TPU Pod。作者在数百项语言理解、语言生成、代码和数学推理基准上进行评估，发现规模扩展带来的收益尚未饱和。PaLM 540B 在许多任务上达到当时最佳少样本结果，并在一系列多步推理任务上超过经过微调的最佳系统；在新发布的 BIG-bench 上，模型的平均表现超过了参与测试的人类平均成绩。</p>
+            <div class="links"><a href="2022/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1.html">阅读网页版</a><span>·</span><a href="2022/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1/PaLM%EF%BC%9A%E7%94%A8%20Pathways%20%E6%89%A9%E5%B1%95%E8%AF%AD%E8%A8%80%E5%BB%BA%E6%A8%A1.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2204.02311" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-04-14">2022.04.14</time>
+          <div class="paper-content">
+            <h3><a href="2022/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">GPT-NeoX-20B：开放的自回归语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>EleutherAI</p>
+            <p>本文介绍 GPT-NeoX-20B：一个在 The Pile 数据集上训练的 200 亿参数自回归语言模型。提交论文时，它是公开提供权重的最大稠密自回归语言模型。作者以 GPT-3 为参照，介绍模型架构、训练过程、硬件与软件配置、数据和分词器，并在语言理解、数学和知识任务上进行评估。结果表明，GPT-NeoX-20B 是尤其强大的少样本推理器：与规模相近的 GPT-3 和 FairSeq 模型相比，它从零样本切换到五样本时获得更大的性能提升。作者将训练和评估代码开源，并通过宽松许可证公开模型权重和训练过程中的检查点。论文还讨论数据重复、少样本评估、计算成本、碳排放，以及开放发布 20B 模型对能力研究、AI 伦理、对齐和研究公平性的影响。</p>
+            <div class="links"><a href="2022/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/GPT-NeoX-20B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E8%87%AA%E5%9B%9E%E5%BD%92%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2204.06745" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-05-02">2022.05.02</time>
+          <div class="paper-content">
+            <h3><a href="2022/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">OPT：开放预训练 Transformer 语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Meta AI</p>
+            <p>大型语言模型通常需要数十万计算日才能训练，已经展现出令人瞩目的零样本和少样本能力，但高昂成本使其难以复现。对于少数通过 API 提供的模型，研究者无法获得完整权重，因而难以研究模型的行为和局限。本文介绍 OPT（开放预训练 Transformer）系列：一组 1.25 亿到 1750 亿参数的仅解码器预训练 Transformer。OPT-175B 的性能与 GPT-3 相当，但开发过程的碳足迹约为 GPT-3 的七分之一。作者公开 1.25 亿到 660 亿参数模型，并向符合条件的研究者提供 OPT-175B 访问；同时发布训练日志、训练代码和评估代码。论文描述工程故障、学习率调整、数据收集和去重，并在自然语言、对话、偏差、仇恨言论和毒性基准上进行评估，强调这些模型仍不适合商业部署。</p>
+            <div class="links"><a href="2022/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/OPT%EF%BC%9A%E5%BC%80%E6%94%BE%E9%A2%84%E8%AE%AD%E7%BB%83%20Transformer%20%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2205.01068" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-05-24">2022.05.24</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8.html">大型语言模型是零样本推理器</a></h3>
+            <p class="organization"><span>发布主体</span>东京大学 · Google Research</p>
+            <p>预训练大型语言模型（LLM）已经广泛用于自然语言处理的许多子领域，通常被认为是依靠任务示例进行少样本学习的优秀模型。近期的思维链提示通过提供逐步作答示例，诱发复杂的多步推理，在算术和符号推理等困难的系统 2 任务上取得了最先进结果，而这些任务并不遵循大型语言模型通常的规模定律。人们往往把这类成功归因于模型的少样本学习能力。本文表明，只需在每个问题的答案之前加入“让我们一步一步地思考”这一短语，大型语言模型本身就是相当不错的零样本推理器。我们把这种方法称为零样本思维链。实验显示，在不为每个任务手工设计少样本示例的情况下，零样本思维链使用同一个提示模板，就能显著超过标准零样本模型，覆盖算术推理（MultiArith、GSM8K、AQUA-RAT、SVAMP）、符号推理（末字母拼接、抛硬币）以及其他逻辑推理（日期理解、追踪打乱对象）等多种基准。</p>
+            <div class="links"><a href="2022/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8.html">阅读网页版</a><span>·</span><a href="2022/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%98%AF%E9%9B%B6%E6%A0%B7%E6%9C%AC%E6%8E%A8%E7%90%86%E5%99%A8.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2205.11916" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-10-05">2022.10.05</time>
+          <div class="paper-content">
+            <h3><a href="2022/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B.html">GLM-130B：开放的双语预训练模型</a></h3>
+            <p class="organization"><span>发布主体</span>清华大学 · 智谱 AI</p>
+            <p>本文介绍 GLM-130B，一个拥有 1300 亿参数、同时支持英文和中文的预训练语言模型。它的目标是开源一个至少达到 GPT-3（davinci）水平的千亿参数模型，并公开这一规模模型如何成功预训练的工程细节。训练过程中，作者遇到了大量技术和工程问题，尤其是损失尖峰、梯度异常与训练发散。论文系统介绍 GLM-130B 的架构选择、训练效率与稳定性策略、推理加速、低成本量化和失败尝试。GLM-130B 在多项英文基准上显著超过 GPT-3 175B，在部分任务上也超过 4 倍大的 PaLM 540B；但在所有评测中并不稳定地超过 OPT-175B 和 BLOOM-176B。作为双语模型，它在中文基准上持续大幅超过最大的中文模型 ERNIE TITAN 3.0 260B。</p>
+            <div class="links"><a href="2022/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/GLM-130B%EF%BC%9A%E5%BC%80%E6%94%BE%E7%9A%84%E5%8F%8C%E8%AF%AD%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2210.02414" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-10-20">2022.10.20</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">规模化指令微调语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>把语言模型在一组用自然语言指令表述的数据集上进行微调，已经被证明可以提升模型性能，并改善对未见任务的泛化。本文围绕三个问题系统研究指令微调：微调任务数量如何扩展、模型规模如何扩展，以及加入思维链标注是否能提升推理。作者把多个已有数据混合与新的对话、代码和推理数据合并，构造包含 473 个数据集、146 个任务类别和 1836 个任务的 Flan 微调集合。实验覆盖 PaLM、T5 和 U-PaLM 等不同架构、从 8000 万到 5400 亿参数的多种规模，以及零样本、少样本和思维链提示。结果显示，指令微调在 MMLU、BIG-bench Hard、TyDiQA、MGSM、开放式生成和 RealToxicityPrompts 上普遍改善模型。</p>
+            <div class="links"><a href="2022/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/%E8%A7%84%E6%A8%A1%E5%8C%96%E6%8C%87%E4%BB%A4%E5%BE%AE%E8%B0%83%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2210.11416" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-11-09">2022.11.09</time>
+          <div class="paper-content">
+            <h3><a href="2022/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">BLOOM：1760亿参数的开放多语言语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>BigScience</p>
+            <p>大型语言模型已经显示出仅凭少量示例或自然语言指令就能执行新任务的能力。尽管这些能力推动了广泛应用，但大多数大型语言模型由资源充足的机构开发，而且模型、数据和训练过程往往不向公众开放。为了推动这项技术民主化，本文介绍 BLOOM：一个拥有 1760 亿参数、开放访问、由数百名研究者协作设计和构建的语言模型。BLOOM 是仅解码器的 Transformer 语言模型，在 ROOTS 语料上训练；ROOTS 汇集了 46 种自然语言和 13 种编程语言的数百个数据源，共计 59 种语言。实验表明，BLOOM 在多类基准上取得有竞争力的结果，经过多任务提示微调后性能更强。为便于后续研究和应用，作者依据负责任人工智能许可协议公开模型权重和代码。论文同时记录了数据治理、语言选择、分词器、模型架构、分布式工程、训练稳定性、碳排放、评测和开放发布的完整协作过程。</p>
+            <div class="links"><a href="2022/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2022/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/BLOOM%EF%BC%9A1760%E4%BA%BF%E5%8F%82%E6%95%B0%E7%9A%84%E5%BC%80%E6%94%BE%E5%A4%9A%E8%AF%AD%E8%A8%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2211.05100" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-12-15">2022.12.15</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7.html">宪法式人工智能：通过人工智能反馈实现无害性</a></h3>
+            <p class="organization"><span>发布主体</span>Anthropic</p>
+            <p>随着人工智能系统能力增强，我们希望利用它们监督其他人工智能系统。本文尝试通过自我改进训练一个无害的 AI 助手，而且不使用任何由人工标注的有害输出标签。唯一的人工监督是一组规则或原则，因此作者把这种方法称为“宪法式人工智能”（CAI）。训练包含监督学习和强化学习两个阶段。监督阶段先从初始模型采样回答，再让模型进行自我批评和改写，最后在改写后的回答上微调原模型。强化学习阶段从微调模型采样回答，让模型判断两个回答哪一个更好，再利用这些 AI 偏好训练偏好模型，最后以偏好模型作为奖励信号进行强化学习，即“基于 AI 反馈的强化学习”（RLAIF）。最终模型既无害，又不会面对有害问题时一味回避，而是解释拒答原因。监督学习和强化学习都可以使用思维链式推理，提高人工评测性能并让 AI 的决策过程更透明。该方法能够用少得多的人工标签更精细地控制 AI 行为。</p>
+            <div class="links"><a href="2022/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7.html">阅读网页版</a><span>·</span><a href="2022/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7/%E5%AE%AA%E6%B3%95%E5%BC%8F%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%EF%BC%9A%E9%80%9A%E8%BF%87%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%8F%8D%E9%A6%88%E5%AE%9E%E7%8E%B0%E6%97%A0%E5%AE%B3%E6%80%A7.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2022-12-20">2022.12.20</time>
+          <div class="paper-content">
+            <h3><a href="2022/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.html">迈向大型语言模型推理：一篇综述</a></h3>
+            <p class="organization"><span>发布主体</span>伊利诺伊大学厄巴纳-香槟分校</p>
+            <p>推理是人类智能的基本组成部分，在问题求解、决策和批判性思维中发挥核心作用。近年来，大型语言模型在自然语言处理领域取得显著进展，并且有研究观察到：当模型足够大时，它们可能表现出某些推理能力。然而，语言模型究竟能在多大程度上推理，仍然没有明确答案。本文全面综述大型语言模型推理的研究现状，包括改进和诱发推理的技术、评估推理能力的方法与基准、已有研究的发现和影响，以及未来方向。作者先澄清“推理”的概念，再讨论监督微调、提示与上下文学习、思维链、理由工程、问题分解、混合训练、自举和自我改进；随后总结终端任务指标与直接分析推理过程的方法。本文希望为快速发展的领域提供及时、细致的参考，并推动对语言模型是否真正推理的进一步讨论。</p>
+            <div class="links"><a href="2022/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2022/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E8%BF%88%E5%90%91%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2212.10403" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2023">
+        <h2>2023</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2023-02-27">2023.02.27</time>
+          <div class="paper-content">
+            <h3><a href="2023/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">LLaMA：开放且高效的基础语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Meta AI</p>
+            <p>本文介绍 LLaMA，一组参数规模从 70 亿到 650 亿的基础语言模型。作者在数万亿词元上训练模型，并证明只使用公开可获得的数据集，也可以训练出接近当前最佳水平的模型，而不依赖专有或无法访问的数据。LLaMA-13B 在大多数基准上超过 1750 亿参数的 GPT-3，LLaMA-65B 与 Chinchilla-70B 和 PaLM-540B 等最佳模型具有竞争力。作者公开全部模型，希望降低大语言模型研究和使用的门槛。</p>
+            <div class="links"><a href="2023/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2023/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/LLaMA%EF%BC%9A%E5%BC%80%E6%94%BE%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E5%9F%BA%E7%A1%80%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2302.13971" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-03-15">2023.03.15</time>
+          <div class="paper-content">
+            <h3><a href="2023/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">GPT-4 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>OpenAI</p>
+            <p>本文报告 GPT-4 的开发工作。GPT-4 是一种大规模多模态模型，能够接收图像与文本输入，并生成文本输出。尽管在许多真实世界场景中仍不及人类，GPT-4 在多项专业和学术基准上已表现出人类水平的能力，其中包括通过模拟律师资格考试，成绩大约位于考生前 10%。GPT-4 是基于 Transformer 的模型，通过预训练来预测文档中的下一个词元。训练后的对齐过程提升了模型在事实性和遵循预期行为方面的表现。本项目的一项核心工作，是开发能够在广泛规模上呈现可预测行为的基础设施和优化方法。借助这些方法，研究者只需使用训练计算量不超过 GPT-4 千分之一的模型，就能准确预测 GPT-4 的若干性能指标。</p>
+            <div class="links"><a href="2023/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2023/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/GPT-4%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2303.08774" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-03-31">2023.03.31</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.html">大型语言模型综述</a></h3>
+            <p class="organization"><span>发布主体</span>中国人民大学 · 蒙特利尔大学</p>
+            <p>自 20 世纪 50 年代图灵测试提出以来，人类一直在探索如何让机器掌握语言智能。语言本质上是一套复杂而精细、受语法规则支配的人类表达系统；让人工智能算法真正理解并掌握语言，始终是一项重大挑战。过去二十年中，语言建模作为语言理解与生成的主要路线被广泛研究，经历了从统计语言模型到神经语言模型的演变。近年来，研究者通过在大规模语料上预训练 Transformer，提出了预训练语言模型，并在多种自然语言处理任务上展示出强大能力。发现扩大模型规模可以增强能力后，研究进一步把参数扩展到更大数量级。一个有趣现象是：当参数规模超过某个水平后，模型不但性能显著提高，还会表现出小型语言模型所没有的特殊能力，例如上下文学习。为了区分不同规模的语言模型，研究界把规模显著、通常包含数百亿或数千亿参数的预训练语言模型称为“大型语言模型”。</p>
+            <div class="links"><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2303.18223" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-05-17">2023.05.17</time>
+          <div class="paper-content">
+            <h3><a href="2023/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">PaLM 2 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>本文介绍 PaLM 2，一种在多语言能力和推理能力上达到当时先进水平、同时比前代 PaLM 更节省计算的语言模型。PaLM 2 以 Transformer 为基础，使用多种预训练目标的混合进行训练。通过对英语、多语言语言任务和推理任务的大量评估，我们证明 PaLM 2 在不同模型规模上都能显著改善下游任务质量，同时比 PaLM 推理更快、更高效。更高的效率既支持更广泛的部署，也让模型能够以更自然的交互节奏更快响应。PaLM 2 在 BIG-bench 及其他推理任务上相较 PaLM 有大幅提升，展现出稳健的推理能力；在一系列负责任人工智能评估中表现稳定，并可以在推理阶段控制毒性，而无需额外开销或损害其他能力。总体而言，PaLM 2 在多种任务和能力上取得当时的先进结果。需要区分 PaLM 2 家族中的预训练模型、微调模型以及使用这些模型的面向用户产品；</p>
+            <div class="links"><a href="2023/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2023/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/PaLM%202%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2305.10403" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-06-23">2023.06.23</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.html">多模态大型语言模型综述</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>以 GPT-4V 为代表的多模态大型语言模型正在成为新的研究热点。这类模型把强大的大型语言模型作为“大脑”，处理图像、视频、音频等多模态任务。根据图像编写故事、无需光学字符识别的数学推理等涌现能力，在传统多模态方法中很少见，显示出一条通向通用人工智能的潜在路径。学术界和产业界因此快速推进多模态大型语言模型，希望在能力上接近甚至超过 GPT-4V。本文首先给出多模态大型语言模型的基本形式化定义，并系统介绍架构、训练策略、训练数据和评估方法；随后讨论如何扩展输入粒度、模态、语言和应用场景；再介绍多模态幻觉及其缓解方法，以及多模态上下文学习、多模态思维链和语言模型辅助视觉推理等扩展技术；最后总结挑战和未来方向。由于多模态大型语言模型仍处于早期阶段，作者会持续更新综述，并维护一个收集最新论文的开源页面。</p>
+            <div class="links"><a href="2023/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2023/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2306.13549" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-07-06">2023.07.06</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0.html">大型语言模型评估综述</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>大型语言模型凭借在各种应用中的前所未有的表现，正在学术界和工业界获得越来越多的关注。随着大型语言模型持续参与科研和日常使用，评估它们的重要性不断提高：评估不仅要覆盖任务层面的能力，也要覆盖社会层面的潜在风险，以便更全面地理解模型。过去几年中，研究者从多个角度对大型语言模型进行了大量考察。本文围绕三个关键维度，对这些评估方法作出系统综述：评估什么、在哪里评估以及如何评估。首先，本文从评估任务角度概览已有工作，覆盖通用自然语言处理任务、推理、医疗使用、伦理、教育、自然科学与社会科学、智能体应用以及其他领域。其次，围绕“在哪里”和“如何”评估，本文深入讨论评估方法与基准，这些方法和基准是衡量大型语言模型性能的关键组成部分。随后，作者总结模型在不同任务中的成功与失败案例。最后，本文提出大型语言模型评估面临的若干未来挑战。</p>
+            <div class="links"><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E8%AF%84%E4%BC%B0%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2307.03109" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-07-12">2023.07.12</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88.html">大型语言模型综合概览</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>大型语言模型近来在自然语言处理及更广泛的任务中展现出令人瞩目的能力。这一成功带来了大量研究贡献，主题包括架构创新、更好的训练策略、上下文长度改进、微调、多模态大型语言模型、机器人、数据集、基准和效率等。随着技术快速发展、突破不断出现，要把握这一领域的整体进展变得越来越困难。面对快速涌现的海量文献，研究社区迫切需要一份简洁而全面的概览。本文从广泛视角综述大型语言模型相关概念。文章在介绍必要背景的同时，覆盖大型语言模型研究前沿的高级主题，形成一份自包含的综合概览。作者希望它不仅是一篇系统综述，也是一份快速、全面的参考资料，使研究者和实践者能够从大量信息丰富的工作摘要中获得洞见，推进大型语言模型研究。</p>
+            <div class="links"><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88.html">阅读网页版</a><span>·</span><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%BB%BC%E5%90%88%E6%A6%82%E8%A7%88.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2307.06435" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-07-18">2023.07.18</time>
+          <div class="paper-content">
+            <h3><a href="2023/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B.html">Llama 2：开放基础模型与微调聊天模型</a></h3>
+            <p class="organization"><span>发布主体</span>Meta AI</p>
+            <p>本文开发并发布 Llama 2，一组参数规模从 70 亿到 700 亿的预训练和微调大型语言模型。微调模型称为 Llama 2-Chat，针对对话场景进行优化。在我们测试的大多数基准上，Llama 2-Chat 超过现有开源聊天模型；根据帮助性和安全性的人工评估，它们可能成为闭源模型的合适替代品。本文详细描述 Llama 2-Chat 的微调方法和安全改进，希望社区能够在此基础上继续工作，并推动大型语言模型的负责任发展。</p>
+            <div class="links"><a href="2023/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2023/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B/Llama%202%EF%BC%9A%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B%E4%B8%8E%E5%BE%AE%E8%B0%83%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2307.09288" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-07-19">2023.07.19</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8.html">大型语言模型的挑战与应用</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>大型语言模型（LLM）在短短几年内从机器学习讨论中几乎不存在的对象，发展为无处不在的核心主题。由于该领域发展速度极快，人们很难判断还有哪些挑战尚未解决，以及哪些应用领域已经取得了实际成效。本文试图系统整理当前仍然开放的问题和已经成功的应用，使机器学习研究者能够更快理解这一领域的现状，并开始开展有效工作。</p>
+            <div class="links"><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8.html">阅读网页版</a><span>·</span><a href="2023/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%8C%91%E6%88%98%E4%B8%8E%E5%BA%94%E7%94%A8.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2307.10169" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-08-22">2023.08.22</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0.html">基于大型语言模型的自主智能体综述</a></h3>
+            <p class="organization"><span>发布主体</span>中国人民大学</p>
+            <p>自主智能体长期以来一直是学术界和工业界的研究重点。以往研究往往在封闭、受限的环境中训练拥有有限知识的智能体，这与人类的学习过程存在显著差异，也使智能体难以作出类似人类的决策。近年来，大型语言模型（LLM）通过吸收海量网络知识，表现出达到人类水平智能的潜力，推动了基于大型语言模型的自主智能体研究迅速增长。本文对这些研究进行全面综述，从整体视角系统梳理基于大型语言模型的自主智能体。首先讨论智能体的构建，并提出一个能够涵盖大量既有工作的统一框架；然后概述其在社会科学、自然科学和工程领域的多样化应用；最后深入讨论目前常用的评估策略。在此基础上，本文还总结该领域面临的若干挑战，并提出未来研究方向。</p>
+            <div class="links"><a href="2023/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2023/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0/%E5%9F%BA%E4%BA%8E%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD%E4%BD%93%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2308.11432" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-09-28">2023.09.28</time>
+          <div class="paper-content">
+            <h3><a href="2023/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">通义千问技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>阿里巴巴通义千问</p>
+            <p>大型语言模型已经彻底改变人工智能领域，使许多过去被认为只有人类才能完成的自然语言处理任务成为可能。在这项工作中，我们介绍 Qwen，即大型语言模型系列的首个版本。Qwen 是一个完整的语言模型系列，包含参数规模不同的多种模型：既有基座预训练语言模型 Qwen，也有通过人类对齐技术微调得到的聊天模型 Qwen-Chat。基座语言模型在大量下游任务上始终表现出优越性能；聊天模型的竞争力也很强，尤其是使用人类反馈强化学习（RLHF）训练的模型。聊天模型拥有先进的工具使用和规划能力，可用于构建智能体应用；即使在使用代码解释器等复杂任务上与更大模型比较，也展现出令人瞩目的性能。此外，我们还在基座语言模型之上开发了面向编程的 Code-Qwen 和 Code-Qwen-Chat，以及面向数学的 Math-Qwen-Chat。</p>
+            <div class="links"><a href="2023/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2023/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/%E9%80%9A%E4%B9%89%E5%8D%83%E9%97%AE%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2309.16609" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-10-10">2023.10.10</time>
+          <div class="paper-content">
+            <h3><a href="2023/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">Mistral 7B 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>Mistral AI</p>
+            <p>我们介绍 Mistral 7B，这是一个为实现卓越性能与高效率而设计的 70 亿参数语言模型。在所有评估基准上，Mistral 7B 都超过了当时最好的开源 130 亿参数模型 Llama 2；在推理、数学和代码生成方面，它还超过了当时已经发布的最佳 340 亿参数模型 Llama 1。模型利用分组查询注意力（GQA）加快推理，并结合滑动窗口注意力（SWA），以更低的推理成本有效处理任意长度的序列。我们还提供经过指令遵循微调的 Mistral 7B-Instruct；在人工基准和自动基准上，它都超过了 Llama 2 13B-Chat。模型以 Apache 2.0 许可证发布。</p>
+            <div class="links"><a href="2023/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2023/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Mistral%207B%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2310.06825" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-11-28">2023.11.28</time>
+          <div class="paper-content">
+            <h3><a href="2023/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97.html">Falcon 开放语言模型系列</a></h3>
+            <p class="organization"><span>发布主体</span>阿布扎比技术创新研究院</p>
+            <p>我们介绍 Falcon 系列：包含 70 亿、400 亿和 1800 亿参数的纯解码器因果语言模型，它们在多样化的高质量语料上训练，语料主要由网络数据构成。最大的 Falcon-180B 使用超过 3.5 万亿文本词元训练，是当时公开记录中规模最大的预训练运行。Falcon-180B 显著超过 PaLM、Chinchilla 等模型，也改进了同期开发的 LLaMA 2 和 Inflection-1；它以更低的预训练和推理成本接近 PaLM-2-Large 的性能。据我们所知，这使它与 GPT-4、PaLM-2-Large 一同成为当时世界上最好的三个语言模型之一。我们报告详细评估，并深入介绍预训练 Falcon 所采用的方法与定制工具。特别是，我们说明了定制的分布式训练代码库；</p>
+            <div class="links"><a href="2023/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97.html">阅读网页版</a><span>·</span><a href="2023/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97/Falcon%20%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%B3%BB%E5%88%97.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2311.16867" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-12-01">2023.12.01</time>
+          <div class="paper-content">
+            <h3><a href="2023/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1.html">Mamba：基于选择性状态空间的线性时间序列建模</a></h3>
+            <p class="organization"><span>发布主体</span>卡内基梅隆大学 · 普林斯顿大学</p>
+            <p>如今为深度学习中大多数令人振奋的应用提供动力的基础模型，几乎无一例外都建立在 Transformer 架构及其核心注意力模块之上。为解决 Transformer 处理长序列时的计算低效问题，研究者已经开发出许多次二次时间架构，例如线性注意力、门控卷积与循环模型，以及结构化状态空间模型（SSM）；然而，在语言等重要模态上，这些架构的表现始终不及注意力。我们发现，这类模型的一个关键弱点，是缺乏基于内容进行推理的能力，并据此作出多项改进。首先，只需让 SSM 参数成为输入的函数，就能缓解模型面对离散模态时的弱点，使模型能够依据当前词元，沿序列长度维度选择性地传播或遗忘信息。其次，尽管这一改变使模型无法继续使用高效卷积，我们仍为循环模式设计了一种硬件感知并行算法。我们把这些选择性 SSM 整合进一种简化的端到端神经网络架构；</p>
+            <div class="links"><a href="2023/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1.html">阅读网页版</a><span>·</span><a href="2023/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1/Mamba%EF%BC%9A%E5%9F%BA%E4%BA%8E%E9%80%89%E6%8B%A9%E6%80%A7%E7%8A%B6%E6%80%81%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E5%BA%8F%E5%88%97%E5%BB%BA%E6%A8%A1.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2312.00752" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2023-12-19">2023.12.19</time>
+          <div class="paper-content">
+            <h3><a href="2023/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.html">Gemini：高能力多模态模型家族</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>本报告介绍一个新的多模态模型家族 Gemini。该系列在图像、音频、视频和文本理解方面展现出卓越能力。Gemini 家族包括 Ultra、Pro 和 Nano 三种规模，适用于从复杂推理到内存受限的端侧应用等不同场景。对大量基准的评测表明，能力最强的 Gemini Ultra 在 32 项基准中的 30 项刷新了当时最佳结果；尤其值得注意的是，它成为首个在广泛研究的 MMLU 考试基准上达到人类专家水平的模型，并在本文考察的全部 20 项多模态基准上推进了最佳水平。我们相信，Gemini 家族在跨模态推理与语言理解方面的新能力将催生广泛用途。本文还讨论了后训练方法，以及如何通过 Gemini、Gemini Advanced、Google AI Studio 和 Cloud Vertex AI 等服务，以负责任的方式把 Gemini 模型部署给用户。</p>
+            <div class="links"><a href="2023/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.html">阅读网页版</a><span>·</span><a href="2023/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/Gemini%EF%BC%9A%E9%AB%98%E8%83%BD%E5%8A%9B%E5%A4%9A%E6%A8%A1%E6%80%81%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2312.11805" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2024">
+        <h2>2024</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2024-01-05">2024.01.05</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">DeepSeek LLM：以长期主义扩展开源语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>开源大型语言模型的快速发展令人瞩目。然而，既有文献描述的缩放定律得出了不同结论，为如何扩大大型语言模型蒙上一层阴影。本文深入研究缩放定律，并提出一组独特发现，用于指导两种常用开源配置——70 亿和 670 亿参数——的大规模模型扩展。在缩放定律指导下，我们提出 DeepSeek LLM：一项以长期视角推进开源语言模型的项目。为了支持预训练，我们构建了一个当前包含 2 万亿词元、且仍在持续扩充的数据集。随后，在 DeepSeek LLM Base 上进行监督微调与直接偏好优化，得到 DeepSeek Chat。评测结果表明，DeepSeek LLM 67B 在多项基准上超过 LLaMA 2 70B，尤其是在代码、数学和推理领域。开放式评测进一步显示，DeepSeek LLM 67B Chat 的表现优于 GPT-3.5。</p>
+            <div class="links"><a href="2024/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek%20LLM%EF%BC%9A%E4%BB%A5%E9%95%BF%E6%9C%9F%E4%B8%BB%E4%B9%89%E6%89%A9%E5%B1%95%E5%BC%80%E6%BA%90%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2401.02954" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-01-08">2024.01.08</time>
+          <div class="paper-content">
+            <h3><a href="2024/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B.html">Mixtral：专家混合模型</a></h3>
+            <p class="organization"><span>发布主体</span>Mistral AI</p>
+            <p>我们介绍 Mixtral 8x7B，这是一种稀疏专家混合语言模型。Mixtral 的整体架构与 Mistral 7B 相同，区别在于每一层都包含 8 个前馈模块，也就是 8 位“专家”。对于每个词元，路由网络都会在每一层选择两位专家处理当前状态，再合并两者的输出。尽管每个词元一次只经过两位专家，不同时间步选中的专家却可以不同。因此，每个词元可以接触总计 470 亿个参数，而推理时实际激活的参数只有 130 亿。Mixtral 使用 3.2 万词元上下文长度训练，在所有评估基准上均达到或超过 Llama 2 70B 与 GPT-3.5；尤其在数学、代码生成和多语言基准上大幅领先 Llama 2 70B。我们还提供经过指令遵循微调的 Mixtral 8x7B - Instruct；</p>
+            <div class="links"><a href="2024/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B/Mixtral%EF%BC%9A%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2401.04088" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-01-11">2024.01.11</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96.html">DeepSeekMoE：迈向专家混合语言模型中的极致专家专门化</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>在大型语言模型时代，专家混合（MoE）是扩展模型参数规模、同时控制计算成本的一种很有前景的架构。然而，GShard 等传统 MoE 架构从 $N$ 位专家中激活得分最高的 $K$ 位，很难保证专家专门化，也就是让每位专家获得互不重叠、彼此聚焦的知识。为此，我们提出以极致专家专门化为目标的 DeepSeekMoE。它采用两项核心策略：第一，把原有专家细分为 $mN$ 位较小专家，并从中激活 $mK$ 位，使专家组合更加灵活；第二，把 $Ks$ 位专家隔离为始终启用的共享专家，让它们承载共通知识，减少路由专家之间的冗余。从 20 亿参数规模开始，DeepSeekMoE 2B 达到 GShard 2.9B 的水平，而后者的专家参数和计算量均为其 1.5 倍；它还接近总参数量相同的稠密模型，而稠密模型构成 MoE 的性能上界。</p>
+            <div class="links"><a href="2024/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96.html">阅读网页版</a><span>·</span><a href="2024/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96/DeepSeekMoE%EF%BC%9A%E8%BF%88%E5%90%91%E4%B8%93%E5%AE%B6%E6%B7%B7%E5%90%88%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%9E%81%E8%87%B4%E4%B8%93%E5%AE%B6%E4%B8%93%E9%97%A8%E5%8C%96.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2401.06066" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-01-25">2024.01.25</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7.html">DeepSeek-Coder：当大型语言模型遇见编程——代码智能的崛起</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>大型语言模型的快速发展已经彻底改变软件开发中的代码智能，但闭源模型占据主导地位，限制了广泛研究与开发。为此，我们推出 DeepSeek-Coder 系列：一组从 13 亿到 330 亿参数不等、从零开始在 2 万亿词元上训练的开源代码模型。这些模型在高质量、项目级代码语料上预训练，并使用 16K 上下文窗口的中间填空任务，增强代码生成与补全能力。大量评估表明，DeepSeek-Coder 不仅在多项基准上取得开源代码模型中的最佳表现，还超过 Codex 与 GPT-3.5 等现有闭源模型。DeepSeek-Coder 采用宽松许可证，可用于研究和不受限制的商业用途。图 1：DeepSeek-Coder 的性能。 图中比较不同规模的 DeepSeek-Coder 与主流代码模型，显示其在开源代码模型中的领先地位。</p>
+            <div class="links"><a href="2024/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7/DeepSeek-Coder%EF%BC%9A%E5%BD%93%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E9%81%87%E8%A7%81%E7%BC%96%E7%A8%8B%E2%80%94%E2%80%94%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E7%9A%84%E5%B4%9B%E8%B5%B7.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2401.14196" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-02-01">2024.02.01</time>
+          <div class="paper-content">
+            <h3><a href="2024/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6.html">OLMo：加速语言模型科学研究</a></h3>
+            <p class="organization"><span>发布主体</span>艾伦人工智能研究所</p>
+            <p>语言模型已经广泛存在于自然语言处理研究与商业产品中。随着商业重要性激增，最强大的模型逐渐封闭在专有接口之后，训练数据、架构与开发过程中的重要细节都未公开。要科学研究这些模型，包括它们的偏见与潜在风险，这些细节至关重要；因此，研究社区必须能够使用强大且真正开放的语言模型。为此，我们构建 OLMo——一个有竞争力、真正开放的语言模型，旨在推动语言模型的科学研究。与多数只发布模型权重和推理代码的工作不同，我们同时公开训练数据、训练代码与评估代码，希望为开放研究社区赋能并激发新一轮创新。</p>
+            <div class="links"><a href="2024/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6.html">阅读网页版</a><span>·</span><a href="2024/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6/OLMo%EF%BC%9A%E5%8A%A0%E9%80%9F%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E7%A7%91%E5%AD%A6%E7%A0%94%E7%A9%B6.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2402.00838" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-02-05">2024.02.05</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90.html">DeepSeekMath：推动开放语言模型数学推理的极限</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>数学推理具有复杂且结构化的性质，对语言模型构成重大挑战。本文介绍 DeepSeekMath 7B：从 DeepSeek-Coder-Base-v1.5 7B 出发，使用来自 Common Crawl 的 1200 亿数学相关词元，并混合自然语言与代码数据继续预训练。DeepSeekMath 7B 不依赖外部工具或投票技术，就在竞赛级 MATH 基准上达到 51.7%，接近 Gemini-Ultra 与 GPT-4；对 64 个样本执行自洽投票后可达到 60.9%。其数学推理能力来自两个关键因素：第一，通过精心设计的数据选择流水线充分挖掘公开网页数据的潜力；第二，提出组相对策略优化（GRPO），这是近端策略优化（PPO）的一个变体，在增强数学推理的同时优化 PPO 的内存占用。图 1：开源模型在竞赛级 MATH 基准上的 Top-1 准确率。</p>
+            <div class="links"><a href="2024/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90.html">阅读网页版</a><span>·</span><a href="2024/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90/DeepSeekMath%EF%BC%9A%E6%8E%A8%E5%8A%A8%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86%E7%9A%84%E6%9E%81%E9%99%90.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-02-09">2024.02.09</time>
+          <div class="paper-content">
+            <h3><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.html">大型语言模型：一篇综述</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>自 ChatGPT 于 2022 年 11 月发布以来，大型语言模型（LLM）凭借在广泛自然语言任务上的强劲表现获得了高度关注。正如缩放定律所预测的那样，LLM 通过在海量文本数据上训练数十亿模型参数，获得通用语言理解与生成能力。LLM 研究虽然历史很短，却正在沿许多不同方向快速演进。本文回顾若干最具代表性的 LLM，包括 GPT、LLaMA 和 PaLM 三个流行模型家族，并讨论它们的特征、贡献与局限。我们还概述构建和增强 LLM 的技术，梳理为 LLM 训练、微调与评估准备的常用数据集，回顾广泛使用的评估指标，并在一组代表性基准上比较若干流行 LLM 的表现。最后，本文讨论开放挑战与未来研究方向。</p>
+            <div class="links"><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E7%AF%87%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2402.06196" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-03-07">2024.03.07</time>
+          <div class="paper-content">
+            <h3><a href="2024/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B.html">Yi：01.AI 的开放基础模型</a></h3>
+            <p class="organization"><span>发布主体</span>01.AI</p>
+            <p>本文介绍 Yi 模型家族，这是一系列在多个维度展现强大能力的语言模型与多模态模型。Yi 家族以 60 亿和 340 亿参数预训练语言模型为基础，进一步扩展出聊天模型、20 万词元长上下文模型、深度扩展模型与视觉—语言模型。基础模型在 MMLU 等广泛基准上表现强劲，微调聊天模型则在 AlpacaEval 和 Chatbot Arena 等主要评估平台上获得很高的人类偏好率。Yi 建立在可扩展超级计算基础设施和经典 Transformer 架构之上；我们认为，其表现主要源于数据工程带来的数据质量。预训练阶段，我们通过级联数据去重与质量过滤流水线构建 3.1 万亿词元的中英文语料。微调阶段，我们经过多轮迭代打磨一个规模较小、不足一万条的指令数据集，其中每个样本都由机器学习工程师直接核验。</p>
+            <div class="links"><a href="2024/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B/Yi%EF%BC%9A01.AI%20%E7%9A%84%E5%BC%80%E6%94%BE%E5%9F%BA%E7%A1%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2403.04652" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-03-08">2024.03.08</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.html">DeepSeek-VL：迈向真实世界视觉—语言理解</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文提出 DeepSeek-VL，一个面向真实世界视觉与语言理解应用的开源视觉—语言模型。方法围绕三个关键维度构建。- 数据构造： 力求让数据多样、可扩展，并广泛覆盖网络截图、PDF、OCR、图表和知识性内容——包括专家知识与教材——等真实世界场景，全面代表实际语境。我们还从真实用户场景建立用例分类体系，并据此构造指令微调数据集。使用该数据集微调，显著改善模型在实际应用中的用户体验。 - 模型架构： 考虑效率与多数真实场景的需求，DeepSeek-VL 使用混合视觉编码器，在固定词元预算内高效处理 1024×1024 高分辨率图像，同时保持较低计算开销。它能在各种视觉任务中同时捕捉关键语义与细节信息。 - 训练策略： 我们认为，一个熟练的视觉—语言模型首先应具备强大语言能力。</p>
+            <div class="links"><a href="2024/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3/DeepSeek-VL%EF%BC%9A%E8%BF%88%E5%90%91%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E7%90%86%E8%A7%A3.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2403.05525" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-03-08">2024.03.08</time>
+          <div class="paper-content">
+            <h3><a href="2024/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3.html">Gemini 1.5：解锁跨数百万词元上下文的多模态理解</a></h3>
+            <p class="organization"><span>发布主体</span>Google</p>
+            <p>本报告介绍 Gemini 1.5 模型家族：新一代高计算效率多模态模型，能够从数百万词元上下文中召回细粒度信息并据此推理，其中可以包含多部长文档以及数小时的视频和音频。该家族包括两个新模型：（1）更新后的 Gemini 1.5 Pro，它在绝大多数能力和基准上超过二月版本；（2）Gemini 1.5 Flash，一个为效率而设计、质量仅有极小退化的轻量版本。Gemini 1.5 模型在跨模态长上下文检索任务上达到近乎完美的召回率，刷新长文档问答、长视频问答和长上下文自动语音识别的最佳水平，并在广泛基准上追平或超过 Gemini 1.0 Ultra 的先进表现。在研究 Gemini 1.5 长上下文能力的极限时，我们发现：随着上下文扩展，下一词元预测仍持续改善；至少到一千万词元为止，检索召回率仍接近完美（超过 99%）。</p>
+            <div class="links"><a href="2024/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3.html">阅读网页版</a><span>·</span><a href="2024/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3/Gemini%201.5%EF%BC%9A%E8%A7%A3%E9%94%81%E8%B7%A8%E6%95%B0%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2403.05530" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-03-13">2024.03.13</time>
+          <div class="paper-content">
+            <h3><a href="2024/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B.html">Gemma：基于 Gemini 研究与技术的开放模型</a></h3>
+            <p class="organization"><span>发布主体</span>Google DeepMind</p>
+            <p>本文介绍 Gemma：一个轻量、先进的开放模型家族，其基础来自创建 Gemini 模型时所使用的研究成果与技术。Gemma 模型在语言理解、推理和安全等学术基准上表现强劲。我们发布两种模型规模，分别为 20 亿和 70 亿参数，并同时提供预训练检查点与微调检查点。在 18 项文本任务中，Gemma 有 11 项超过规模相近的开放模型。除详细说明模型开发过程之外，我们还全面评估了模型的安全性与责任性。我们认为，负责任地发布大型语言模型，对于提高前沿模型的安全水平以及促成下一轮大型语言模型创新至关重要。</p>
+            <div class="links"><a href="2024/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B/Gemma%EF%BC%9A%E5%9F%BA%E4%BA%8E%20Gemini%20%E7%A0%94%E7%A9%B6%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%9A%84%E5%BC%80%E6%94%BE%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2403.08295" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-03-26">2024.03.26</time>
+          <div class="paper-content">
+            <h3><a href="2024/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">InternLM2 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>上海人工智能实验室</p>
+            <p>ChatGPT、GPT-4 等大型语言模型的演进，引发了关于通用人工智能即将到来的讨论；但要在开源模型中复现这些进展仍很困难。本文介绍 InternLM2：一个开源大型语言模型。通过创新的预训练和优化技术，它在覆盖 6 个维度、30 项基准的综合评估、长上下文建模以及开放式主观评估中均超过前代模型。论文详细说明 InternLM2 的预训练过程，重点介绍文本、代码和长上下文等多类数据的准备方法。InternLM2 先以 4K 词元训练，再在预训练和微调阶段扩展到 32K，从而高效捕捉长期依赖，并在 200K 上下文的“大海捞针”测试中取得出色表现。模型随后通过监督微调和新提出的条件式在线人类反馈强化学习策略 COOL RLHF 完成对齐；该策略面向人类偏好冲突与奖励黑客问题。</p>
+            <div class="links"><a href="2024/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2024/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/InternLM2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2403.17297" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-04-22">2024.04.22</time>
+          <div class="paper-content">
+            <h3><a href="2024/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">Phi-3 技术报告：在手机本地运行的高能力语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Microsoft</p>
+            <p>本文介绍 phi-3-mini，一个使用 3.3 万亿词元训练的 38 亿参数语言模型。学术基准和内部测试显示，它的总体表现可与 Mixtral 8x7B、GPT-3.5 等模型竞争，例如 MMLU 达到 69%，MT-Bench 达到 8.38 分；同时，模型足够小，可以部署在手机上。训练数据是 phi-2 数据集的扩展版，由经过严格过滤的公开网络数据和合成数据组成。模型还针对稳健性、安全性和对话格式进一步对齐。报告还给出参数扩展结果：phi-3-small 和 phi-3-medium 分别为 7B、14B，均使用 4.8 万亿词元训练，能力显著高于 phi-3-mini，例如 MMLU 分别达到 75% 和 78%，MT-Bench 分别达到 8.7 和 8.9。</p>
+            <div class="links"><a href="2024/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Phi-3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A%EF%BC%9A%E5%9C%A8%E6%89%8B%E6%9C%BA%E6%9C%AC%E5%9C%B0%E8%BF%90%E8%A1%8C%E7%9A%84%E9%AB%98%E8%83%BD%E5%8A%9B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2404.14219" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-05-07">2024.05.07</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">DeepSeek-V2：强大、经济且高效的混合专家语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>我们提出 DeepSeek-V2，这是一种性能强大、训练经济且推理高效的混合专家（MoE）语言模型。模型共有 2360 亿个参数，每个词元激活其中 210 亿个参数，并支持 128K 词元的上下文长度。DeepSeek-V2 采用多头潜在注意力（Multi-head Latent Attention，MLA）和 DeepSeekMoE 等创新架构。MLA 将键值（KV）缓存显著压缩为潜在向量，从而保障高效推理；DeepSeekMoE 则借助稀疏计算，以较低成本训练出强大模型。与 DeepSeek 67B 相比，DeepSeek-V2 的性能显著提升，同时节省 42.5% 的训练成本、减少 93.3% 的 KV 缓存，并将最大生成吞吐量提升至 5.76 倍。</p>
+            <div class="links"><a href="2024/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-V2%EF%BC%9A%E5%BC%BA%E5%A4%A7%E3%80%81%E7%BB%8F%E6%B5%8E%E4%B8%94%E9%AB%98%E6%95%88%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2405.04434" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-05-23">2024.05.23</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E.html">DeepSeek-Prover：通过大规模合成数据推进大型语言模型定理证明</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>Lean 等证明助手彻底改变了数学证明的验证方式，确保了高度准确性与可靠性。大型语言模型在数学推理上展现出潜力，但训练数据不足阻碍了它们在形式化定理证明方面的进步。为解决这一问题，我们提出一种方法，从高中和本科层次数学竞赛题中生成大规模 Lean 4 证明数据。该方法先把自然语言问题翻译为形式化陈述，再滤除低质量陈述，最后生成证明以构建合成数据。我们在包含 800 万条“形式化陈述—证明”对的合成数据集上微调 DeepSeekMath 7B。模型在 Lean 4 miniF2F 测试集上，使用 64 次采样的完整证明生成准确率达到 46.3%，累计准确率达到 52%；相比之下，GPT-4 基线使用 64 次采样仅为 23.0%，基于树搜索的强化学习方法为 41.0%。</p>
+            <div class="links"><a href="2024/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E/DeepSeek-Prover%EF%BC%9A%E9%80%9A%E8%BF%87%E5%A4%A7%E8%A7%84%E6%A8%A1%E5%90%88%E6%88%90%E6%95%B0%E6%8D%AE%E6%8E%A8%E8%BF%9B%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%9A%E7%90%86%E8%AF%81%E6%98%8E.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2405.14333" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-06-17">2024.06.17</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92.html">DeepSeek-Coder-V2：突破闭源模型的代码智能壁垒</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>我们提出 DeepSeek-Coder-V2：一种开源混合专家（MoE）代码语言模型，在代码专项任务上的性能可与 GPT-4 Turbo 相比。DeepSeek-Coder-V2 从 DeepSeek-V2 的中间检查点开始，使用额外 6 万亿词元继续预训练。经过这一阶段，模型的编程与数学推理能力得到显著增强，同时在通用语言任务上保持与 DeepSeek-V2 相当的表现。与 DeepSeek-Coder 33B 相比，DeepSeek-Coder-V2 在各类代码任务、推理和通用能力上均有明显进步。它支持的编程语言由 86 种扩大到 338 种，上下文长度从 16K 延伸到 128K。</p>
+            <div class="links"><a href="2024/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92/DeepSeek-Coder-V2%EF%BC%9A%E7%AA%81%E7%A0%B4%E9%97%AD%E6%BA%90%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E5%A3%81%E5%9E%92.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2406.11931" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-06-18">2024.06.18</time>
+          <div class="paper-content">
+            <h3><a href="2024/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.html">ChatGLM：从 GLM-130B 到 GLM-4 全工具的大型语言模型家族</a></h3>
+            <p class="organization"><span>发布主体</span>智谱 AI · 清华大学</p>
+            <p>本文介绍不断演进的 ChatGLM 大型语言模型家族，重点是 GLM-4、GLM-4-Air 与 GLM-4-9B。这些模型汇集了前三代 ChatGLM 的经验和教训，是团队当时能力最强的模型。GLM-4 系列已在约 10 万亿个词元上预训练，语料以中文和英文为主，并包含来自 24 种语言的少量数据；对齐则主要面向中英文使用场景。高质量对齐通过多阶段后训练实现，包括监督微调和人类反馈学习。评测显示，GLM-4 在 MMLU、GSM8K、MATH、BBH、GPQA、HumanEval 等通用指标上接近或超过 GPT-4；在 IFEval 衡量的指令遵循上接近 GPT-4 Turbo；在长上下文任务上与 GPT-4 Turbo 128K 和 Claude 3 相当；在 AlignBench 衡量的中文对齐上超过 GPT-4。</p>
+            <div class="links"><a href="2024/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.html">阅读网页版</a><span>·</span><a href="2024/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F/ChatGLM%EF%BC%9A%E4%BB%8E%20GLM-130B%20%E5%88%B0%20GLM-4%20%E5%85%A8%E5%B7%A5%E5%85%B7%E7%9A%84%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%AE%B6%E6%97%8F.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2406.12793" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-06-26">2024.06.26</time>
+          <div class="paper-content">
+            <h3><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0.html">大型语言模型中的混合专家综述</a></h3>
+            <p class="organization"><span>发布主体</span>香港科技大学（广州）</p>
+            <p>大型语言模型（LLM）在自然语言处理、计算机视觉等领域取得了空前进展。其能力来自庞大的模型规模、广泛多样的数据和训练期间使用的巨大计算资源，这些因素共同催生了小模型不具备的上下文学习等涌现能力。在此背景下，混合专家（MoE）成为一种以很小计算开销显著扩大模型容量的有效方法，受到学术界和产业界广泛关注。尽管 MoE 日益普及，相关文献仍缺少系统、全面的综述。本文先简要介绍 MoE 层结构，再提出新的分类体系；随后从算法和系统两个方面梳理不同 MoE 模型的核心设计，并汇总开源实现、超参数配置和经验评测；进一步说明 MoE 的实际应用，并总结未来研究方向。作者还建立持续更新的资源仓库，分享 MoE 研究前沿进展。</p>
+            <div class="links"><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2024/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0/%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2407.06204" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-07-15">2024.07.15</time>
+          <div class="paper-content">
+            <h3><a href="2024/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">Qwen2 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>阿里巴巴通义千问</p>
+            <p>本报告介绍 Qwen2 系列，这是我们大型语言模型和大型多模态模型家族的最新成员。我们发布了一套完整的基础模型与指令调优语言模型，参数规模覆盖 5 亿至 720 亿，既包括稠密模型，也包括一个混合专家模型。Qwen2 超过了包括其前代 Qwen1.5 在内的大多数既有开放权重模型；在语言理解、生成、多语言能力、代码、数学和推理等多类基准上，它相对于闭源模型也表现出竞争力。旗舰基础模型 Qwen2-72B 展现出突出的性能：MMLU 为 84.2，GPQA 为 37.9，HumanEval 为 64.6，GSM8K 为 89.5，BBH 为 82.4。其指令调优版本 Qwen2-72B-Instruct 在 MT-Bench、Arena-Hard 和 LiveCodeBench 上分别取得 9.1、48.1 和 35.7。</p>
+            <div class="links"><a href="2024/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2024/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2407.10671" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-07-31">2024.07.31</time>
+          <div class="paper-content">
+            <h3><a href="2024/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">Gemma 2：改进实用规模的开放语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>Google DeepMind</p>
+            <p>本文介绍 Gemma 2，这是 Gemma 轻量级先进开放模型家族的新成员，参数规模从 20 亿到 270 亿。新版本对 Transformer 架构采用多项成熟的技术改动，包括交替使用局部注意力与全局注意力，以及分组查询注意力。我们没有使用下一词元预测，而是通过知识蒸馏训练 20 亿和 90 亿参数模型。最终模型在各自规模上取得最佳性能，甚至可与参数量大两到三倍的模型竞争。全部模型均向社区开放。</p>
+            <div class="links"><a href="2024/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/Gemma%202%EF%BC%9A%E6%94%B9%E8%BF%9B%E5%AE%9E%E7%94%A8%E8%A7%84%E6%A8%A1%E7%9A%84%E5%BC%80%E6%94%BE%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2408.00118" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-07-31">2024.07.31</time>
+          <div class="paper-content">
+            <h3><a href="2024/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4.html">Llama 3 模型群</a></h3>
+            <p class="organization"><span>发布主体</span>Meta AI</p>
+            <p>现代人工智能系统由基础模型驱动。本文介绍一组名为 Llama 3 的新基础模型。这一语言模型群原生支持多语言、代码、推理与工具使用。最大模型是一个具有 4050 亿参数的稠密 Transformer，上下文窗口最长为 128K 词元。本文对 Llama 3 进行广泛的实证评测；结果发现，它在大量任务上的质量可与 GPT-4 等领先语言模型相比。我们公开发布 Llama 3，其中包括 4050 亿参数语言模型的预训练版与后训练版，以及用于输入和输出安全的 Llama Guard 3。论文还报告了通过组合式方法把图像、视频和语音能力集成进 Llama 3 的实验。该方法在图像、视频与语音识别任务上能够与先进水平竞争。由于这些多模态模型仍在开发，暂未广泛发布。</p>
+            <div class="links"><a href="2024/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4.html">阅读网页版</a><span>·</span><a href="2024/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4/Llama%203%20%E6%A8%A1%E5%9E%8B%E7%BE%A4.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2407.21783" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-08-15">2024.08.15</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2.html">DeepSeek-Prover-V1.5：利用证明助手反馈进行强化学习与蒙特卡洛树搜索</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>我们提出 DeepSeek-Prover-V1.5，一个面向 Lean 4 定理证明的开源语言模型。它通过优化训练与推理过程，在 DeepSeek-Prover-V1 基础上进一步增强。模型以 DeepSeekMath-Base 为起点，在形式数学语言上进行专门预训练；随后使用由 DeepSeek-Prover-V1 数据改进而来的形式定理证明数据集执行监督微调；最后通过证明助手反馈强化学习进一步优化。除 DeepSeek-Prover-V1 所采用的单遍完整证明生成外，我们还提出 RMaxTS：一种蒙特卡洛树搜索变体，使用内在奖励驱动的探索策略生成多样化证明路径。DeepSeek-Prover-V1.5 相比 V1 显著提升，在高中水平 miniF2F 测试集上达到 63.5%，在本科水平 ProofNet 上达到 25.3%，均刷新当时最先进结果。</p>
+            <div class="links"><a href="2024/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2/DeepSeek-Prover-V1.5%EF%BC%9A%E5%88%A9%E7%94%A8%E8%AF%81%E6%98%8E%E5%8A%A9%E6%89%8B%E5%8F%8D%E9%A6%88%E8%BF%9B%E8%A1%8C%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E4%B8%8E%E8%92%99%E7%89%B9%E5%8D%A1%E6%B4%9B%E6%A0%91%E6%90%9C%E7%B4%A2.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2408.08152" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-10-17">2024.10.17</time>
+          <div class="paper-content">
+            <h3><a href="2024/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.html">Janus：解耦视觉编码以统一多模态理解与生成</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文提出 Janus，一个统一多模态理解与生成的自回归框架。以 Chameleon 为代表的既有研究通常让两项任务共用一个视觉编码器；然而，多模态理解与生成所需的信息粒度不同，这种做法可能造成次优性能，尤其会损害多模态理解。为解决该问题，我们把视觉编码解耦为两条独立路径，同时仍使用一个统一 Transformer 架构处理。解耦既缓解视觉编码器在理解与生成角色之间的冲突，也提高框架灵活性，例如两项组件可以分别选择最适合自己的编码方法。实验表明，Janus 超过此前统一模型，并达到或超过任务专用模型。其简单、高灵活性和有效性使它成为下一代统一多模态模型的有力候选。</p>
+            <div class="links"><a href="2024/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.html">阅读网页版</a><span>·</span><a href="2024/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus%EF%BC%9A%E8%A7%A3%E8%80%A6%E8%A7%86%E8%A7%89%E7%BC%96%E7%A0%81%E4%BB%A5%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2410.13848" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-12-13">2024.12.13</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">DeepSeek-VL2：用于高级多模态理解的混合专家视觉—语言模型</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>我们提出 DeepSeek-VL2，一系列先进的大型混合专家视觉—语言模型。相较前代 DeepSeek-VL，它包含两项关键升级。视觉部分加入动态图块视觉编码策略，用于处理不同宽高比的高分辨率图像；语言部分采用带多头潜在注意力机制的 DeepSeekMoE，把键值缓存压缩为潜在向量，以实现高效推理和高吞吐量。模型使用改进的视觉—语言数据集训练，在视觉问答、光学字符识别、文档/表格/图表理解和视觉指代定位等任务上展示出色能力。系列包含 Tiny、Small 与标准版，激活参数量分别为 10 亿、28 亿和 45 亿。相较现有开源稠密与混合专家模型，DeepSeek-VL2 以相近或更少激活参数达到有竞争力或最先进的表现。代码和预训练模型已公开。图 1 比较不同开源模型的平均性能与激活参数量。</p>
+            <div class="links"><a href="2024/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/DeepSeek-VL2%EF%BC%9A%E7%94%A8%E4%BA%8E%E9%AB%98%E7%BA%A7%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E7%9A%84%E6%B7%B7%E5%90%88%E4%B8%93%E5%AE%B6%E8%A7%86%E8%A7%89%E2%80%94%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2412.10302" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-12-19">2024.12.19</time>
+          <div class="paper-content">
+            <h3><a href="2024/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">Qwen2.5 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>阿里巴巴通义千问</p>
+            <p>本报告提出 Qwen2.5，一个面向多样需求的完整大语言模型系列。相较上一代，Qwen2.5 在预训练和后训练阶段均显著改进。预训练方面，高质量数据从 7 万亿词元扩展到 18 万亿，为常识、专业知识与推理能力奠定坚实基础。后训练方面，使用超过 100 万条样本进行精细监督微调，并采用多阶段强化学习，包括离线 DPO 与在线 GRPO。后训练显著改善人类偏好对齐，尤其提高长文本生成、结构化数据分析和指令遵循。为适应多样用例，Qwen2.5 提供丰富配置。开放权重包含 0.5B、1.5B、3B、7B、14B、32B、72B 的基础模型和指令模型，也提供指令模型量化版；Hugging Face、ModelScope 和 Kaggle 上共有超过 100 个模型。</p>
+            <div class="links"><a href="2024/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2024/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen2.5%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2412.15115" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2024-12-27">2024.12.27</time>
+          <div class="paper-content">
+            <h3><a href="2024/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">DeepSeek-V3 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>我们提出 DeepSeek-V3，一个强大的混合专家语言模型，总参数量为 671B，每个词元激活 37B 参数。为实现高效推理和低成本训练，DeepSeek-V3 采用已经在 DeepSeek-V2 中得到充分验证的多头潜在注意力与 DeepSeekMoE 架构。此外，DeepSeek-V3 首创无辅助损失的负载均衡策略，并设置多词元预测训练目标，以获得更强表现。我们先在 14.8 万亿个多样且高质量的词元上预训练 DeepSeek-V3，随后进行监督微调与强化学习，充分释放模型能力。全面评测表明，DeepSeek-V3 超过其他开源模型，并达到可与领先闭源模型相当的表现。尽管能力出色，它的完整训练只使用了 278.8 万 H800 GPU 小时；训练过程也极其稳定，全程没有出现任何无法恢复的损失尖峰，也没有执行过回滚。模型检查点可从项目仓库获取。</p>
+            <div class="links"><a href="2024/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2024/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/DeepSeek-V3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2412.19437" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2025">
+        <h2>2025</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2025-01-22">2025.01.22</time>
+          <div class="paper-content">
+            <h3><a href="2025/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0.html">Kimi k1.5：用大型语言模型扩展强化学习</a></h3>
+            <p class="organization"><span>发布主体</span>月之暗面 Kimi</p>
+            <p>基于下一词元预测的语言模型预训练已经证明能够有效扩展计算，但其上限受可用训练数据量约束。扩展强化学习（RL）为人工智能持续进步打开了一条新轴线：大型语言模型可以通过带奖励的探索，自行扩展训练经验。然而，此前公开工作尚未给出具有竞争力的结果。本文报告最新多模态模型 Kimi k1.5 的训练实践，包括强化学习训练技术、多模态数据配方和基础设施优化。长上下文扩展与改进的策略优化是方法的关键组成部分；二者构成了一个简洁而有效的强化学习框架，不依赖蒙特卡洛树搜索、价值函数或过程奖励模型等更复杂技术。Kimi k1.5 在多项基准和多种模态上取得领先推理表现：AIME 77.5、MATH-500 96.2、Codeforces 第 94 百分位、MathVista 74.9，与 OpenAI o1 相当。</p>
+            <div class="links"><a href="2025/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0.html">阅读网页版</a><span>·</span><a href="2025/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/Kimi%20k1.5%EF%BC%9A%E7%94%A8%E5%A4%A7%E5%9E%8B%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2501.12599" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-01-29">2025.01.29</time>
+          <div class="paper-content">
+            <h3><a href="2025/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.html">Janus-Pro：通过数据与模型扩展统一多模态理解与生成</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文介绍 Janus-Pro，即 Janus 的增强版本。Janus-Pro 从三个方面改进前代工作：优化训练策略、扩充训练数据，并把模型扩展到更大规模。这些改进显著提升了多模态理解和文生图指令遵循能力，同时让文生图质量更加稳定。代码与模型均已公开。图 1 汇总主要结果。多模态理解采用 POPE、MME-Perception、GQA、MMMU 四项平均分；视觉生成采用 GenEval 与 DPG-Bench。Janus-Pro-7B 超过此前统一多模态模型，也能与理解专用或生成专用模型竞争。</p>
+            <div class="links"><a href="2025/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.html">阅读网页版</a><span>·</span><a href="2025/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90/Janus-Pro%EF%BC%9A%E9%80%9A%E8%BF%87%E6%95%B0%E6%8D%AE%E4%B8%8E%E6%A8%A1%E5%9E%8B%E6%89%A9%E5%B1%95%E7%BB%9F%E4%B8%80%E5%A4%9A%E6%A8%A1%E6%80%81%E7%90%86%E8%A7%A3%E4%B8%8E%E7%94%9F%E6%88%90.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2501.17811" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-03-14">2025.03.14</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0.html">DeepSeek 模型关键创新技术综述</a></h3>
+            <p class="organization"><span>发布主体</span>UT Dallas · Virginia Tech</p>
+            <p>DeepSeek-V3 与 DeepSeek-R1 是面向通用任务和推理任务的领先开源大语言模型。它们只使用顶尖闭源模型训练成本的一小部分，性能却可与 OpenAI、Anthropic 等公司的先进模型竞争。理解这些成果背后的关键创新，对于继续推进大语言模型研究十分重要。本文综述促成这些模型高效果与高效率的核心技术，包括 Transformer 架构改进、多头潜在注意力（Multi-Head Latent Attention，MLA）、混合专家（Mixture of Experts，MoE）、多词元预测（Multi-Token Prediction，MTP）、算法—框架—硬件协同设计、群组相对策略优化（Group Relative Policy Optimization，GRPO），以及纯强化学习和监督微调与强化学习交替进行的迭代式后训练。</p>
+            <div class="links"><a href="2025/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0/DeepSeek%20%E6%A8%A1%E5%9E%8B%E5%85%B3%E9%94%AE%E5%88%9B%E6%96%B0%E6%8A%80%E6%9C%AF%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2503.11486" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-04-30">2025.04.30</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86.html">DeepSeek-Prover-V2：通过强化学习子目标分解推进形式化数学推理</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文介绍 DeepSeek-Prover-V2：一个面向 Lean 4 形式化定理证明的开源大语言模型。它的初始化数据由 DeepSeek-V3 驱动的递归证明流水线生成。冷启动阶段先让 DeepSeek-V3 把复杂问题拆成一系列子目标，再由较小的证明模型逐一求解；成功子目标的形式化证明被合成为完整证明，并与 DeepSeek-V3 的逐步自然语言推理结合，构成强化学习的起点。这样，非形式化数学推理与形式化证明被统一到同一个模型中。DeepSeek-Prover-V2-671B 在 MiniF2F-test 上以 Pass@8192 达到 88.9%，在 PutnamBench 的 658 道题中解出 47 道。论文还发布 ProverBench，其中包含 325 道形式化问题和 15 道选自 2024–2025 年 AIME 的问题。</p>
+            <div class="links"><a href="2025/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86/DeepSeek-Prover-V2%EF%BC%9A%E9%80%9A%E8%BF%87%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E5%AD%90%E7%9B%AE%E6%A0%87%E5%88%86%E8%A7%A3%E6%8E%A8%E8%BF%9B%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%95%B0%E5%AD%A6%E6%8E%A8%E7%90%86.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2504.21801" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-05-14">2025.05.14</time>
+          <div class="paper-content">
+            <h3><a href="2025/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">Qwen3 技术报告</a></h3>
+            <p class="organization"><span>发布主体</span>阿里巴巴通义千问</p>
+            <p>本文介绍 Qwen 模型家族的最新版本 Qwen3。该系列同时包含稠密与混合专家（MoE）架构，参数规模从 6 亿到 2350 亿，重点提升性能、效率与多语言能力。Qwen3 的主要创新，是把适合复杂多步推理的“思考模式”和适合快速、依赖上下文回答的“非思考模式”统一到一个模型中。用户不必在聊天模型与专用推理模型之间切换，而可以根据查询或聊天模板动态选择模式。模型还提供思考预算机制，让用户在推理时按任务复杂度分配计算，在延迟与性能之间取舍。团队利用旗舰模型的知识显著降低小模型的训练成本，同时维持很强竞争力。实验显示，Qwen3 在代码生成、数学推理和智能体等多类基准上达到领先水平，可与更大的 MoE 模型和专有模型竞争。与 Qwen2.5 相比，多语言支持从 29 种扩展到 119 种语言和方言。</p>
+            <div class="links"><a href="2025/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.html">阅读网页版</a><span>·</span><a href="2025/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A/Qwen3%20%E6%8A%80%E6%9C%AF%E6%8A%A5%E5%91%8A.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-05-15">2025.05.15</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0.html">DeepSeek-R1 发布百日复盘综述</a></h3>
+            <p class="organization"><span>发布主体</span>MiroMind · 复旦大学</p>
+            <p>推理语言模型（Reasoning Language Model，RLM）代表了大语言模型的一次新演进。DeepSeek-R1 的发布产生广泛社会影响，也激发了研究界对“显式推理”范式的热情。不过，DeepSeek-R1-Zero、DeepSeek-R1 及其蒸馏小模型的训练数据、配置和实现细节并未完全公开，于是大量复现研究开始用开放数据和相近训练流程逼近其表现。本文梳理发布后约百日内的复现进展，重点讨论两条路线：监督微调（SFT）与可验证奖励强化学习（RLVR）。综述覆盖数据构建、算法设计、奖励系统、采样策略和训练配置，并从已有实验中归纳共同经验。最后，作者扩展到过程奖励、偏好优化、泛化、安全、多模态和多语言等方向，试图为后续推理模型研究提供一张及时的路线图。</p>
+            <div class="links"><a href="2025/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0/DeepSeek-R1%20%E5%8F%91%E5%B8%83%E7%99%BE%E6%97%A5%E5%A4%8D%E7%9B%98%E7%BB%BC%E8%BF%B0.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2505.00551" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-07-14">2025.07.14</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B.html">DeepSeek 范式转移与技术演进</a></h3>
+            <p class="organization"><span>发布主体</span>学术综述</p>
+            <p>DeepSeek-V3 与 R1 系列凭借较低成本、强性能和开放权重引起全球关注。本文从范式变化出发回顾大型 AI 模型的演进，比较主流大语言模型范式与 DeepSeek 路线；随后介绍多头潜在注意力（MLA）、DeepSeekMoE、多词元预测（MTP）和群组相对策略优化（GRPO）四项算法，并讨论训练、推理和系统架构中的工程突破。作者进一步分析 DeepSeek 对竞争格局和开源生态的影响，并把未来趋势归纳到数据工程、高效训练、推理优化与场景化应用。全文的核心判断是：大模型竞争正在从单纯增加参数和算力，转向数据质量、算法效率、软硬件协同与测试时计算的共同优化。</p>
+            <div class="links"><a href="2025/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/DeepSeek%20%E8%8C%83%E5%BC%8F%E8%BD%AC%E7%A7%BB%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2507.09955" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-07-28">2025.07.28</time>
+          <div class="paper-content">
+            <h3><a href="2025/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.html">Kimi K2：开放式智能体智能</a></h3>
+            <p class="organization"><span>发布主体</span>月之暗面 Kimi</p>
+            <p>本文介绍 Kimi K2，一个每词元激活 320 亿参数、总参数约 1 万亿的混合专家大语言模型。团队提出 MuonClip 优化器，在 Muon 的高词元效率基础上加入新的 QK-Clip 技术，解决大规模训练不稳定。借助 MuonClip，K2 在 15.5 万亿词元的预训练中没有出现一次损失尖峰。后训练采用多阶段流程，重点包括大规模智能体数据合成，以及让模型通过真实和合成环境交互提升能力的联合强化学习。Kimi K2 在开放权重非思考模型中取得领先表现，尤其擅长智能体任务：Tau2-Bench 66.1、ACEBench 英文 76.5、SWE-bench Verified 65.8、SWE-bench Multilingual 47.3。</p>
+            <div class="links"><a href="2025/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.html">阅读网页版</a><span>·</span><a href="2025/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2%EF%BC%9A%E5%BC%80%E6%94%BE%E5%BC%8F%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-10-21">2025.10.21</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9.html">DeepSeek-OCR：上下文的光学压缩</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文提出 DeepSeek-OCR，初步研究能否通过“光学二维映射”压缩长上下文。模型由两个部分组成：负责视觉编码与压缩的 DeepEncoder，以及作为解码器的 DeepSeek-3B-MoE-A570M。DeepEncoder 的核心目标，是在接收高分辨率图像时维持较低的激活开销，同时通过高压缩率把视觉词元数量控制在可管理范围内。实验显示，当文本词元数不超过视觉词元数的 10 倍，即压缩率低于 10× 时，模型的 OCR 解码准确率可达 97%；即使压缩率达到 20×，准确率仍约为 60%。这说明，把历史上下文渲染为图像并逐步压缩，可能为超长上下文与“记忆遗忘”机制提供新的研究路径。DeepSeek-OCR 同时具有较强的实际文档解析能力。</p>
+            <div class="links"><a href="2025/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9/DeepSeek-OCR%EF%BC%9A%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E5%85%89%E5%AD%A6%E5%8E%8B%E7%BC%A9.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2510.18234" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2025-12-02">2025.12.02</time>
+          <div class="paper-content">
+            <h3><a href="2025/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF.html">DeepSeek-V3.2：推进开放大语言模型前沿</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文介绍 DeepSeek-V3.2：一个同时追求高计算效率、强推理能力与智能体能力的开放模型。其关键进展包括三方面。1. DeepSeek 稀疏注意力（DSA）。 DSA 通过轻量的“闪电索引器”与细粒度 top-k 词元选择，把主模型核心注意力的复杂度从 $O(L^2)$ 降至 $O(Lk)$，并在长上下文任务上保持模型性能。 2. 可扩展强化学习框架。 团队建立了稳定的 RL 训练方案，并把后训练计算预算扩展到预训练成本的 10% 以上。标准版 DeepSeek-V3.2 在多项推理任务上可与 GPT-5 相比；高计算版本 DeepSeek-V3.2-Speciale 进一步达到与 Gemini-3.0-Pro 相近的水平，并在 2025 年 IMO、IOI、CMO 与 ICPC 世界总决赛评测中达到金牌标准。 3. 大规模智能体任务合成。</p>
+            <div class="links"><a href="2025/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF.html">阅读网页版</a><span>·</span><a href="2025/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF/DeepSeek-V3.2%EF%BC%9A%E6%8E%A8%E8%BF%9B%E5%BC%80%E6%94%BE%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E5%89%8D%E6%B2%BF.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2512.02556" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section><section class="year" id="2026">
+        <h2>2026</h2>
+        <div class="year-papers"><article class="paper">
+          <time datetime="2026-02-02">2026.02.02</time>
+          <div class="paper-content">
+            <h3><a href="2026/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.html">Kimi K2.5：视觉智能体智能</a></h3>
+            <p class="organization"><span>发布主体</span>月之暗面 Kimi</p>
+            <p>本文介绍 Kimi K2.5，一个面向通用智能体智能的开源多模态智能体模型。K2.5 强调文本与视觉的联合优化，让两种模态相互促进；核心方法包括文本-视觉联合预训练、零视觉监督微调和文本-视觉联合强化学习。在这一多模态基础之上，K2.5 引入 Agent Swarm：一个能够自主分解复杂任务、动态创建异构子智能体并行执行的编排框架。大量评测表明，Kimi K2.5 在代码、视觉、推理和智能体任务上取得领先结果；Agent Swarm 相比单智能体还可将延迟最多降低 4.5 倍。团队公开后训练检查点，希望推动智能体智能研究和现实应用。</p>
+            <div class="links"><a href="2026/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.html">阅读网页版</a><span>·</span><a href="2026/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD/Kimi%20K2.5%EF%BC%9A%E8%A7%86%E8%A7%89%E6%99%BA%E8%83%BD%E4%BD%93%E6%99%BA%E8%83%BD.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2602.02276" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2026-04-26">2026.04.26</time>
+          <div class="paper-content">
+            <h3><a href="2026/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD.html">DeepSeek-V4：迈向高效的百万词元上下文智能</a></h3>
+            <p class="organization"><span>发布主体</span>DeepSeek-AI</p>
+            <p>本文发布 DeepSeek-V4 系列预览版，包括两个混合专家语言模型：总参数 1.6 万亿、每词元激活 490 亿参数的 DeepSeek-V4-Pro，以及总参数 2840 亿、每词元激活 130 亿参数的 DeepSeek-V4-Flash。两者都原生支持 100 万词元上下文。DeepSeek-V4 的主要升级包括：把压缩稀疏注意力（CSA）与重度压缩注意力（HCA）结合的混合注意力；增强传统残差连接的流形约束超连接（mHC）；以及收敛更快、稳定性更好的 Muon 优化器。Flash 与 Pro 分别在 32 万亿和 33 万亿个高质量词元上预训练，再通过专家训练与在策略蒸馏完成后训练。最大推理强度模式 DeepSeek-V4-Pro-Max 在开放模型中刷新多项结果。</p>
+            <div class="links"><a href="2026/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD.html">阅读网页版</a><span>·</span><a href="2026/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD/DeepSeek-V4%EF%BC%9A%E8%BF%88%E5%90%91%E9%AB%98%E6%95%88%E7%9A%84%E7%99%BE%E4%B8%87%E8%AF%8D%E5%85%83%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%BA%E8%83%BD.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2026-07-27">2026.07.27</time>
+          <div class="paper-content">
+            <h3><a href="2026/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD.html">Kimi K3：开放前沿智能</a></h3>
+            <p class="organization"><span>发布主体</span>月之暗面 Kimi</p>
+            <p>本文介绍 Kimi K3，一个总参数 2.8 万亿、每词元激活 1040 亿参数、原生支持视觉并拥有 100 万词元上下文窗口的混合专家模型。K3 建立在 Kimi Delta Attention（KDA）和 Attention Residuals（AttnRes）之上，分别改善超长序列和深层网络的信息流；Stable LatentMoE 在 896 个路由专家中每词元激活 16 个，并通过新的训练与数据配方稳定极端稀疏性。综合改进使整体缩放效率相比 Kimi K2 约提升 2.5 倍。后训练覆盖通用、智能体和代码领域，并为多种推理投入等级训练专家，再通过多教师在策略蒸馏合并为一个模型。基础设施针对 KDA 系统协同设计、3T 级专家并行训练、百万词元智能体 RL、持久化沙箱和线上部署分别优化。</p>
+            <div class="links"><a href="2026/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD.html">阅读网页版</a><span>·</span><a href="2026/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD/Kimi%20K3%EF%BC%9A%E5%BC%80%E6%94%BE%E5%89%8D%E6%B2%BF%E6%99%BA%E8%83%BD.md">Markdown</a><span>·</span><a href="https://arxiv.org/abs/2607.24653" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article><article class="paper">
+          <time datetime="2026-08-13">2026.08.13</time>
+          <div class="paper-content">
+            <h3><a href="2026/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html">面向时空可组合性的编程范式</a></h3>
+            <p class="organization"><span>发布主体</span>北京大学 · DeepSeek-AI</p>
+            <p>从插件系统到自演化智能体支架，现代软件越来越需要动态组合，但其形式化基础仍不完善。我们识别出这一问题的两个正交维度：时间可组合性，即移除组件时能够完全撤销该组件副作用的能力；空间可组合性，即声明组件间依赖关系并以反应式方式对其进行管理的能力。我们通过把经典的效应与余效应概念提升为运行时机制来处理这两个维度。具体而言，我们形式化了可撤销效应，其中每一次上下文变换都携带一个由运行时跟踪的逆变换。我们还形式化了反应式余效应，其中上下文每次发生变化，都会依据组件的余效应规约向该组件发出通知。我们把效应上下文与余效应上下文统一为单一的上下文类型，由此构成一种编程范式。随后，我们把这些机制结合为组件这一概念，并给出一套动态组合演算；其元理论把时空可组合性从单个组件推广到由相互交错的组件组成的整个系统。我们在 Cordis 中实现了这些思想。</p>
+            <div class="links"><a href="2026/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.html">阅读网页版</a><span>·</span><a href="2026/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F/%E9%9D%A2%E5%90%91%E6%97%B6%E7%A9%BA%E5%8F%AF%E7%BB%84%E5%90%88%E6%80%A7%E7%9A%84%E7%BC%96%E7%A8%8B%E8%8C%83%E5%BC%8F.md">Markdown</a><span>·</span><a href="https://github.com/cordiverse/paper" target="_blank" rel="noopener noreferrer">阅读原文</a></div>
+          </div>
+        </article></div>
+      </section></main>
+</body>
+</html>

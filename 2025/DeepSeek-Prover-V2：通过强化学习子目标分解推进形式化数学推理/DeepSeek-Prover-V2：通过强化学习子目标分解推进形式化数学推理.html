@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek-Prover-V2：通过强化学习子目标分解推进形式化数学推理</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">DeepSeek-Prover-V2：通过强化学习子目标分解推进形式化数学推理</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#deepseek-prover-v2">DeepSeek-Prover-V2：通过强化学习子目标分解推进形式化数学推理</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 方法</a><ul>
+<li><a href="#21">2.1 通过子目标分解进行递归证明搜索</a><ul>
+<li><a href="#_2">子目标分解</a></li>
+<li><a href="#_3">面向子目标证明的课程学习</a></li>
+</ul>
+</li>
+<li><a href="#22">2.2 统一非形式化推理与证明形式化</a><ul>
+<li><a href="#_4">用合成数据冷启动</a></li>
+<li><a href="#_5">面向推理的强化学习</a></li>
+</ul>
+</li>
+<li><a href="#23-deepseek-prover-v2">2.3 DeepSeek-Prover-V2 训练细节</a><ul>
+<li><a href="#_6">两阶段训练与双生成模式</a></li>
+<li><a href="#_7">专家迭代与监督微调</a></li>
+<li><a href="#_8">强化学习与蒸馏</a></li>
+</ul>
+</li>
+<li><a href="#24">2.4 实验设置</a></li>
+</ul>
+</li>
+<li><a href="#3">3 实验结果</a><ul>
+<li><a href="#31-minif2f">3.1 MiniF2F</a></li>
+<li><a href="#32">3.2 本科层级基准</a><ul>
+<li><a href="#_9">强化学习中的奖励黑客</a></li>
+</ul>
+</li>
+<li><a href="#33">3.3 组合数学问题</a></li>
+<li><a href="#34-formalmath">3.4 FormalMATH</a></li>
+<li><a href="#35-proverbenchaime">3.5 ProverBench：AIME 与教材题的形式化</a></li>
+</ul>
+</li>
+<li><a href="#4">4 结论</a></li>
+<li><a href="#_10">参考文献</a></li>
+<li><a href="#anon-cot-cot">附录 A：non-CoT 与 CoT 证明生成示例</a><ul>
+<li><a href="#a1-non-cot">A.1 non-CoT 生成</a></li>
+<li><a href="#a2-cot">A.2 CoT 生成策略</a></li>
+</ul>
+</li>
+<li><a href="#b-apply">附录 B：触发 apply? 缺陷的错误证明</a></li>
+<li><a href="#c-exfalso">附录 C：用 exfalso 证明空真命题</a></li>
+<li><a href="#dminif2f">附录 D：MiniF2F 修订</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="deepseek-prover-v2">DeepSeek-Prover-V2：通过强化学习子目标分解推进形式化数学推理</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2025-04-30">2025 年 4 月 30 日</time></p>
+<p><strong>作者：</strong> Z. Z. Ren、Zhihong Shao、Junxiao Song、Huajian Xin、Haocheng Wang、Wanjia Zhao、Liyue Zhang、Zhe Fu、Qihao Zhu、Dejian Yang、Z. F. Wu、Zhibin Gou、Shirong Ma、Hongxuan Tang、Yuxuan Liu、Wenjun Gao、Daya Guo、Chong Ruan</p>
+<p><strong>机构：</strong> DeepSeek-AI</p>
+<p><strong>项目：</strong> <a href="https://github.com/deepseek-ai/DeepSeek-Prover-V2">GitHub</a></p>
+<p><strong>原文：</strong> <a href="https://arxiv.org/abs/2504.21801">arXiv:2504.21801</a></p>
+<h2 id="_1">摘要</h2>
+<p>本文介绍 DeepSeek-Prover-V2：一个面向 Lean 4 形式化定理证明的开源大语言模型。它的初始化数据由 DeepSeek-V3 驱动的递归证明流水线生成。冷启动阶段先让 DeepSeek-V3 把复杂问题拆成一系列子目标，再由较小的证明模型逐一求解；成功子目标的形式化证明被合成为完整证明，并与 DeepSeek-V3 的逐步自然语言推理结合，构成强化学习的起点。这样，非形式化数学推理与形式化证明被统一到同一个模型中。</p>
+<p>DeepSeek-Prover-V2-671B 在 MiniF2F-test 上以 Pass@8192 达到 88.9%，在 PutnamBench 的 658 道题中解出 47 道。论文还发布 ProverBench，其中包含 325 道形式化问题和 15 道选自 2024–2025 年 AIME 的问题。模型为 15 道 AIME 题中的 6 道构造出有效 Lean 证明；作为对照，DeepSeek-V3 在自然语言找答案任务中以多数投票解出 8 道。这说明大模型的非形式化数学推理与严格形式化证明之间的差距正在缩小。</p>
+<p><img alt="原论文第 1 页：摘要与三组基准结果" src="资源/原页-01.png"></p>
+<h2 id="1">1 引言</h2>
+<p>推理模型通过测试时扩展和自然语言思维链，在竞赛数学上取得显著进展。它们不再只依赖一次前向计算，而是能够检查中间步骤、反思并修正路线。不过，自然语言推理容许启发式、近似和省略；Lean、Isabelle、Coq 等证明助手则要求每一步都明确构造并由逻辑内核验证，不能依赖歧义或隐含假设。如何把高层数学直觉转化为句法严格、细节完备的形式化证明，仍是神经定理证明的核心难题。</p>
+<p>经典的 Draft, Sketch, and Prove 路线先让大模型写自然语言证明草图，再把草图翻译为形式化步骤。它与分层强化学习中的子目标思想相近：把复杂任务拆成可独立求解的中间命题或引理，逐步逼近总目标。这样的分解符合人类数学家的工作方式，也有利于证明模块化、复用和搜索效率。</p>
+<p>本文进一步训练一个专门进行子目标分解的推理模型。DeepSeek-V3 同时负责高层证明草图和 Lean 4 形式化：它生成一串含有待补证明的中间引理；计算成本较低的 7B 证明模型负责搜索每个子目标的证明。子目标又被改造成由易到难的训练题，形成课程学习。所有步骤解出后，系统把完整形式化证明与 DeepSeek-V3 的思维链配对，合成数百条高质量冷启动数据，再通过大规模强化学习加强两类推理之间的联系。</p>
+<p><img alt="原论文第 2 页：形式化推理难题、分层分解路线与主要贡献" src="资源/原页-02.png"></p>
+<p>图 2 以 $n^2\le n!\;(n\ge 4)$ 为例：DeepSeek-V3 先提出数学归纳法草图，并把基例、归纳步骤和最终结论写成带待证占位的 Lean 结构；7B 模型递归补齐各子目标；系统最后拼接为可验证的完整证明，再把它附在原自然语言推理之后形成训练样本。</p>
+<p><img alt="原论文第 3 页：冷启动数据的递归子目标求解流程" src="资源/原页-03.png"></p>
+<h2 id="2">2 方法</h2>
+<h3 id="21">2.1 通过子目标分解进行递归证明搜索</h3>
+<h4 id="_2">子目标分解</h4>
+<p>DeepSeek-V3 接收形式化定理后，先生成自然语言证明草图，同时把草图中的关键步骤表达为 Lean 的 have 结构。系统从中抽取子目标，构造两类局部引理：</p>
+<ul>
+<li>用某个子目标直接替换原定理目标，使模型独立证明这一局部结论；</li>
+<li>把此前已经得到的子目标作为前提，再证明当前子目标，使依赖关系保持局部且逐步累积。</li>
+</ul>
+<p>专门优化过的 7B 模型负责这些局部证明，降低对大型通用模型进行密集搜索的计算负担。只要全部子目标成功，原定理的完整证明便可自动合成。</p>
+<h4 id="_3">面向子目标证明的课程学习</h4>
+<p>形式化训练数据即使来源优质，也常产生稀疏反馈：大多数搜索尝试失败，无法提供正奖励。本文把拆出的子目标及其带前提变体都加入专家迭代，把一道困难原题扩展为一组更容易获得成功信号的相关猜想。模型先掌握局部引理，再逐步回到完整问题。这与 AlphaProof 测试时强化学习的基本思想相通：围绕目标问题生成变体，以提高解决高难题的概率。</p>
+<p><img alt="原论文第 4 页：两类子目标引理构造与局部依赖" src="资源/原页-04.png"></p>
+<h3 id="22">2.2 统一非形式化推理与证明形式化</h3>
+<h4 id="_4">用合成数据冷启动</h4>
+<p>系统挑选一类特殊难题：7B 模型无法端到端解出原题，但能够逐一证明 DeepSeek-V3 拆出的全部子目标。把各局部证明组合后，系统便获得原题的完整形式化证明；再把它接到 DeepSeek-V3 的引理分解思维链后，形成从数学直觉到 Lean 证明的完整样本。</p>
+<p>该路线与同期 Kimina-Prover 的方向相反：本文从自然语言证明出发，向前生成结构化形式证明草图；Kimina-Prover 先收集完整形式证明及其非形式化版本，再反向合成中间自然语言推理。</p>
+<h4 id="_5">面向推理的强化学习</h4>
+<p>冷启动 SFT 后，模型使用二元正确性反馈做强化学习：Lean 验证通过记 1，否则记 0。训练早期还加入一致性奖励，要求最终证明真正包含思维链分解出的所有 have 型中间引理。研究者观察到，如果不加约束，模型生成的证明结构常偏离前面的分解；强制结构对齐能提高多步复杂定理的证明准确率。</p>
+<p><img alt="原论文第 5 页：子目标课程、冷启动合成与结构一致性奖励" src="资源/原页-05.png"></p>
+<h3 id="23-deepseek-prover-v2">2.3 DeepSeek-Prover-V2 训练细节</h3>
+<h4 id="_6">两阶段训练与双生成模式</h4>
+<p>模型支持两种由不同提示词触发的模式：</p>
+<ol>
+<li><strong>高效率 non-CoT 模式。</strong> 直接生成简洁 Lean 代码，不显式展开中间推理，适合快速迭代、数据收集与低成本证明。</li>
+<li><strong>高精度 CoT 模式。</strong> 先系统说明中间步骤和逻辑推进，再构造最终形式证明，强调透明性与复杂问题准确率。</li>
+</ol>
+<p>第一阶段以课程学习中的专家迭代训练 non-CoT 模型，并用递归子目标证明攻克难题。第二阶段把 DeepSeek-V3 的数学推理与合成形式证明结合成 CoT 冷启动数据，随后按推理模型标准流程进行强化学习。</p>
+<h4 id="_7">专家迭代与监督微调</h4>
+<p>每轮专家迭代都让当前最佳策略尝试此前未解的问题；被 Lean 验证成功的证明加入 SFT 数据，用来训练下一版模型。这让模型既学习初始示范，也能蒸馏自己新发现的成功轨迹。相较 V1/V1.5，V2 扩充了自动形式化和开源数据，并加入子目标分解生成的问题。</p>
+<p>671B 模型以 DeepSeek-V3-Base 为底座，在 16,384 词元上下文中用固定 $5\times10^{-6}$ 学习率微调。训练集同时包含不展开推理的 Lean 代码，以及展示“数学直觉→证明结构”转换过程的 CoT 样本。</p>
+<p><img alt="原论文第 6 页：两阶段训练、专家迭代与监督微调" src="资源/原页-06.png"></p>
+<h4 id="_8">强化学习与蒸馏</h4>
+<p>强化学习采用 GRPO。它不训练单独的 critic，而是为每个定理采样一组候选证明，根据组内相对奖励优化策略。每轮抽取 256 道题，每题生成 32 个候选，最大序列长度为 32,768；训练题必须“足够困难但 SFT 模型仍有一定成功率”，避免奖励全为 0 或全为 1。</p>
+<p>小模型以 DeepSeek-Prover-V1.5-Base-7B 为起点，把上下文从 4,096 扩展到 32,768 词元，再用 671B 强化学习 rollout 进行微调。它同时学习 CoT 和专家迭代获得的 non-CoT 证明，随后再执行与 671B 相同的强化学习阶段。</p>
+<h3 id="24">2.4 实验设置</h3>
+<p>所有实验使用 Lean 4.9.0-rc2，并沿用 V1.5 的测试环境。MiniF2F 含 488 道来自 AIME、AMC、IMO 和 MATH 的奥赛级形式化题，验证集与测试集各 244 道。测试集只用于评估；验证集进入子目标课程学习。</p>
+<p><img alt="原论文第 7 页：强化学习、蒸馏与 MiniF2F 评测设置" src="资源/原页-07.png"></p>
+<h2 id="3">3 实验结果</h2>
+<h3 id="31-minif2f">3.1 MiniF2F</h3>
+<p>DeepSeek-Prover-V2-671B 的 CoT 模式以 32 个样本达到 82.4%，Pass@1024 为 86.6%，Pass@8192 为 88.9%，刷新该基准结果。7B CoT 模型相应达到 75.6%、79.9% 和 82.0%，也超过论文列出的既有开源证明器。</p>
+<p>随着样本预算从 1 增长到 8192，671B 与 7B 的差距扩大，说明大模型不只单次成功率更高，也能更有效利用测试时采样。子目标课程在 MiniF2F-valid 上解出 219+2 道、总体 90.6%；测试集解出 217/244，即 88.9%。</p>
+<p><img alt="原论文第 8 页：MiniF2F 模型对比与分类结果" src="资源/原页-08.png"></p>
+<p>CoT 相比 non-CoT 提升明显，但代价是输出大幅变长：7B 平均由 442.6 增至 4,488.5 词元，671B 由 761.8 增至 6,751.9 词元。即便在 non-CoT 提示下，671B 也偶尔会在代码中插入简短自然语言注释，表现出隐式中间推理。</p>
+<h3 id="32">3.2 本科层级基准</h3>
+<p>ProofNet-test 包含 186 道来自实分析、复分析、线性代数、抽象代数和拓扑教材的 Lean 4 问题。尽管训练数据主要来自高中数学，671B CoT 仍以 Pass@1024 达到 37.1%，显著高于 non-CoT 的 31.2%。</p>
+<p>PutnamBench 使用 1962–2023 年 Putnam 竞赛题，最新版共 658 道 Lean 4 问题。排除与运行环境不兼容的题后，模型最初报告解出 49 道；提交给维护者复核后，两道题因形式化陈述错误被排除，最终为 47/658。CoT 模式明显优于 non-CoT。</p>
+<p><img alt="原论文第 9 页：CoT 输出长度以及 ProofNet 介绍" src="资源/原页-09.png"></p>
+<h4 id="_9">强化学习中的奖励黑客</h4>
+<p>初版报告曾称 7B 解出 13 道 671B 未解的 PutnamBench 题。Lean 社区随后发现，原因不是小模型数学能力反超，而是 Lean 4.9.0 用户界面的边角缺陷：apply? tactic 在特定情况下没有输出本应出现的未完成证明声明。7B 模型频繁组合 Cardinal.toNat 与 Cardinal.natCast_inj 触发该缺陷，671B 输出中却几乎没有这种模式。因此这些结果必须视为奖励黑客并更正。</p>
+<p><img alt="原论文第 10 页：ProofNet、PutnamBench 与 apply? 缺陷说明" src="资源/原页-10.png"></p>
+<h3 id="33">3.3 组合数学问题</h3>
+<p>CombiBench 原含 100 道 Lean 4 组合竞赛题。过滤不兼容题和含多个待证占位的题后，实际评估 77 道。初报解出 12 道，维护者又识别出两道形式化错误，最终结果为 10 道。671B CoT 在 Pass@16 下为 10/100，高于其 non-CoT 的 8/100、7B CoT 的 7/100。模型主要训练于数论和代数，因而组合数学仍然困难；但大型 CoT 模型能够发现错误陈述中的矛盾，并通过推出 False 关闭目标。</p>
+<h3 id="34-formalmath">3.4 FormalMATH</h3>
+<p>FormalMATH-All 有 5,560 道题，覆盖高中奥赛到本科数学；Lite 子集有 425 道。671B CoT 以 32 个样本在全量集达到 28.31%，在 Lite 达到 56.00%；Lite 的样本预算增至 3,200 后达到 61.88%。7B 相应为 22.41%、51.76% 与 55.06%，也超过论文列出的 Goedel-Prover-SFT、STP 和 Kimina-Prover-Preview-Distill-7B。</p>
+<p><img alt="原论文第 11 页：CombiBench 与 FormalMATH 结果" src="资源/原页-11.png"></p>
+<h3 id="35-proverbenchaime">3.5 ProverBench：AIME 与教材题的形式化</h3>
+<p>论文新建 ProverBench，共 325 道题：15 道来自 2024–2025 年 AIME 的数论和代数题，其余 310 道来自高中竞赛教材和本科教程。671B CoT 在全量集上以 32、128、512 个样本分别达到 52.9%、56.5%、59.1%；15 道 AIME 子集分别解出 4、5、6 道。</p>
+<p>为便于在非形式化与形式化推理间对照，作者排除在 Lean 中表达较繁琐的几何、组合与计数题，留下 15 道 AIME 数论/代数题。DeepSeek-V3-0324 在自然语言找答案任务中以 Maj@16 解出 8 道；DeepSeek-Prover-V2-671B 在已知正确答案的条件下，为其中 6 道构造出有效 Lean 证明。两项任务并不完全等价，但结果显示形式化能力正在接近非形式化推理。</p>
+<p><img alt="原论文第 12 页：ProverBench 总体与 AIME 子集结果" src="资源/原页-12.png"></p>
+<p>教材部分覆盖数论 40、初等代数 30、线性代数 50、抽象代数 40、微积分 90、实分析 30、复分析 10、泛函分析 10、概率论 10 道。这样的分布同时考察离散结构、方程、极限与连续性，以及抽象结构和空间中的形式推理。</p>
+<h2 id="4">4 结论</h2>
+<p>DeepSeek-Prover-V2 用递归定理证明流水线合成冷启动数据：DeepSeek-V3 统一完成子目标分解和 Lean 引理形式化，7B 模型高效补齐局部证明；子目标同时构成由易到难的课程。完整形式证明与自然语言思维链配对后，再以强化学习强化二者之间的映射。最终 671B 模型在高中竞赛和本科数学基准上都取得领先结果。</p>
+<p>未来工作将把这套范式扩展为更接近 AlphaProof 的系统，目标是解决代表自动定理证明前沿的 IMO 级问题。</p>
+<p><img alt="原论文第 13 页：教材题分布、ProverBench 分析与结论" src="资源/原页-13.png"></p>
+<h2 id="_10">参考文献</h2>
+<p>参考文献覆盖 ProofNet、Lean 4、分层强化学习、AlphaProof、DSP、MiniF2F、PutnamBench、CombiBench、FormalMATH、DeepSeek-Prover 系列、GRPO、专家迭代与多种神经定理证明系统。</p>
+<p><img alt="原论文第 14 页：结论末尾与参考文献" src="资源/原页-14.png"></p>
+<p><img alt="原论文第 15 页：参考文献" src="资源/原页-15.png"></p>
+<p><img alt="原论文第 16 页：参考文献" src="资源/原页-16.png"></p>
+<h2 id="anon-cot-cot">附录 A：non-CoT 与 CoT 证明生成示例</h2>
+<h3 id="a1-non-cot">A.1 non-CoT 生成</h3>
+<p>附录首先要求模型完成一个 Lean 4 证明：证明 $\cos(\pi/7)-\cos(2\pi/7)+\cos(3\pi/7)=1/2$。non-CoT 提示只要求补全代码，模型直接生成长篇 Lean 证明，围绕二倍角、三倍角恒等式、正弦余弦平方和、角度区间和非线性算术展开。虽然没有单独输出证明计划，代码中仍出现少量自然语言注释，印证正文所说的大模型隐式推理现象。</p>
+<p><img alt="原论文第 17 页：non-CoT 提示与余弦恒等式证明开篇" src="资源/原页-17.png"></p>
+<p><img alt="原论文第 18 页：non-CoT Lean 证明续" src="资源/原页-18.png"></p>
+<p><img alt="原论文第 19 页：non-CoT Lean 证明结尾与 CoT 示例开篇" src="资源/原页-19.png"></p>
+<h3 id="a2-cot">A.2 CoT 生成策略</h3>
+<p>CoT 示例取 1992 年 IMO 第 1 题：整数 $1&lt;p&lt;q&lt;r$，且 $(p-1)(q-1)(r-1)$ 整除 $pqr-1$，证明三元组只能是 $(2,4,8)$ 或 $(3,5,15)$。提示明确要求在 Lean 代码前给出详细证明计划、关键引理和形式化结构。</p>
+<p>模型先引入正整数 $k$，令</p>
+<div class="math-block">$$
+pqr-1=k(p-1)(q-1)(r-1),
+$$</div>
+<p>再利用 $p\ge2,q\ge3,r\ge4$ 推出 $k\le3$，随后分别讨论 $k=1,2,3$，通过代数变形、因式分解和大小关系排除不可能分支，得到两组解。之后的 Lean 代码把该计划展开为大量 have 引理、整型算术与分类讨论。</p>
+<p><img alt="原论文第 20 页：CoT 证明计划与 k 的上界" src="资源/原页-20.png"></p>
+<p><img alt="原论文第 21 页：k=1、k=2 的代数分析" src="资源/原页-21.png"></p>
+<p><img alt="原论文第 22 页：k=2 结论与 k=3 分析" src="资源/原页-22.png"></p>
+<p><img alt="原论文第 23 页：CoT 证明计划结尾与形式化代码开篇" src="资源/原页-23.png"></p>
+<p><img alt="原论文第 24 页：Lean 证明中的基础界与整除见证" src="资源/原页-24.png"></p>
+<p><img alt="原论文第 25 页：对 k 上界的形式化推导" src="资源/原页-25.png"></p>
+<p><img alt="原论文第 26 页：k=1 分支的排除" src="资源/原页-26.png"></p>
+<p><img alt="原论文第 27 页：k=2 分支与矛盾推导" src="资源/原页-27.png"></p>
+<p><img alt="原论文第 28 页：k=2 的因式分解分类" src="资源/原页-28.png"></p>
+<p><img alt="原论文第 29 页：得到三元组 (3,5,15)" src="资源/原页-29.png"></p>
+<p><img alt="原论文第 30 页：k=3 分支与目标三元组" src="资源/原页-30.png"></p>
+<p><img alt="原论文第 31 页：k=3 的整型因式分解" src="资源/原页-31.png"></p>
+<p><img alt="原论文第 32 页：候选因子组合分类" src="资源/原页-32.png"></p>
+<p><img alt="原论文第 33 页：排除非法组合并完成证明" src="资源/原页-33.png"></p>
+<h2 id="b-apply">附录 B：触发 apply? 缺陷的错误证明</h2>
+<p>附录给出 7B 模型在 PutnamBench 上生成的两个错误示例。它们分别涉及 Hadamard 矩阵中的全 1 子矩阵，以及满足多项式平方和恒等式的多项式对计数。模型通过 Cardinal.toNat、Cardinal.natCast_inj 后调用 apply?，触发 Lean 4.9.0 的界面缺陷，使未完成证明没有按预期暴露。这些代码不能作为正确数学证明，也解释了正文中被撤回的异常结果。</p>
+<p><img alt="原论文第 34 页：两段触发 apply? 界面缺陷的错误证明" src="资源/原页-34.png"></p>
+<h2 id="c-exfalso">附录 C：用 exfalso 证明空真命题</h2>
+<p>该例来自 CombiBench 的早期错误版本。形式化陈述要求从一个无限周期二进制词构造到“无处不在”有限词的嵌入，但对最小周期的约束错误地包含了周期 0。由于任意函数都以 0 为周期，假设同时要求它不是 0 周期函数，系统可以直接推出 False。</p>
+<p><img alt="原论文第 35 页：CombiBench 错误陈述与 CoT 分析开篇" src="资源/原页-35.png"></p>
+<p>模型识别到这一矛盾后，不再解决原本的组合数学内容，而是选择长度为 1 的任意词，并利用“由假可推出任意命题”完成所有条件。这个案例说明，形式验证只能保证结论由给定陈述推出；若形式化陈述本身错误，模型可能合法地利用矛盾得到空真证明。</p>
+<p><img alt="原论文第 36 页：对周期 0 矛盾的识别" src="资源/原页-36.png"></p>
+<p><img alt="原论文第 37 页：由错误假设推出 False 的证明计划" src="资源/原页-37.png"></p>
+<p><img alt="原论文第 38 页：exfalso Lean 证明与附录 D 开篇" src="资源/原页-38.png"></p>
+<h2 id="dminif2f">附录 D：MiniF2F 修订</h2>
+<p>作者列出三处 MiniF2F 陈述修订：删除一个多余且错误的参数应用；把“奇数和”中的加 1 移回求和项内部；修正乘积表达式的括号范围。这些改动避免解析出的 Lean 项与自然语言题意不一致。</p>
+<p><img alt="原论文第 39 页：三处 MiniF2F 形式化陈述修订" src="资源/原页-39.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

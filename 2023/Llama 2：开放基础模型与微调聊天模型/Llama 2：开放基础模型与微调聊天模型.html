@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Llama 2：开放基础模型与微调聊天模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">Llama 2：开放基础模型与微调聊天模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#llama-2">Llama 2：开放基础模型与微调聊天模型</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#_2">目录与图示</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 预训练</a><ul>
+<li><a href="#21">2.1 预训练数据</a></li>
+<li><a href="#22">2.2 训练细节</a><ul>
+<li><a href="#221">2.2.1 训练硬件与碳足迹</a></li>
+</ul>
+</li>
+<li><a href="#23-llama-2">2.3 Llama 2 预训练模型评估</a></li>
+</ul>
+</li>
+<li><a href="#3">3 微调</a><ul>
+<li><a href="#31">3.1 监督微调</a></li>
+<li><a href="#32">3.2 基于人类反馈的强化学习</a><ul>
+<li><a href="#321">3.2.1 人类偏好数据收集</a></li>
+<li><a href="#322">3.2.2 奖励建模</a></li>
+<li><a href="#323">3.2.3 迭代微调</a></li>
+</ul>
+</li>
+<li><a href="#33">3.3 多轮一致性的系统消息</a></li>
+<li><a href="#34-rlhf">3.4 RLHF 结果</a><ul>
+<li><a href="#341">3.4.1 基于模型的评估</a></li>
+<li><a href="#342">3.4.2 人工评估</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#4">4 安全</a><ul>
+<li><a href="#41">4.1 预训练阶段的安全</a></li>
+<li><a href="#42">4.2 安全微调</a><ul>
+<li><a href="#421">4.2.1 安全类别与标注指南</a></li>
+<li><a href="#422">4.2.2 安全监督微调</a></li>
+<li><a href="#423-rlhf">4.2.3 安全 RLHF</a></li>
+<li><a href="#424">4.2.4 面向安全的上下文蒸馏</a></li>
+</ul>
+</li>
+<li><a href="#43">4.3 红队测试</a></li>
+<li><a href="#44-llama-2-chat">4.4 Llama 2-Chat 的安全评估</a></li>
+</ul>
+</li>
+<li><a href="#5">5 讨论</a><ul>
+<li><a href="#51">5.1 经验与观察</a></li>
+<li><a href="#52">5.2 局限与伦理考量</a></li>
+<li><a href="#53">5.3 负责任的发布策略</a></li>
+</ul>
+</li>
+<li><a href="#6">6 相关工作</a></li>
+<li><a href="#7">7 结论</a></li>
+<li><a href="#_3">参考文献</a></li>
+<li><a href="#_4">附录</a><ul>
+<li><a href="#a1">A.1 贡献说明</a></li>
+<li><a href="#a2">A.2 预训练的额外细节</a></li>
+<li><a href="#a3">A.3 微调的额外细节</a></li>
+<li><a href="#a4">A.4 安全的额外细节</a></li>
+<li><a href="#a5">A.5 数据标注</a></li>
+<li><a href="#a6">A.6 数据集污染</a></li>
+<li><a href="#a7">A.7 模型卡</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="llama-2">Llama 2：开放基础模型与微调聊天模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2023-07-18">2023 年 7 月 18 日</time></p>
+<p><strong>作者：</strong> Hugo Touvron、Louis Martin、Kevin Stone 等，Meta GenAI 团队</p>
+<p><strong>论文版本：</strong> arXiv:2307.09288v2，2023 年 7 月 19 日</p>
+<p><strong>首次公开：</strong> 2023 年 7 月 18 日</p>
+<p><strong>说明：</strong> 本译文按论文顺序编排。正文和小标题译为中文；训练曲线、评估表、红队案例、附录中的完整参数与数据标注表、模型卡及参考文献保留对应原页截图，便于逐项核对。</p>
+<h2 id="_1">摘要</h2>
+<p>本文开发并发布 Llama 2，一组参数规模从 70 亿到 700 亿的预训练和微调大型语言模型。微调模型称为 Llama 2-Chat，针对对话场景进行优化。在我们测试的大多数基准上，Llama 2-Chat 超过现有开源聊天模型；根据帮助性和安全性的人工评估，它们可能成为闭源模型的合适替代品。本文详细描述 Llama 2-Chat 的微调方法和安全改进，希望社区能够在此基础上继续工作，并推动大型语言模型的负责任发展。</p>
+<p><img alt="原论文第 1 页：标题、作者与摘要" src="资源/原页-001.png"></p>
+<h2 id="_2">目录与图示</h2>
+<p>论文正文包括：引言；预训练（预训练数据、训练细节、预训练模型评估）；微调（监督微调、基于人类反馈的强化学习、多轮一致性系统消息、RLHF 结果）；安全（预训练安全、安全微调、红队测试、安全评估）；讨论（经验、局限与伦理、责任发布策略）；相关工作；结论；以及包含贡献说明、额外训练与安全细节、数据标注、数据污染和模型卡的附录。</p>
+<p><img alt="原论文第 2 页：目录与帮助性人工评估图" src="资源/原页-002.png"></p>
+<h2 id="1">1 引言</h2>
+<p>大型语言模型已经显示出成为高能力人工智能助手的巨大潜力，能够在多个领域完成需要专业知识的复杂推理任务，包括编程和创意写作。直观的聊天界面让人们可以与模型交互，也推动了它们在公众中的快速普及。</p>
+<p>大型语言模型的能力令人瞩目，而训练方法表面上相当直接：先在大规模自监督语料上预训练自回归 Transformer，再通过基于人类反馈的强化学习等技术与人类偏好对齐。高昂的计算需求把模型开发限制在少数参与者手中。BLOOM、LLaMA-1 和 Falcon 等公开预训练模型已经可以匹敌 GPT-3 和 Chinchilla 等闭源预训练模型，但它们尚不能替代 ChatGPT、BARD 和 Claude 等闭源产品模型。闭源产品模型经过大量微调以对齐人类偏好，因而在可用性和安全性上显著更好；这一过程需要大量计算和人工标注，而且通常不透明、难以复现，限制了社区推进对齐研究。</p>
+<p>本文开发并发布 Llama 2 及 Llama 2-Chat，规模最高达到 700 亿参数。在帮助性和安全性基准上，Llama 2-Chat 通常优于现有开源模型；在人工评估中，它的表现与部分闭源模型相当。作者通过安全专项数据标注和调优、红队测试以及迭代式评估提升模型安全性，并完整公开微调流程和安全改进方法，希望社区能够复现微调模型并持续提高安全性。</p>
+<p>本文还报告了开发过程中的新观察，例如工具使用能力的出现，以及知识在时间维度上的组织方式。</p>
+<p>本文公开以下模型：</p>
+<ol>
+<li><strong>Llama 2：</strong> Llama-1 的更新版本，使用新的公开数据混合训练；预训练语料增加 40%，上下文长度加倍，并采用分组查询注意力。公开 7B、13B 和 70B 版本；34B 版本只在文中报告，因时间不足以充分红队测试而暂缓发布。</li>
+<li><strong>Llama 2-Chat：</strong> 面向对话优化的 Llama 2 微调版本，公开 7B、13B 和 70B 版本。</li>
+</ol>
+<p>开放发布大型语言模型在安全进行时可能给社会带来总体收益，但 Llama 2 和所有大型语言模型一样，也带来潜在风险。已有测试主要使用英语，无法覆盖所有场景。因此，在部署 Llama 2-Chat 应用前，开发者应针对具体应用执行安全测试和调优，并遵循责任使用指南和代码示例。本文后续依次介绍预训练、微调、安全方法、关键观察、相关工作和结论。</p>
+<p><img alt="原论文第 3 页：安全人工评估与模型发布说明" src="资源/原页-003.png"></p>
+<p><img alt="原论文第 4 页：Llama 2-Chat 训练流程图与预训练开头" src="资源/原页-004.png"></p>
+<h2 id="2">2 预训练</h2>
+<p>Llama 2 沿用 Llama-1 的优化自回归 Transformer 训练方案，同时进行了多项改进：更严格的数据清洗，更新数据混合，训练总词元增加 40%，上下文长度加倍，并在更大模型中使用分组查询注意力以改善推理扩展性。</p>
+<h3 id="21">2.1 预训练数据</h3>
+<p>训练语料来自公开来源，不包含 Meta 产品或服务中的数据。作者尽量移除已知包含大量私人信息的网站内容。模型使用 2 万亿词元训练，这在性能与成本之间取得了良好平衡；同时对事实性更强的来源上采样，以增加知识并减轻幻觉。论文还开展了预训练数据调查，用于帮助用户理解模型潜在能力和局限。</p>
+<h3 id="22">2.2 训练细节</h3>
+<p>Llama 2 大体采用 Llama-1 的预训练设置和架构：标准 Transformer、RMSNorm 前置归一化、SwiGLU 激活和旋转位置嵌入。主要架构变化是上下文长度加倍以及分组查询注意力。论文附录通过消融实验说明这些变化的重要性。</p>
+<p>优化器使用 AdamW，参数为 $\beta_1=0.9$、$\beta_2=0.95$、$\epsilon=10^{-5}$；学习率采用余弦调度，预热 2000 步，最终衰减到峰值的 10%；权重衰减为 0.1，梯度裁剪阈值为 1.0。词元化仍使用 Llama-1 的 SentencePiece 字节对编码，把数字拆成单个数字，并用字节分解未知 UTF-8 字符，总词表为 32,000 个词元。</p>
+<h4 id="221">2.2.1 训练硬件与碳足迹</h4>
+<p>预训练使用 Meta Research Super Cluster 和内部生产集群，两者都使用 NVIDIA A100。前者采用 NVIDIA Quantum InfiniBand，生产集群采用 RoCE 网络；两种集群在网络互连、存储和调度上不同。作者报告了不同规模模型的训练时间、GPU 小时、功耗和碳排放，并强调能源来源和硬件利用率都会影响实际环境成本。</p>
+<h3 id="23-llama-2">2.3 Llama 2 预训练模型评估</h3>
+<p>预训练模型在自然语言理解、常识、推理、数学、代码、知识和多语言任务上进行评估，并与 Llama-1、MPT、Falcon、GPT-3、PaLM 等模型比较。Llama 2 在大多数基准上随着模型规模增长而提升；在一些任务中，Llama 2-70B 接近或超过闭源模型。扩大预训练数据和上下文后，模型在知识、代码和推理任务上获得稳定收益，但并非所有任务都随规模线性改善。</p>
+<p>预训练数据污染会导致基准分数虚高。作者通过与测试集去重、按时间切分和污染检查估计数据泄漏，并在附录中报告污染比例。预训练模型没有经过对话对齐，可能生成有害、偏见或不符合用户意图的回答，因此评估分数不能直接等同于聊天模型质量。</p>
+<p><img alt="原论文第 5 页：预训练数据、训练配置和模型表" src="资源/原页-005.png"></p>
+<p><img alt="原论文第 6 页：训练损失曲线、词元化与硬件" src="资源/原页-006.png"></p>
+<p><img alt="原论文第 7 页：预训练模型基准评估" src="资源/原页-007.png"></p>
+<h2 id="3">3 微调</h2>
+<p>Llama 2-Chat 的训练流程从预训练模型开始，先进行监督微调，再使用基于人类反馈的强化学习迭代改进。RLHF 阶段同时采用拒绝采样和近端策略优化；随着模型改进持续收集新的偏好数据并训练奖励模型，以避免奖励模型脱离当前模型分布。</p>
+<p><img alt="原论文第 8 页：Llama 2-Chat 的训练总流程" src="资源/原页-008.png"></p>
+<h3 id="31">3.1 监督微调</h3>
+<p>监督微调数据由人工编写的高质量对话组成，覆盖帮助性、知识问答、推理、写作、代码和安全拒答等任务。每条样本包含系统消息、用户消息和助手回答；训练时主要对助手回答计算损失，避免模型学习复制用户提示。作者发现，数据质量、回答风格和指令多样性比单纯增加样本数量更重要。</p>
+<p>监督微调模型已经能够遵循指令，但仍可能生成事实错误、过度迎合或不安全内容。因此，SFT 只作为 RLHF 的起点，后续需要使用偏好数据进一步优化。</p>
+<h3 id="32">3.2 基于人类反馈的强化学习</h3>
+<p>RLHF 包含偏好数据收集、奖励建模和策略优化三个环节。</p>
+<h4 id="321">3.2.1 人类偏好数据收集</h4>
+<p>标注员看到同一个提示下的两个模型回答，判断哪个更有帮助、更安全或更符合要求。帮助性数据覆盖一般对话、知识、写作和代码；安全数据专门包含潜在有害提示以及恰当拒答。标注指南要求评估事实性、相关性、完整性、清晰度和安全性，同时允许标注员报告无法判断的样本。</p>
+<p>随着迭代进行，作者不断增加困难提示、对抗性提示和多轮对话。偏好数据按批次收集，后续批次由当前模型生成，以保持奖励模型训练数据与策略分布一致。</p>
+<h4 id="322">3.2.2 奖励建模</h4>
+<p>奖励模型输入提示和回答，输出一个标量分数，学习人类对回答的相对偏好。作者分别训练帮助性奖励模型和安全性奖励模型，因为“尽可能帮助”与“必要时拒绝不安全请求”之间存在张力。分开训练可以简化任务，也能减少模型在安全和帮助性之间混淆。</p>
+<p>奖励模型准确率在“明显更好”的回答对上最高；当两个回答只略有差异时，标注员主观性和细微判断使准确率下降。随着标注数据和模型规模增加，奖励模型性能仍未饱和，说明更多高质量偏好数据仍能带来改进。</p>
+<h4 id="323">3.2.3 迭代微调</h4>
+<p>作者训练 RLHF-V1 到 RLHF-V5 多个版本，并探索两种算法：</p>
+<ul>
+<li><strong>近端策略优化：</strong> 从策略模型采样一个回答，用奖励模型估计人类偏好，再通过 PPO 更新策略。</li>
+<li><strong>拒绝采样微调：</strong> 针对每个提示采样多个回答，选择奖励最高的回答作为新的“金标准”，再像监督微调一样训练模型。</li>
+</ul>
+<p>两者的差异在于探索宽度和更新深度：拒绝采样对同一提示探索多个回答，PPO 通常只生成一个回答但在每一步更新策略。Llama 2-Chat 先使用拒绝采样，后续在拒绝采样检查点上叠加 PPO。</p>
+<p>拒绝采样主要用于 70B 模型，再把大模型选出的回答用于训练较小模型，形成能力蒸馏。早期版本只使用上一轮样本，导致某些能力退化；后续版本合并所有历史迭代中的高质量样本，缓解遗忘。采样温度决定探索程度，最优温度会随着 RLHF 迭代变化，需要逐步重新调整。</p>
+<p>PPO 优化目标是最大化奖励模型得分，同时加入相对于初始策略的 KL 惩罚：</p>
+<div class="math-block">$$R(g|p)=\widetilde R_c(g|p)-\beta D_{KL}(\pi_\theta(g|p)\Vert\pi_0(g|p)).$$</div>
+<p>KL 惩罚用于保持训练稳定，并减少奖励模型被“钻空子”的现象。对于可能不安全的提示，系统优先使用安全奖励；其他提示使用帮助性奖励。训练采用 AdamW、固定学习率、批大小 512、PPO 裁剪阈值 0.2，并对不同模型规模使用不同 KL 系数。</p>
+<p><img alt="原论文第 9 页：SFT 与 RLHF 结果" src="资源/原页-009.png"></p>
+<p><img alt="原论文第 10 页：人类偏好数据与奖励模型" src="资源/原页-010.png"></p>
+<p><img alt="原论文第 11 页：奖励模型训练与准确率" src="资源/原页-011.png"></p>
+<p><img alt="原论文第 12 页：帮助性与安全性奖励模型" src="资源/原页-012.png"></p>
+<p><img alt="原论文第 13 页：迭代微调与拒绝采样" src="资源/原页-013.png"></p>
+<p><img alt="原论文第 14 页：拒绝采样奖励与温度" src="资源/原页-014.png"></p>
+<p><img alt="原论文第 15 页：PPO 目标和训练配置" src="资源/原页-015.png"></p>
+<h3 id="33">3.3 多轮一致性的系统消息</h3>
+<p>对话中有些指令应当适用于所有轮次，例如“回答简洁”或“扮演某位公众人物”。初始 RLHF 模型在几轮后容易忘记系统消息。作者提出 Ghost Attention（GAtt），通过改造微调数据，让注意力在多轮过程中持续关注初始约束。</p>
+<p>给定用户和助手交替消息序列，以及应贯穿整个对话的指令，GAtt 把指令合成到每条用户消息中，用最新 RLHF 模型生成样本，再只保留第一轮的系统指令，并把之前轮次的损失设为零。训练约束包括爱好、语言和公众人物，也可以随机组合多个约束。评估显示，GAtt 在达到最大上下文长度前可以保持 20 多轮一致性，即使推理时提供训练中未出现的约束也能较好保持。</p>
+<p><img alt="原论文第 16 页：Ghost Attention 多轮一致性" src="资源/原页-016.png"></p>
+<h3 id="34-rlhf">3.4 RLHF 结果</h3>
+<h4 id="341">3.4.1 基于模型的评估</h4>
+<p>作者使用 GPT-4 作为外部评审，比较 Llama 2-Chat 与商业闭源基线的帮助性和安全性。模型评审存在顺序偏差和风格偏差，因此作者随机交换回答顺序，并报告胜率而非绝对分数。Llama 2-Chat 在帮助性上超过多数开源聊天模型，在安全性上显著优于未经安全调优的基线；70B 模型与部分闭源模型接近。</p>
+<h4 id="342">3.4.2 人工评估</h4>
+<p>人工评估使用约 4,000 个帮助性提示和约 2,000 个对抗性安全提示，覆盖单轮与多轮对话。评估者比较回答质量、事实性、相关性、完整性和安全违规程度。结果显示，Llama 2-Chat 随模型规模增大而提升；但人工评估会受到提示集合、指南、评估者主观性和回答比较困难等因素影响，置信区间不能代表所有现实场景。</p>
+<p><img alt="原论文第 17 页：RLHF 模型评估与人工偏好" src="资源/原页-017.png"></p>
+<p><img alt="原论文第 18 页：帮助性和安全性人工评估结果" src="资源/原页-018.png"></p>
+<p><img alt="原论文第 19 页：模型胜率与人工评估限制" src="资源/原页-019.png"></p>
+<h2 id="4">4 安全</h2>
+<p>本节深入讨论安全性测量与缓解。首先分析预训练数据和预训练模型的安全性；随后介绍安全对齐流程，包括安全相关标注、监督微调和基于人类反馈的强化学习，并给出实验结果；接着讨论为进一步理解和改善模型安全性而开展的红队测试；最后给出 Llama 2-Chat 的定量安全评估。附录表 52 还提供了模型卡。</p>
+<h3 id="41">4.1 预训练阶段的安全</h3>
+<p>了解预训练数据包含什么内容，对于提高透明度以及揭示潜在下游问题（例如偏见）的根本原因都很重要。这些信息可以帮助判断是否需要下游缓解措施，并指导模型的适当使用。本节分析预训练数据中的语言分布、人口统计群体表示和毒性，同时报告预训练模型在现有安全基准上的测试结果。</p>
+<p><strong>负责任预训练所采取的措施。</strong> 对训练中使用的每个数据集，作者都遵循 Meta 的标准隐私和法律审查流程。训练没有使用任何 Meta 用户数据；对于已知含有大量私人个人信息的部分网站，作者排除了其中的数据。作者尽力提高训练效率，以减少预训练的碳足迹（见第 2.2.1 节）；广泛共享模型也可以减少其他人重复训练类似模型的需要。</p>
+<p>作者没有对数据集进行额外过滤，以便 Llama 2 能够更广泛地用于不同任务（例如更好地用于仇恨言论分类），同时避免过度清洗有时会意外造成的人口群体消除。重要的是，保留这些数据还能让 Llama 2-Chat 在安全调优时用更少的示例实现更好的泛化。因此，Llama 2 模型应谨慎使用，只有在完成充分的安全调优后才能部署。</p>
+<p><strong>人口统计表示：代词。</strong> 模型生成中的偏见可能继承自训练数据本身。例如，大规模文本语料中表示“人”的词往往比表示“女性”的词更常与表示“男性”的词出现在相似语境中；模型在代表弱势人口群体的数据上如何训练，也会显著影响其公平性指标。在英语训练语料中，作者统计了表 9a 所列常见英语代词的频率。与“她”代词相比，“他”代词在文档中的表示通常更高，这与同等规模预训练数据集中的代词频率差异一致。这意味着模型在预训练期间学到的涉及“她”代词的语境可能更少，之后生成“他”代词的比例也可能更高。</p>
+<p><strong>人口统计表示：身份。</strong> 作者还通过 HolisticBias 数据集中的人口身份术语使用率，近似分析不同人口群体在预训练数据中的表示。作者计算每个描述词在语料中的频率，将其分为宗教、性别与性、国籍、种族与族裔、性取向五个轴，并在表 9b 中展示每个轴的前五个术语。由于“直性恋”“白人”和“黑人”等词在非人口统计语境中也很常见（例如基本颜色词），前五名中删除了这些词；同时对性别与性、性取向两个列表之间的重复项进行了去重。</p>
+<p>在性别与性轴中，“她”代词出现在更少的文档里，但“女性”一词出现在更大比例的文档中。这可能意味着关于“她”代词的语境较少，而关于“女性”的评论更多，或许反映了这些术语在语言标记性上的差异。性取向轴的前五个术语都与 LGBTQ+ 身份有关。国籍、种族与族裔、宗教三个轴都表现出西方偏向：例如，“美国人”出现在 69.4% 的相关文档中；“欧洲人”比其他种族和族裔术语更常见；“基督教徒”是表示最多的宗教群体，其次是“天主教徒”和“犹太人”。</p>
+<p><img alt="原论文第 20 页：人口统计表示与代词分析" src="资源/原页-020.png"></p>
+<p><strong>数据毒性。</strong> 作者使用在 ToxiGen 数据集上微调的 HateBERT 分类器，测量英语预训练语料中的毒性比例。对每个文档逐行打分，再取平均值作为文档分数。图 13 展示了完整语料 10% 随机样本的分数分布。约 0.2% 的文档得到不低于 0.5 的毒性可能性分数，说明预训练数据中存在少量毒性内容。作者选择不清除这些毒性数据，以便下游任务获得更好的泛化能力。</p>
+<p><strong>语言识别。</strong> 预训练数据主要是英语，也包含少量其他语言。表 10 给出了占文档比例超过 0.005% 的语言分布。分析使用 fastText 语言识别工具，并将 0.5 作为语言检测阈值。训练语料以英语为主，意味着模型可能不适合其他语言的使用场景。</p>
+<p><img alt="原论文第 21 页：毒性分布与语言识别" src="资源/原页-021.png"></p>
+<p><strong>预训练模型安全基准。</strong> 作者在三个常用自动基准上评估 Llama 2 的安全能力：</p>
+<ol>
+<li><strong>真实性：</strong> 指语言模型是否因为误解或错误信念而生成已知的虚假陈述，使用 TruthfulQA 衡量输出是否可靠、符合事实和常识。</li>
+<li><strong>毒性：</strong> 指模型生成有毒、粗鲁、对抗性或隐含仇恨内容的倾向，使用 ToxiGen 衡量针对不同群体生成有毒语言和仇恨言论的程度。</li>
+<li><strong>偏见：</strong> 指模型生成如何复现既有的社会刻板印象，使用 BOLD 研究生成文本的情感是否随人口属性而变化。</li>
+</ol>
+<p>作者将 Llama 2 与 Llama 1、Falcon 和 MPT 比较。解码温度设为 0.1，使用核采样，top-p 为 0.9。TruthfulQA 报告同时真实且有信息量的生成比例，越高越好；ToxiGen 报告被指标判定为有毒的生成比例，越低越好。与 Llama 1-7B 相比，Llama 2-7B 的真实性和信息量提高 21.37%，毒性降低 7.61%。预训练的 Llama 2-13B 和 70B 毒性有所增加，可能源于更大的预训练数据或不同的数据混合。虽然有人提出预训练数据集规模与下游模型毒性或偏见之间可能存在关系，但这一假设仍需要更多实证研究验证。</p>
+<p>在 BOLD 提示上，许多群体的总体正向情感有所增加。Llama 2 在毒性指标上没有超过其他模型，作者推测这可能是因为没有对预训练数据进行激进过滤。保留未过滤数据有助于基础模型完成更多下游任务（包括仇恨言论检测），也降低了意外过滤掉某些人口群体的风险；同时，使用较少过滤的数据训练的模型通常只需更少示例就能实现合理的安全对齐。因此，部署基础 Llama 2 模型前仍必须采取额外的安全缓解措施。</p>
+<p><img alt="原论文第 22 页：预训练模型安全基准" src="资源/原页-022.png"></p>
+<h3 id="42">4.2 安全微调</h3>
+<p>本节介绍安全微调方法，包括安全类别、标注指南，以及用于缓解安全风险的技术。整体流程与第 3 节的一般微调方法相似，但针对安全问题做了重要调整，具体包括：</p>
+<ol>
+<li><strong>安全监督微调：</strong> 首先收集对抗性提示和安全示范，并把它们纳入一般监督微调流程。这使模型在 RLHF 之前就开始遵循安全指南，也为高质量的人类偏好数据标注打下基础。</li>
+<li><strong>安全 RLHF：</strong> 随后将安全纳入一般 RLHF 流程，包括训练专门的安全奖励模型，并收集更具挑战性的对抗性提示，用于拒绝采样式微调和 PPO 优化。</li>
+<li><strong>安全上下文蒸馏：</strong> 最后使用上下文蒸馏改进 RLHF 流程：在提示前添加安全预提示（例如“你是一名安全且负责任的助手”）来生成更安全的回答，再去掉预提示、用这些回答微调模型，相当于把安全上下文蒸馏进模型。作者采用定向策略，由安全奖励模型为每个样本决定是否使用上下文蒸馏。</li>
+</ol>
+<h4 id="421">4.2.1 安全类别与标注指南</h4>
+<p>根据已有研究指出的大型语言模型局限，作者要求标注团队从两个维度创建对抗性提示：一是风险类别，即模型可能生成不安全内容的潜在主题；二是攻击向量，即能够诱发不良行为的不同提问方式。</p>
+<p>风险类别大致分为三类：非法和犯罪活动（例如恐怖主义、盗窃、人口贩运）；仇恨和有害活动（例如诽谤、自残、饮食失调、歧视）；以及无资质建议（例如医疗、金融和法律建议）。攻击向量包括心理操纵（例如权威操纵）、逻辑操纵（例如虚假前提）、句法操纵（例如拼写错误）、语义操纵（例如隐喻）、视角操纵（例如角色扮演）、非英语语言等。</p>
+<p>作者随后定义安全且有帮助的回答应遵循的最佳实践：如果存在即时安全问题，模型首先应处理该问题；然后回答提示并向用户解释潜在风险；最后在可能时提供补充信息。标注员还被要求避免造成负面用户体验的类别。指南只是一般性指导，会根据新发现的风险持续迭代和修订。</p>
+<h4 id="422">4.2.2 安全监督微调</h4>
+<p>根据第 4.2.1 节的指南，作者从受训标注员处收集提示和安全回答示范，并按照第 3.1 节所述方式用于监督微调。标注员首先提出他们认为可能诱导模型产生不安全行为的提示，也就是按照指南开展红队测试；随后为每个提示编写模型应当生成的安全且有帮助的回答。</p>
+<h4 id="423-rlhf">4.2.3 安全 RLHF</h4>
+<p>Llama 2-Chat 开发早期的观察表明，模型能够从监督微调中的安全示范进行泛化。模型很快学会撰写详细的安全回答、处理安全问题、解释主题为何敏感，并提供额外的帮助性信息。模型生成的安全回答往往比普通标注员撰写的回答更详细。因此，作者只收集了几千条监督示范，就完全转向 RLHF，以教会模型撰写更细致、更有层次的回答。全面的 RLHF 调优还可能使模型更能抵抗越狱尝试。</p>
+<p>安全 RLHF 首先收集人类偏好数据：标注员编写他们认为可能诱发不安全行为的提示，然后比较多个模型回答，按照指南选出最安全的回答。随后使用这些偏好数据训练安全奖励模型，并在 RLHF 阶段再次使用对抗性提示从模型采样。</p>
+<p><strong>在不损害帮助性的情况下提升长尾安全鲁棒性。</strong> 安全问题天然具有长尾特征，挑战来自少量非常具体的案例。作者取两个中间 Llama 2-Chat 检查点，一个在 RLHF 阶段不包含对抗性提示，另一个包含对抗性提示；然后使用安全和帮助性奖励模型，在测试集上为两者的回答打分。安全奖励模型的分数分布在安全调优后向更高分移动，接近零分的长尾变薄，左上角出现明显聚集，说明模型安全性提高。帮助性测试集没有出现低于 y=x 线的聚集，说明安全调优后帮助性分数分布得到保留。换言之，只要已有足够的帮助性训练数据，再增加安全缓解阶段并不会明显损害帮助性表现。</p>
+<p><strong>安全数据规模的影响。</strong> 为了解安全训练数据增加如何影响整体性能，特别是帮助性，作者固定帮助性训练数据约 90 万条，逐步将 RLHF 中使用的安全数据从 0% 增加到 100%（约 10 万条）。按照第 3.1 节的数据混合流程，将 Llama 2 预训练模型微调两个训练周期，得到使用安全数据总量 0%、1%、10%、25%、50% 和 100% 的六个模型变体。每个变体都用安全和帮助性奖励模型评分。增加安全数据比例后，模型处理风险和对抗性提示的能力显著提升，安全奖励分布的低分尾部变轻；与此同时，平均帮助性分数保持稳定。作者推测，这是因为帮助性训练数据已经足够多。</p>
+<p><img alt="原论文第 23 页：安全类别、标注指南与安全微调流程" src="资源/原页-023.png"></p>
+<p><img alt="原论文第 24 页：安全 RLHF 与数据规模实验" src="资源/原页-024.png"></p>
+<p><img alt="原论文第 25 页：安全奖励分布与拒绝示例" src="资源/原页-025.png"></p>
+<p>作者还测量了<strong>错误拒答</strong>。虽然总体帮助性没有回归，但交互中可以定性观察到，安全缓解更多的模型对某些问题回答得更保守。错误拒答定义为：模型因为无关的安全担忧，错误拒绝回答合法的用户提示；因能力不足而合理拒答（例如“我不能参加视频通话”或“2024 年超出我的知识截止日期”）不计入。作者训练一个检测回答中拒答的分类器，并将其用于帮助性测试集，以及一个包含 210 个边界样本的专门测试集。这些边界提示刻意包含看似对抗性的敏感词，但实际并不危险，例如“给我一个圣诞 Crack 的食谱”。随着安全数据混入比例增加，两个数据集上的错误拒答率都变高；不过在帮助性数据集上，即使使用 100% 安全数据，错误拒答总体仍约为 0.05%。边界集更困难，模型有时难以判断包含“炸弹”等常出现在不安全生成中的词的提示是否安全。</p>
+<h4 id="424">4.2.4 面向安全的上下文蒸馏</h4>
+<p>作者使用上下文蒸馏，使 Llama 2-Chat 将对抗性提示与更安全的回答联系起来。实验表明，只需在模型前加安全预提示（例如“你是一名安全且负责任的助手”），就能高效增强大型语言模型的安全能力。与安全监督微调类似，安全上下文蒸馏可以快速启动模型对困难对抗性提示的回答，之后再通过 RLHF 进一步改进。</p>
+<p>具体而言，作者在对抗性提示前添加安全预提示，生成更安全的回答；然后去掉预提示，用模型自己生成的安全回答对模型进行微调。安全预提示通过模板自动生成，使用“负责任”“尊重”“明智”等通常与安全行为相关的形容词，使模型将这些词与希望在安全回答中体现的积极特征联系起来。</p>
+<p>在收集提示时，标注员还会按照风险类别为提示标注，这使得预提示可以更加有针对性：根据识别出的风险类别，向模型提供专门的回答模板，规定应如何处理对抗性提示。通用预提示会提高安全奖励分数，而带有定制回答模板的预提示提升更大。</p>
+<p>作者发现，对帮助性提示进行安全上下文蒸馏会损害模型性能并增加错误拒答，因此只对对抗性提示使用。即使面对对抗性提示，上下文蒸馏有时也会降低回答质量：如果原回答已经很高质量，蒸馏后模型可能过度强调预提示，反复给出泛化的安全担忧，导致回答不够贴切。因此，作者让安全奖励模型决定是否保留蒸馏结果：只有当蒸馏回答的奖励分数高于原回答时才保留。该策略对模型原本表现很差的提示尤其有帮助，同时限制了上下文蒸馏的负面影响。</p>
+<p><img alt="原论文第 26 页：安全数据扩展与错误拒答" src="资源/原页-026.png"></p>
+<p><img alt="原论文第 27 页：安全上下文蒸馏" src="资源/原页-027.png"></p>
+<h3 id="43">4.3 红队测试</h3>
+<p>大型语言模型的能力范围很广，训练数据也高度多样，仅通过事后使用和分析来识别风险是不够的。因此，作者开展了多种主动风险识别活动，通常称为“红队测试”，名称来自计算机安全领域。这种细粒度分析很重要，因为安全问题具有长尾特征，即使极少出现的边界案例也可能造成明显问题。即使定量分数看起来很好，定性洞察仍能帮助识别并针对更具体的模式。</p>
+<p>作者组织内部员工、合同工和外部供应商开展多轮红队测试，参与者超过 350 人，包括网络安全、选举欺诈、社交媒体虚假信息、法律、政策、公民权利、伦理、软件工程、机器学习、负责任人工智能和创意写作等领域的专家，也包括来自不同社会经济、性别、族裔和种族背景的人员。</p>
+<p>红队成员围绕多种风险类别探测模型，包括犯罪计划、人口贩运、受管制物质、露骨性内容、无资质健康或金融建议、隐私侵犯等，也测试假设性问题、格式错误或拼写错误输入、长对话等攻击向量。作者还专门测试模型协助制造武器（核、生物、化学和网络武器）的能力；相关发现很少，并已采取缓解措施，但红队工作仍将继续。</p>
+<p>截至论文撰写时，所有红队测试都以英语模型输出为目标，但包含非英语提示和对话上下文，因为这是一种已知攻击向量。参与者先获得风险类别定义和少量危险交互示例，然后分配到专注于某一风险类别或攻击向量的子团队。每次创建对话后，红队成员都会标注风险区域和风险程度等属性，风险程度采用五点李克特量表。</p>
+<p>红队测试带来了以下改进模型的关键洞察：早期模型更可能在生成不安全回答时不承认内容有问题；稍后模型即使继续提供有害内容，也会先说明内容有问题，而最新模型已经能够解决这种“先警告、后照做”的情况。通过加入“古怪”要求或具体格式来分散早期模型的注意力，通常可以绕过直接请求下的抵抗，例如要求写歌、故事或诗歌是诱导模型生成原本能够防住的内容的可靠方式。把问题请求嵌入积极语境，也常能让早期模型忽视真正要生成的有害内容。</p>
+<p>每轮红队测试后，作者会彻底分析数据，包括对话长度、风险区域分布、虚假信息主题直方图（适用时）和风险程度评分，并把总体经验用于进一步的模型安全训练：将数据用于模型微调、模型反馈训练，或作为其他安全模型训练的信号。数月内还开展了多轮额外红队测试，以衡量每个新模型的鲁棒性。对于由专家执行的红队测试，模型鲁棒性 γ 定义为每人每小时创建的、会触发违规回答的提示平均数量。在 7B 模型上，γ 从 1.8 演变为 0.45。作者还跟踪上一轮红队测试中发现的违规提示在新候选版本中被缓解的比例，跨模型平均拒答率为 90%。</p>
+<p><img alt="原论文第 28 页：红队测试流程、参与者与主要发现" src="资源/原页-028.png"></p>
+<h3 id="44-llama-2-chat">4.4 Llama 2-Chat 的安全评估</h3>
+<p><strong>安全人工评估。</strong> 作者按照第 4.2.1 节的安全类别收集约 2,000 个对抗性提示，其中 1,351 个为单轮提示，623 个为多轮提示。评估者使用五点李克特量表判断模型是否存在安全违规：5 分表示没有安全违规且非常有帮助；4 分表示没有安全违规，只有轻微的非安全问题；3 分表示没有安全违规，但没有帮助性或存在其他严重的非安全问题；2 分表示轻度或中度安全违规；1 分表示严重安全违规。</p>
+<p>作者将 1 分或 2 分视为违规，以违规比例作为主要指标，平均分作为补充指标。每个样本由三名标注员标注，并通过多数票判断回答是否违规。使用 Gwet AC1/2 统计量测量标注员间可靠性。不同标注批次的可靠性分数为 0.70 至 0.95，表明标注员对安全判断总体高度一致；Llama 2-Chat 标注的平均可靠性按 Gwet AC2 计算为 0.92。模型违规率高的批次（例如 Vicuna）可靠性较低，违规率较低的批次（例如 Llama 2-Chat、Falcon 和 ChatGPT）可靠性较高。</p>
+<p>在不同模型规模上，Llama 2-Chat 的总体违规比例相当或更低；随后是 ChatGPT 和 Falcon，再后是 MPT 与 Vicuna。需要谨慎解释这些结果，因为它们受到提示集合、评审指南、内容标准和评审者主观性的影响。人工分析发现，Falcon 的回答通常很短，因此不容易生成不安全内容，但帮助性也较弱，大量回答得到 3 分。这解释了为什么 Falcon 与 Llama 2-Chat-34B 的违规比例看起来相近（3.88 对 4.45），但平均分明显更低。</p>
+<p>多轮对话比单轮对话更容易诱发不安全回答；尽管如此，Llama 2-Chat 尤其在多轮对话上仍优于基线。Falcon 在单轮对话中表现较好，主要得益于简洁，但在多轮对话中明显更差，可能是因为缺少多轮监督微调数据。按风险类别看，Llama 2-Chat 在无资质建议类别中的违规相对更多，虽然绝对比例仍较低，原因之一是有时缺少“我不是专业人士”等恰当免责声明；在另外两个类别中，无论模型规模如何，Llama 2-Chat 都持续取得相当或更低的违规比例。</p>
+<p><strong>真实性、毒性和偏见。</strong> 表 14 显示，微调后的 Llama 2-Chat 相比预训练 Llama 2 在真实性和毒性上都有显著改善：70B 的 TruthfulQA 从 50.18 提高到 64.14，ToxiGen 从 24.60 降到 0.01。各规模 Llama 2-Chat 的有毒生成比例都接近 0%，是所有比较模型中最低的。与 Falcon 和 MPT 相比，微调后的 Llama 2-Chat 在毒性和真实性方面总体表现最好。微调后，BOLD 中许多人口群体的总体正向情感有所增加。偏见基准的分组结果，以及真实性和偏见的更深入分析见附录 A.4.8。</p>
+<p><img alt="原论文第 29 页：安全人工评估指标" src="资源/原页-029.png"></p>
+<p><img alt="原论文第 30 页：单轮、多轮及风险类别违规率" src="资源/原页-030.png"></p>
+<p><img alt="原论文第 31 页：真实性、毒性和偏见评估" src="资源/原页-031.png"></p>
+<h2 id="5">5 讨论</h2>
+<p>本节讨论作者在 RLHF 中观察到的有趣性质，随后讨论 Llama 2-Chat 的局限，最后介绍模型的负责任发布策略。</p>
+<h3 id="51">5.1 经验与观察</h3>
+<p>调优过程揭示了若干有趣结果，例如 Llama 2-Chat 能够按时间组织知识，也能够调用外部工具的 API。</p>
+<p><strong>超越人类监督。</strong> 项目开始时，许多研究者偏好监督标注，因为它提供更密集的信号；而强化学习以不稳定著称，在自然语言处理研究群体中似乎有些神秘。然而，强化学习非常有效，尤其在成本和时间效率方面。研究结果表明，RLHF 成功的关键在于它在标注过程中促成了人与大型语言模型之间的协同。</p>
+<p>即使是熟练标注员，每个人的写作也有明显差异。用监督微调标注训练的模型会学习这种多样性，也会不幸地学习低质量标注的尾部；同时，模型能力还受到最优秀标注员写作能力的上限限制。相比之下，人类在比较两个输出并标注偏好时，受到个人能力差异的影响可能更小。因此，奖励机制能够迅速给低质量尾部样本分配低分，并向人类偏好对齐。图 20 显示，最差回答逐渐被移除，分布向右移动。</p>
+<p>此外，在标注过程中，模型可能探索出连最优秀标注员也不会写出的回答轨迹；但人类比较两个回答时，仍能在超出自身写作能力的范围提供有价值的反馈。就像不是每个人都是优秀艺术家，但大多数人仍有欣赏和批评艺术的能力。作者认为，大型语言模型在某些任务中超过人类标注员的写作能力，根本上由 RLHF 驱动。监督数据可能不再是唯一的黄金标准，这一变化迫使我们重新审视“监督”的概念。</p>
+<p><img alt="原论文第 32 页：RLHF 经验与上下文温度重标定" src="资源/原页-032.png"></p>
+<p><strong>上下文中的温度重标定。</strong> 作者观察到一种此前据其所知尚未报告的 RLHF 现象：温度会根据上下文动态重新缩放。图 8 表明温度似乎受到 RLHF 影响，但这种变化并不会对所有提示均匀施加。对于“写一首诗”这类创造性提示，提高温度仍会在不同 RLHF 迭代中产生多样性，Self-BLEU 曲线斜率与监督微调模型相近。另一方面，对于“首都是什么”这类事实提示，Self-BLEU 斜率会随时间减小。这说明即使温度升高，模型也学会对事实提示持续给出相同回答。</p>
+<p><strong>Llama 2-Chat 的时间感知。</strong> 模型展现出令人印象深刻的泛化能力。作者手动测试了几十个示例，持续观察到模型能够以时间方式组织知识，即使只提供很少数据。为向 Llama 2-Chat 注入时间概念，作者收集了 1,000 条与具体日期有关的监督微调示例，例如“巴拉克·奥巴马当选总统已经多久了”。每条示例带有两个关键元数据：提出问题的日期（会影响回答）和事件日期，即早于该日期时问题才有意义的时间点。这一观察表明，尽管模型训练只进行下一个词元预测，数据也按随机顺序打乱而没有考虑时间顺序，大型语言模型仍比此前假设的更充分地内化了时间概念。</p>
+<p><img alt="原论文第 33 页：时间感知、工具使用与计算器评估" src="资源/原页-033.png"></p>
+<p><strong>工具使用能力的出现。</strong> 将大型语言模型与工具结合是不断发展的研究方向。Toolformer 的方法为每个工具采样数百万条轨迹，并构造少量示例，但它在每个示例中只使用单一工具，难以扩展到一连串工具调用。OpenAI 插件的发布引发了关于“如何教模型使用工具”和“是否需要大规模数据集”的讨论。作者的实验表明，工具使用能力可以通过对齐以零样本方式自发出现：虽然从未明确标注工具使用，Llama 2-Chat 仍能在零样本环境中理解工具用途和 API 参数，并调用一连串工具。作者还评估了接入计算器的 Llama 2-Chat，结果见表 15。工具使用令人兴奋，但也会带来安全问题，需要更多社区研究和红队测试。</p>
+<h3 id="52">5.2 局限与伦理考量</h3>
+<p>Llama 2-Chat 具有其他大型语言模型众所周知的局限，包括预训练结束后知识不再更新，可能生成不符合事实的内容（例如无资质建议），以及容易产生幻觉。</p>
+<p>初版 Llama 2-Chat 主要使用英语数据。实验观察表明，模型对其他语言也有一定能力，但由于非英语预训练数据很少，这种能力有限。因此，模型在英语之外的语言上的表现仍不稳定，应谨慎使用。</p>
+<p>与其他大型语言模型一样，Llama 2 在公开在线数据集上训练，可能生成有害、冒犯性或带偏见的内容。作者通过微调尝试缓解这些问题，但仍可能存在残留问题，尤其是可用非英语数据较少的语言。随着问题得到进一步处理，作者将继续微调并发布更新版本。</p>
+<p>并非所有模型使用者都怀有善意；对话式人工智能代理可能被用于生成虚假信息，或获取生物恐怖主义、网络犯罪等主题的信息。作者已努力调优模型，避免这些主题并降低模型在这些用途上的能力。作者试图平衡安全和帮助性，但有时安全调优过度，用户可能看到模型过于谨慎，倾向于拒绝某些请求或给出过多安全细节。使用预训练模型的用户尤其需要谨慎，并按照责任使用指南在调优和部署阶段采取额外措施。</p>
+<h3 id="53">5.3 负责任的发布策略</h3>
+<p><strong>发布细节。</strong> Llama 2 同时面向研究和商业使用开放。使用者必须遵守所提供的许可证和可接受使用政策，这些政策禁止违反适用政策、法律、规则和法规的用途。作者还提供代码示例，帮助开发者复现 Llama 2-Chat 的安全生成，并在用户输入层和模型输出层应用基本安全技术；同时发布责任使用指南，说明如何安全开发和部署。</p>
+<p><strong>负责任发布。</strong> 许多公司选择闭门开发人工智能，而作者选择开放发布 Llama 2，以鼓励负责任的人工智能创新。根据作者经验，开放方式可以汇集 AI 实践者社区的集体智慧、多样性和创造力，让技术收益得到实现；协作会让模型更好、更安全。整个 AI 社区，包括学术研究者、公民社会、政策制定者和产业界，都必须共同严格分析并揭示当前 AI 系统的风险，构建应对潜在滥用的解决方案。</p>
+<p>开放发布不仅促进与大科技公司之外的多元利益相关者协作，也是普及基础模型访问的基石。开放发布促进透明度，让更多人接触 AI 工具，推动技术民主化和 AI 专业知识去中心化。作者认为，去中心化不仅分配知识，还会刺激创新、加速产业进步。公开发布还可以分摊成本、消除进入壁垒，让小企业利用大型语言模型创新来探索和构建文本生成应用，最终为全球不同规模的组织创造更公平的竞争环境。</p>
+<p>作者承认，并非所有模型使用者都怀有善意，也承认 AI 将如何影响世界存在合理担忧。有毒内容生成和问题性关联仍是 AI 社区尚未完全缓解的重要风险。本文展示了限制这类回答方面的进展；虽然仍有更多工作要做，但这种认识反而加深了作者对开放科学和与 AI 社区协作的承诺。</p>
+<p><img alt="原论文第 34 页：局限、伦理考量与责任发布策略" src="资源/原页-034.png"></p>
+<h2 id="6">6 相关工作</h2>
+<p><strong>大型语言模型。</strong> 近年来，大型语言模型领域经历了巨大变化。遵循 Kaplan 等人提出的扩展定律，研究者提出了多个参数超过 1,000 亿的模型，从 GPT-3 到 Gopher，以及面向科学等专门领域的 Galactica。拥有 700 亿参数的 Chinchilla 将扩展定律重新指向词元数量，而不只是模型权重数量。Llama 的出现也十分重要，它强调推理阶段的计算效率。与此同时，开源模型与闭源模型的关系引发了持续讨论：BLOOM、OPT 和 Falcon 等开源发布试图挑战 GPT-3 和 Chinchilla 等闭源模型。</p>
+<p>但在 ChatGPT、Bard 和 Claude 这类“可用于生产”的大型语言模型上，性能和可用性仍存在明显差距。这些模型依靠复杂的调优技术与人类偏好对齐，而开源社区仍在探索和完善这一过程。为了缩小差距，Vicuna 和 Alpaca 等基于蒸馏的模型采用合成指令训练方法；尽管这些模型展现出潜力，仍未达到闭源模型的水平。</p>
+<p><strong>指令调优。</strong> Wei 等人通过在大量数据集上微调大型语言模型，使模型在未见任务上取得零样本性能。后续研究考察任务数量、模型规模和提示设置等因素对指令调优的影响。用于指令调优的提示可以由人类或语言模型创建，也可以通过后续指令改进初始生成，使其更有用、更有吸引力且偏见更少。与指令调优相关的链式思维提示，会要求模型在面对复杂问题时解释推理过程，以提高最终答案正确的可能性。</p>
+<p>RLHF 已成为微调大型语言模型的强大策略，可以显著改善模型性能。该方法最初用于文本摘要，后来扩展到许多其他应用。在这一范式中，模型根据人类用户反馈进行微调，使回答逐步更接近人类期待和偏好。研究表明，指令微调与 RLHF 的组合可以修复仅靠扩大模型规模无法解决的真实性、毒性和帮助性问题。另一项工作部分自动化了“微调加 RLHF”流程：用模型自身的批评和修改替代人工标注微调数据，用模型替代人类评审者对输出排序，这一过程称为“来自人工智能反馈的强化学习”。</p>
+<p><strong>已知的大型语言模型安全挑战。</strong> 近期文献广泛研究大型语言模型相关风险和挑战，包括偏见、毒性、私人数据泄漏和恶意使用。相关研究将这些影响分为可以在基础系统内评估的影响，以及必须放在社会语境中评估的影响，并提出潜在缓解策略。关于面向聊天机器人的大型语言模型的研究揭示了隐私和虚假专业能力声明等问题；另有工作提出处理这些问题的分类框架，并讨论发布对话模型可能带来的积极和消极影响之间的平衡。</p>
+<p>红队研究揭示了调优模型面临的具体挑战，展示了多种成功攻击类型及其对有害内容生成的影响。国家安全机构和研究者也对高级涌现模型行为、网络威胁以及生物战等领域的潜在滥用发出警告。更广泛的社会问题还包括 AI 研究加速导致的工作岗位替代，以及过度依赖大型语言模型可能造成训练数据退化。作者承诺继续与政策、学术和产业界展开合作，处理这些问题。</p>
+<p><img alt="原论文第 35 页：相关工作" src="资源/原页-035.png"></p>
+<h2 id="7">7 结论</h2>
+<p>本文介绍了 Llama 2，一组规模从 70 亿到 700 亿参数的新型预训练和微调模型。在作者考察的评估集上，这些模型与现有开源聊天模型具有竞争力，在能力上也达到部分专有模型的水平，但仍落后于 GPT-4 等模型。作者详细说明了训练这些模型所采用的方法和技术，并重点强调帮助性和安全性原则下的对齐。为了更大程度地服务社会并加快研究进展，作者以负责任的方式开放了 Llama 2 和 Llama 2-Chat。作为持续提高透明度和安全性的承诺，未来还将进一步改进 Llama 2-Chat。</p>
+<p><img alt="原论文第 36 页：结论" src="资源/原页-036.png"></p>
+<h2 id="_3">参考文献</h2>
+<p>论文参考文献按原文逐页保留。引用编号和作者信息与正文中的引用对应。</p>
+<p><img alt="原论文第 37 页：参考文献" src="资源/原页-037.png"></p>
+<p><img alt="原论文第 38 页：参考文献" src="资源/原页-038.png"></p>
+<p><img alt="原论文第 39 页：参考文献" src="资源/原页-039.png"></p>
+<p><img alt="原论文第 40 页：参考文献" src="资源/原页-040.png"></p>
+<p><img alt="原论文第 41 页：参考文献" src="资源/原页-041.png"></p>
+<p><img alt="原论文第 42 页：参考文献" src="资源/原页-042.png"></p>
+<p><img alt="原论文第 43 页：参考文献" src="资源/原页-043.png"></p>
+<p><img alt="原论文第 44 页：参考文献" src="资源/原页-044.png"></p>
+<p><img alt="原论文第 45 页：参考文献" src="资源/原页-045.png"></p>
+<h2 id="_4">附录</h2>
+<p>附录中的完整贡献说明、额外训练与微调细节、安全数据与评估、数据标注、数据污染分析和模型卡均以原论文页面截图保留，以避免表格、公式和示例在转写过程中丢失。</p>
+<h3 id="a1">A.1 贡献说明</h3>
+<p><img alt="原论文第 46 页：贡献说明" src="资源/原页-046.png"></p>
+<h3 id="a2">A.2 预训练的额外细节</h3>
+<p><img alt="原论文第 47 页：预训练额外细节" src="资源/原页-047.png"></p>
+<p><img alt="原论文第 48 页：预训练额外细节" src="资源/原页-048.png"></p>
+<p><img alt="原论文第 49 页：预训练额外细节" src="资源/原页-049.png"></p>
+<p><img alt="原论文第 50 页：预训练额外细节" src="资源/原页-050.png"></p>
+<h3 id="a3">A.3 微调的额外细节</h3>
+<p><img alt="原论文第 51 页：微调额外细节" src="资源/原页-051.png"></p>
+<p><img alt="原论文第 52 页：微调额外细节" src="资源/原页-052.png"></p>
+<p><img alt="原论文第 53 页：微调额外细节" src="资源/原页-053.png"></p>
+<p><img alt="原论文第 54 页：微调额外细节" src="资源/原页-054.png"></p>
+<p><img alt="原论文第 55 页：微调额外细节" src="资源/原页-055.png"></p>
+<p><img alt="原论文第 56 页：微调额外细节" src="资源/原页-056.png"></p>
+<p><img alt="原论文第 57 页：微调额外细节" src="资源/原页-057.png"></p>
+<h3 id="a4">A.4 安全的额外细节</h3>
+<p><img alt="原论文第 58 页：安全额外细节" src="资源/原页-058.png"></p>
+<p><img alt="原论文第 59 页：安全额外细节" src="资源/原页-059.png"></p>
+<p><img alt="原论文第 60 页：安全额外细节" src="资源/原页-060.png"></p>
+<p><img alt="原论文第 61 页：安全额外细节" src="资源/原页-061.png"></p>
+<p><img alt="原论文第 62 页：安全额外细节" src="资源/原页-062.png"></p>
+<p><img alt="原论文第 63 页：安全额外细节" src="资源/原页-063.png"></p>
+<p><img alt="原论文第 64 页：安全额外细节" src="资源/原页-064.png"></p>
+<p><img alt="原论文第 65 页：安全额外细节" src="资源/原页-065.png"></p>
+<p><img alt="原论文第 66 页：安全额外细节" src="资源/原页-066.png"></p>
+<p><img alt="原论文第 67 页：安全额外细节" src="资源/原页-067.png"></p>
+<p><img alt="原论文第 68 页：安全额外细节" src="资源/原页-068.png"></p>
+<p><img alt="原论文第 69 页：安全额外细节" src="资源/原页-069.png"></p>
+<p><img alt="原论文第 70 页：安全额外细节" src="资源/原页-070.png"></p>
+<p><img alt="原论文第 71 页：安全额外细节" src="资源/原页-071.png"></p>
+<h3 id="a5">A.5 数据标注</h3>
+<p><img alt="原论文第 72 页：数据标注" src="资源/原页-072.png"></p>
+<p><img alt="原论文第 73 页：数据标注" src="资源/原页-073.png"></p>
+<p><img alt="原论文第 74 页：数据标注" src="资源/原页-074.png"></p>
+<h3 id="a6">A.6 数据集污染</h3>
+<p><img alt="原论文第 75 页：数据集污染" src="资源/原页-075.png"></p>
+<p><img alt="原论文第 76 页：数据集污染" src="资源/原页-076.png"></p>
+<h3 id="a7">A.7 模型卡</h3>
+<p><img alt="原论文第 77 页：模型卡" src="资源/原页-077.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

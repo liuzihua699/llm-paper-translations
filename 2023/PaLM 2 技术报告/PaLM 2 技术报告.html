@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PaLM 2 技术报告</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">PaLM 2 技术报告</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#palm-2">PaLM 2 技术报告</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 缩放规律实验</a><ul>
+<li><a href="#21">2.1 缩放规律</a></li>
+<li><a href="#22">2.2 下游指标评估</a></li>
+</ul>
+</li>
+<li><a href="#3">3 训练数据集</a></li>
+<li><a href="#4">4 评估</a><ul>
+<li><a href="#41">4.1 语言水平考试</a></li>
+<li><a href="#42">4.2 分类与问答</a></li>
+<li><a href="#43">4.3 推理</a></li>
+<li><a href="#44">4.4 代码</a></li>
+<li><a href="#45">4.5 翻译</a></li>
+<li><a href="#46">4.6 自然语言生成</a></li>
+<li><a href="#47">4.7 记忆</a></li>
+</ul>
+</li>
+<li><a href="#5">5 负责任使用</a><ul>
+<li><a href="#51">5.1 推理阶段控制</a></li>
+<li><a href="#52">5.2 对开发者的建议</a></li>
+</ul>
+</li>
+<li><a href="#6">6 结论</a></li>
+<li><a href="#7">7 作者、署名与致谢</a></li>
+<li><a href="#_2">参考文献</a></li>
+<li><a href="#a">附录 A 详细结果</a></li>
+<li><a href="#b">附录 B 模型能力示例</a></li>
+<li><a href="#c">附录 C 语言水平考试</a></li>
+<li><a href="#d">附录 D 负责任人工智能</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="palm-2">PaLM 2 技术报告</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2023-05-17">2023 年 5 月 17 日</time></p>
+<p><strong>作者：</strong> Google 研究团队（完整作者、贡献者与致谢见第 7 节）<br>
+<strong>论文编号：</strong> arXiv:2305.10403v3  2023 年 9 月 13 日<br>
+<strong>首次公开：</strong> 2023 年 5 月 17 日<br>
+<strong>说明：</strong> 本译文按 PaLM 2 技术报告的原文顺序编排。正文翻译为中文；密集表格、示例、参考文献和附录使用对应原页截图保留。</p>
+<h2 id="_1">摘要</h2>
+<p>本文介绍 PaLM 2，一种在多语言能力和推理能力上达到当时先进水平、同时比前代 PaLM 更节省计算的语言模型。PaLM 2 以 Transformer 为基础，使用多种预训练目标的混合进行训练。通过对英语、多语言语言任务和推理任务的大量评估，我们证明 PaLM 2 在不同模型规模上都能显著改善下游任务质量，同时比 PaLM 推理更快、更高效。更高的效率既支持更广泛的部署，也让模型能够以更自然的交互节奏更快响应。</p>
+<p>PaLM 2 在 BIG-bench 及其他推理任务上相较 PaLM 有大幅提升，展现出稳健的推理能力；在一系列负责任人工智能评估中表现稳定，并可以在推理阶段控制毒性，而无需额外开销或损害其他能力。总体而言，PaLM 2 在多种任务和能力上取得当时的先进结果。需要区分 PaLM 2 家族中的预训练模型、微调模型以及使用这些模型的面向用户产品；后者通常包含额外的前处理和后处理，底层模型也会持续演化，因此产品表现不应被理解为与本文报告的预训练模型结果完全相同。</p>
+<p><img alt="原论文第 1 页：标题与摘要" src="资源/原页-001.png">
+<img alt="原论文第 2 页：目录" src="资源/原页-002.png"></p>
+<h2 id="1">1 引言</h2>
+<p>语言建模自香农用下一个词预测估计语言信息以来，一直是重要研究方向。早期方法以 $n$ 元模型为主，随后长短期记忆网络推动了快速发展；研究者也发现，语言建模训练能够迁移到语言理解。随着模型规模扩大和 Transformer 架构出现，大型语言模型在语言理解、生成、推理、数学、科学和多种语言任务上取得突破。</p>
+<p>过去的语言模型通常使用以英语为主的单语语料，并采用单一语言建模目标。PaLM 2 是 PaLM 的后继模型，把模型缩放、数据改进和架构研究结合起来，主要包含以下改进：</p>
+<ol>
+<li><strong>计算最优缩放。</strong> 在固定训练计算量下，训练数据量与模型规模应大致按相同比例增长，而不是像早期实践那样让模型规模增长速度约为数据集的三倍。</li>
+<li><strong>更丰富的数据混合。</strong> PaLM 2 使用覆盖数百种语言和多个领域的混合数据，包含编程语言、数学以及成对的多语言文档。研究显示，更大的模型能够处理更多差异明显的非英语数据，同时不降低英语理解能力；去重还可以减少记忆风险。</li>
+<li><strong>架构和训练目标改进。</strong> 模型仍基于 Transformer，但不再只使用单一的因果或掩码语言建模目标，而是采用经过调优的多目标混合，使模型学习语言的不同方面。</li>
+</ol>
+<p>PaLM 2 家族中最大的 PaLM 2-L 比最大的 PaLM 小得多，但使用了更多训练计算。评估显示，PaLM 2 在自然语言生成、翻译和推理等任务上显著超过 PaLM，说明性能提升不只来自扩大参数，也来自精细的数据选择、架构和目标设计。更小但质量更高的模型能提高推理效率、降低服务成本，并让更多应用和用户获得模型能力。</p>
+<p>PaLM 2 在多语言、代码生成和推理方面表现突出。报告还评估了多语言能力、训练数据记忆、偏差、毒性和潜在下游伤害。模型预训练数据中加入了用于毒性控制的控制词元，并注入了特殊的多语言“金丝雀”序列，以便测量模型对训练数据的逐字记忆。作者发现，PaLM 2 的平均逐字记忆率低于 PaLM；在低资源语言中，只有当数据跨文档重复多次时，记忆率才会明显高于英语。</p>
+<p>语言水平考试实验使用公开的高等级考试题，推理、代码、翻译和生成实验则使用标准学术基准。文中所有生成样例和指标都来自模型本身，没有使用 Google 搜索或翻译等外部增强。应注意，报告中并非 PaLM 2 的所有能力都通过 PaLM 2 API 对外开放。</p>
+<p><img alt="原论文第 3 页：引言与 PaLM 2 设计动机" src="资源/原页-003.png">
+<img alt="原论文第 4 页：多语言考试成绩概览" src="资源/原页-004.png">
+<img alt="原论文第 5 页：代码修复与多语言示例" src="资源/原页-005.png">
+<img alt="原论文第 6 页：多语言解释和生成示例" src="资源/原页-006.png"></p>
+<h2 id="2">2 缩放规律实验</h2>
+<p>扩大 Transformer 语言模型一直是获得先进性能的主要方法。早期缩放研究认为，模型参数量 $N$ 需要比数据量 $D$ 增长得更快；后续计算最优研究则表明，在固定计算预算下，参数量和数据量应大致同步增长。本文在更大的计算规模上独立验证这一结论，并进一步检查缩放规律是否能够预测下游任务指标。</p>
+<h3 id="21">2.1 缩放规律</h3>
+<p>作者为四个计算预算训练不同大小的模型，预算分别为 $1\times10^{19}$、$1\times10^{20}$、$1\times10^{21}$ 和 $1\times10^{22}$ FLOPs。每个模型的训练词元数由近似关系</p>
+<div class="math-block">$$\mathrm{FLOPs}\approx 6ND$$</div>
+<p>确定，并使用余弦学习率衰减，确保学习率在模型完成最终训练词元时完全衰减。对每个等 FLOPs 区间的验证损失进行二次拟合，拟合曲线的最低点给出预测的最优模型规模，再根据计算预算得到最优数据规模。</p>
+<p>不同计算尺度的结果一致表明，随着 FLOPs 增加，模型参数量和训练词元数应以近似相同的比例增长。这个结论与较小规模研究一致，说明计算最优缩放规律具有跨规模稳定性。根据拟合规律，作者又训练了约 4 亿到 150 亿参数的模型，并在不同 FLOPs 点测量损失。最低损失通常出现在接近预测最优参数量的模型上。</p>
+<h3 id="22">2.2 下游指标评估</h3>
+<p>训练损失可以帮助选择计算最优模型，但不是下游任务表现的完美代理。实验中，验证损失最低且最接近预测最优规模的模型，在部分下游任务上略低于参数更多的模型。这说明模型选择还要考虑训练吞吐、服务延迟、内存和部署成本。固定训练或推理预算时，最优的参数量可能因任务和使用场景而不同。</p>
+<p><img alt="原论文第 7 页：等 FLOPs 曲线与最优参数拟合" src="资源/原页-007.png">
+<img alt="原论文第 8 页：缩放规律和最优参数量表" src="资源/原页-008.png"></p>
+<h2 id="3">3 训练数据集</h2>
+<p>PaLM 2 的预训练语料由网页文档、书籍、代码、数学文本和对话数据组成，规模显著大于 PaLM 使用的语料。与以英语为主的旧模型相比，PaLM 2 使用更高比例的非英语数据，以改善翻译和多语言问答；数据覆盖数百种语言和文化，使模型学习不同语言的细微差别。</p>
+<p>除非英语单语数据外，训练集还包含大量平行多语言数据，即一侧为英语、另一侧为其他语言的文本对。平行数据既提升多语言理解和生成，也让模型在预训练阶段形成内在翻译能力。作者没有专门过滤或保留某些语言，而是从混合语料的自然分布中构建语言覆盖。</p>
+<p>数据处理包括去重、删除敏感个人信息和质量过滤。虽然 PaLM 2 中英语数据比例低于 PaLM，英语评测仍显著改善，作者将部分收益归因于更高的数据质量。少量预训练文本带有由固定版本 Perspective API 产生的毒性控制词元，用于推理阶段调节生成；与此相关的多语言金丝雀序列用于记忆实验。</p>
+<p>PaLM 2 还把上下文长度显著扩展到超过 PaLM 的水平，以支持长对话、远距离推理、长文档理解和摘要。实验显示，在不损害普通基准性能的前提下，可以增加模型上下文长度。</p>
+<p><img alt="原论文第 9 页：训练数据组成与数据处理" src="资源/原页-009.png"></p>
+<h2 id="4">4 评估</h2>
+<p>作者同时使用面向人类的语言水平考试和标准机器学习基准评估 PaLM 2。学术任务分为分类与问答、推理、代码、翻译和自然语言生成五类，多语言能力和负责任人工智能贯穿所有类别；记忆实验则作为潜在隐私风险的一部分。</p>
+<p>评估 PaLM 2-S、PaLM 2-M 和 PaLM 2-L 三个版本，未特别说明时“PaLM 2”指大型版本。由于不同检查点之间存在方差，大型模型取最后五个检查点的平均结果。大多数实验采用少样本上下文学习，给模型简短提示和可选的少量示例；除另有说明外，解码长度取开发集源文本和目标文本长度的第 99 百分位，并在可用时使用测试集。</p>
+<h3 id="41">4.1 语言水平考试</h3>
+<p>语言考试选择欧洲语言共同参考框架最高等级 C2，约对应 ACTFL 的 S/D 或 ILR 的 4/4+。作者使用公开的最新历年或练习试题，模拟考试而不是针对具体考试训练。模型只接收考试名称和题目，不提供少样本示例；考试中的选择题和写作题都被保留，写作由第三方评分者独立按 1 到 5 评分，5 分代表成年母语者水平。由于没有模型语音输入，口语部分未评估；听力题在有录音文本时改用转录文本作为阅读题。阅读和写作等权合成总分，再依据官方标准给出通过或未通过，但这些不是正式考试成绩。</p>
+<p>PaLM 2 在所有评估语言的考试中都超过 PaLM，并且全部达到通过线。部分考试的表现已达到能够教授该语言的水平，说明多语言数据和模型训练策略带来的收益不仅体现在基准分数，也体现在高难度、真实语言能力测试中。</p>
+<h3 id="42">4.2 分类与问答</h3>
+<p>英语任务覆盖开放域闭卷问答、完形填空、Winograd 类任务、阅读理解、常识推理、SuperGLUE 和自然语言推断。PaLM 2-L 在绝大多数任务上超过 PaLM，最小的 PaLM 2-S 也能与参数远大的 PaLM 540B 竞争；PaLM 2-M 已经在多项任务上稳定超过 PaLM。显著收益出现在对抗自然语言推断、阅读理解和常识推理数据集上，而两个 Winograd 数据集的提升相对有限。</p>
+<p>多语言问答使用 TyDi QA，分别评估提供黄金段落和不提供上下文的闭卷设置。PaLM 2 的三个版本在两种设置都超过 PaLM；不提供上下文时模型规模差异更明显，PaLM 2-L 的优势最大。低资源语言、非拉丁文字语言和跨文化问答的提升尤其突出，说明多语言语料提高了模型从参数中调用知识的能力。</p>
+<p>毒性分类实验改编零样本和少样本提示，在英语 Civil Comments 与多语言 Jigsaw 上测量 AUC-ROC。PaLM 2 在英语以及法语、葡萄牙语、俄语、土耳其语等非英语数据上普遍超过 PaLM，西班牙语少样本结果略有波动。作者还在涉及社会身份的问题上检查偏差，未观察到系统性的身份偏差模式。</p>
+<p><img alt="原论文第 10 页：评估设置与语言水平考试" src="资源/原页-010.png">
+<img alt="原论文第 11 页：英语问答与分类结果" src="资源/原页-011.png">
+<img alt="原论文第 12 页：多语言 TyDi QA 和毒性分类" src="资源/原页-012.png">
+<img alt="原论文第 13 页：毒性分类结果和多语言能力" src="资源/原页-013.png"></p>
+<h3 id="43">4.3 推理</h3>
+<p>推理能力要求模型组合多条信息并进行逻辑推断。作者在 WinoGrande、ARC-C、DROP、StrategyQA、CommonsenseQA、XCOPA 和 BIG-bench Hard 上进行少样本评估，使用经过指令微调的 PaLM 2；XCOPA 使用未针对该任务进行的版本。部分 ARC-C、StrategyQA 和 CSQA 结果结合思维链与自一致性，BIG-bench Hard 使用思维链提示。</p>
+<p>PaLM 2 在所有数据集上超过 PaLM，并达到与 GPT-4 有竞争力的结果。多语言 XCOPA 在斯瓦希里语、克丘亚语和海地克里奥尔语等低资源语言上提升尤其明显，即使不使用思维链也取得新的先进水平。BIG-bench Hard 的 23 个任务中，PaLM 2 每项都超过 PaLM；多步算术、时间序列和 Dyck 语言层次推理等任务出现超过一倍的相对提升，显示出新的涌现能力。</p>
+<p>BIG-bench Hard 是从超过 200 个任务中挑出的、当时最强语言模型低于平均人类评分的 23 个任务。作者沿用三样本直接提示和三样本思维链提示，并从每个任务取约 250 个样本，总计 6511 个示例。结果显示，思维链对多步算术、对象计数、时间序列、逻辑演绎和表格推理帮助明显，但并非所有任务都在思维链下提升，提示格式仍然需要按任务设计。</p>
+<p>数学推理使用 MATH、GSM8K 和多语言 MGSM。模型先生成中间推理，再给出答案；自一致性通过多次采样并对最终答案投票减少单一路径错误。PaLM 2 在数学和多语言数学上相较 PaLM 有较大进步，说明更丰富的数学和多语言数据以及指令微调共同改善了复杂推理。</p>
+<p><img alt="原论文第 14 页：推理基准结果" src="资源/原页-014.png">
+<img alt="原论文第 15 页：BIG-bench Hard、数学与思维链结果" src="资源/原页-015.png"></p>
+<h3 id="44">4.4 代码</h3>
+<p>代码评估包含自然语言到代码生成、代码补全、代码解释和多语言编程任务。PaLM 2 的代码能力来自更高质量的代码数据、更多编程语言覆盖和更强的模型规模效率。作者还评估了 PaLM 2-S 的代码增强版本 PaLM 2-S*，该版本在额外代码数据上训练，以区分通用多语言能力和专门代码训练的作用。</p>
+<p>在 HumanEval、BabelCode 以及多语言代码任务上，PaLM 2-S* 的通过率显著高于基础小模型；模型能够根据自然语言生成 Python、C、Java、Go、Rust 等代码，也能解释、修复和添加注释。可执行测试是主要评价依据，因此代码的语法流畅并不等价于功能正确。多语言代码示例还显示，PaLM 2 可以用目标语言解释代码和注释，而不必先翻译成英语。</p>
+<p><img alt="原论文第 16 页：代码评估结果" src="资源/原页-016.png">
+<img alt="原论文第 17 页：多语言代码生成示例" src="资源/原页-017.png"></p>
+<h3 id="45">4.5 翻译</h3>
+<p>翻译使用 WMT21 测试集和 FRMT 方言翻译基准。WMT21 覆盖多种语言方向，主要指标比较 PaLM、PaLM 2 和 Google 生产翻译系统；FRMT 进一步评估模型在地区方言和非标准表达之间转换的能力。</p>
+<p>PaLM 2 在许多语言方向上超过 PaLM，并与生产翻译系统相当或更优。结果表明，即使平行数据只占训练混合的一小部分，也能显著增强模型的翻译能力。与此同时，翻译质量会受到低资源语言、方言、性别一致性和文化语境影响，不能仅依据英语到高资源语言的平均分判断多语言质量。</p>
+<p><img alt="原论文第 18 页：WMT21 和方言翻译结果" src="资源/原页-018.png"></p>
+<h3 id="46">4.6 自然语言生成</h3>
+<p>自然语言生成实验涵盖数据到文本、摘要和开放式生成。作者在 GEM 数据集以及 WikiLingua、XL-Sum、XSum 上使用一-shot 提示，英语采用 ROUGE-2，其他语言采用 SentencePiece-ROUGE-2。模型需要根据结构化输入生成流畅文本，或从多语言文档中提炼摘要。</p>
+<p>PaLM 2-L 在多数语言和任务上超过 PaLM，尤其是低资源语言和跨语言摘要。对原始数据集与过滤数据集的比较显示，噪声、重复和格式错误会显著影响生成成绩；过滤后的样本能更好反映模型真正的摘要能力。开放式生成示例展示了模型在不同语言、方言和文字体系之间切换的能力，同时也暴露出事实性和毒性控制的风险。</p>
+<p><img alt="原论文第 19 页：一-shot 自然语言生成结果" src="资源/原页-019.png">
+<img alt="原论文第 20 页：多语言摘要与过滤数据结果" src="资源/原页-020.png"></p>
+<h3 id="47">4.7 记忆</h3>
+<p>模型记忆实验关注攻击者能否从模型中提取训练数据的逐字片段。作者构造了插入式和打乱式金丝雀：插入式金丝雀把两个真实文档的词元批次交错排列，保留部分语言特征；打乱式金丝雀把单个训练文档的词元完全打乱，破坏句子顺序。金丝雀在多个语言中按不同重复次数插入，既要足够像自然数据以免被模型忽略，又要有异常结构便于检测。</p>
+<p>实验分别测量金丝雀抽取和真实训练数据抽取。金丝雀在低资源语言尾部只需较少重复次数就可能被记住，但真实数据的抽取率与语言规模没有简单的线性关系；单次出现的低资源语言序列有时反而更少被记忆。当尾部语言序列在训练集中高度重复时，记忆率可能明显升高。</p>
+<p>与 PaLM 相比，PaLM 2 的平均逐字记忆率显著下降，尤其是重复次数少于三次的样本。作者强调，这些指标只是估计，不能完整刻画攻击者获得模型访问权限后可以恢复的内容；对话、摘要等下游用法还会改变威胁模型，需要额外的权限、过滤和监控措施。</p>
+<p><img alt="原论文第 21 页：PaLM 与 PaLM 2 的记忆率" src="资源/原页-021.png">
+<img alt="原论文第 22 页：多语言金丝雀分布" src="资源/原页-022.png">
+<img alt="原论文第 23 页：尾部语言记忆率" src="资源/原页-023.png"></p>
+<h2 id="5">5 负责任使用</h2>
+<p>通用语言模型可以被用于大量下游场景，因此模型风险评估无法只依靠一组固定基准。本文评估的是不同规模的预训练模型，而面向用户的产品通常还包括微调、过滤、提示、检索和后处理，底层模型也可能随时间更新，所以产品表现不一定与本文结果一致。</p>
+<p>Google 的人工智能原则不追求会造成总体伤害的技术、主要用于伤害人的武器技术、违反国际公认规范的监控技术，以及违反国际法和人权原则的用途。所有使用 PaLM 2 构建的 Google 应用都要经过原则审查和受训伦理专家评估，发现漏洞后加入缓解措施，并通过测试与生产监控观察新的风险。</p>
+<p>语言模型从广泛信息中学习，可能复制现实中的不公平偏见和刻板印象，也可能自信地生成错误、误导或虚假信息，即幻觉，并产生隐私泄露。开发者应根据具体应用评估偏见、毒性、身份相关伤害、错误建议和数据提取风险，不能把通用基准分数当成应用安全证明。</p>
+<h3 id="51">5.1 推理阶段控制</h3>
+<p>作者在少量预训练数据中加入表示毒性等级的特殊控制词元，研究其在语言建模和对话生成中的作用。语言建模实验从 RealToxicityPrompts 采样五万个提示，保留毒性概率低于 0.5 的约三万八千个提示，每个提示用贪心解码生成一个响应，并用固定版本的 Perspective API 评估。</p>
+<p>在非毒性提示上，控制词元可以显著改变生成毒性续写的概率：低毒性控制降低毒性，高毒性控制提高毒性，且这种效果在不同提示毒性分层上都成立。控制只作用于预训练词元中的很小部分，没有观察到其他任务明显的对齐代价。</p>
+<p>对话实验使用普通和对抗性对话数据集。控制词元使普通数据上的毒性响应比例从 30% 降到 12%，对抗性数据上从 18% 降到 7%。但在面向对话的实际提示中，对话提示本身往往比控制词元更有效；把二者叠加只带来小幅额外收益。专门的对话系统和应用级措施仍然更强，因此实际部署需要额外微调、过滤、分类器打分、样本排序和分类器参与的解码。</p>
+<p><img alt="原论文第 24 页：控制词元与毒性续写表" src="资源/原页-024.png">
+<img alt="原论文第 25 页：提示毒性与续写毒性的关系" src="资源/原页-025.png"></p>
+<h3 id="52">5.2 对开发者的建议</h3>
+<p>开发者应阅读负责任人工智能指南和评估工具，并针对具体应用分析潜在伤害。提示、解码策略和上下文改变都会影响模型输出；在一个数据集上观察到的对话提示收益，不一定推广到其他形式的代表性伤害、提示方法或使用环境。</p>
+<p>应用发布前应建立风险清单和测试集，覆盖身份偏见、毒性、幻觉、隐私、越狱、错误建议和长尾语言；上线后持续监控输出、允许用户申诉并保留人工复核和回滚机制。对高风险场景，要把模型限制在明确权限内，并在关键决策前要求专业人员确认。</p>
+<p><img alt="原论文第 26 页：对话毒性控制比较与开发者建议" src="资源/原页-026.png"></p>
+<h2 id="6">6 结论</h2>
+<p>PaLM 2 是一种在推理阶段显著少用计算、但在英语和多语言理解、生成与推理任务上全面超过 PaLM 的模型。本文在大规模条件下独立验证了计算最优缩放规律：训练词元数应与模型参数量以近似相同的速度增长。</p>
+<p>研究还表明，架构改进和更丰富的训练目标对性能提升十分重要，数据混合是最终模型质量的关键组成。尽管翻译平行数据只占混合数据的一小部分，它仍然使模型达到生产翻译服务附近的水平。在固定训练和推理预算下，与其只修改架构以获得更高推理效率，不如训练一个更小、使用更多词元的模型。未来，继续扩大参数、数据规模和数据质量，并改进架构和训练目标，仍有望提升语言理解与生成。</p>
+<p><img alt="原论文第 27 页：结论" src="资源/原页-027.png"></p>
+<h2 id="7">7 作者、署名与致谢</h2>
+<p>本节列出大型模型训练、数据、评估、负责任人工智能、基础设施、产品和报告撰写等工作的核心贡献者、贡献者与顾问。由于作者名单较长，完整署名、贡献类别、研究机构和致谢按原文第 28 至第 30 页截图保留。</p>
+<p><img alt="原论文第 28 页：作者与贡献者" src="资源/原页-028.png">
+<img alt="原论文第 29 页：作者贡献分类" src="资源/原页-029.png">
+<img alt="原论文第 30 页：报告团队与致谢" src="资源/原页-030.png"></p>
+<h2 id="_2">参考文献</h2>
+<p>原论文第 31 至第 41 页为完整参考文献。为保留作者、论文题名、出版信息和链接的逐项对应关系，按原页顺序嵌入截图。</p>
+<p><img alt="原论文第 31 页：参考文献" src="资源/原页-031.png">
+<img alt="原论文第 32 页：参考文献" src="资源/原页-032.png">
+<img alt="原论文第 33 页：参考文献" src="资源/原页-033.png">
+<img alt="原论文第 34 页：参考文献" src="资源/原页-034.png">
+<img alt="原论文第 35 页：参考文献" src="资源/原页-035.png">
+<img alt="原论文第 36 页：参考文献" src="资源/原页-036.png">
+<img alt="原论文第 37 页：参考文献" src="资源/原页-037.png">
+<img alt="原论文第 38 页：参考文献" src="资源/原页-038.png">
+<img alt="原论文第 39 页：参考文献" src="资源/原页-039.png">
+<img alt="原论文第 40 页：参考文献" src="资源/原页-040.png">
+<img alt="原论文第 41 页：参考文献" src="资源/原页-041.png"></p>
+<h2 id="a">附录 A 详细结果</h2>
+<p>附录 A 展示缩放规律、指令微调、多语言常识推理、代码和自然语言生成的补充实验，包括不同 FLOPs 下的模型、Flan 指令微调结果、XCOPA、BabelCode 和多语言生成表格。</p>
+<p><img alt="原论文第 42 页：附录 A.1 缩放规律" src="资源/原页-042.png">
+<img alt="原论文第 43 页：附录 A.1 结果表" src="资源/原页-043.png">
+<img alt="原论文第 44 页：附录 A.2 指令微调" src="资源/原页-044.png">
+<img alt="原论文第 45 页：附录 A.3 和 A.4 结果" src="资源/原页-045.png">
+<img alt="原论文第 46 页：附录 A.5 自然语言生成" src="资源/原页-046.png"></p>
+<h2 id="b">附录 B 模型能力示例</h2>
+<p>附录 B 提供多语言、创意生成和代码能力的逐例输出。示例包括解释笑话、跨语言和方言转换、改写文字、设计游戏、撰写演讲、生成网页、修复代码以及用多种语言添加代码注释。下面按原页保留全部输入和输出。</p>
+<p><img alt="原论文第 47 页：附录 B.1 多语言能力" src="资源/原页-047.png">
+<img alt="原论文第 48 页：附录 B.1 多语言翻译" src="资源/原页-048.png">
+<img alt="原论文第 49 页：附录 B.1 文字规范化" src="资源/原页-049.png">
+<img alt="原论文第 50 页：附录 B.1 转写与文字系统" src="资源/原页-050.png">
+<img alt="原论文第 51 页：附录 B.2 创意生成" src="资源/原页-051.png">
+<img alt="原论文第 52 页：附录 B.2 多语言演讲" src="资源/原页-052.png">
+<img alt="原论文第 53 页：附录 B.2 方言解释" src="资源/原页-053.png">
+<img alt="原论文第 54 页：附录 B.2 波斯语邮件" src="资源/原页-054.png">
+<img alt="原论文第 55 页：附录 B.2 阿拉伯语邮件" src="资源/原页-055.png">
+<img alt="原论文第 56 页：附录 B.2 转写邮件" src="资源/原页-056.png">
+<img alt="原论文第 57 页：附录 B.2 塔吉克语与波斯语" src="资源/原页-057.png">
+<img alt="原论文第 58 页：附录 B.2 泰米尔语诗歌" src="资源/原页-058.png">
+<img alt="原论文第 59 页：附录 B.3 网页生成" src="资源/原页-059.png">
+<img alt="原论文第 60 页：附录 B.3 韩语代码修复" src="资源/原页-060.png">
+<img alt="原论文第 61 页：附录 B.3 马拉雅拉姆语代码" src="资源/原页-061.png"></p>
+<h2 id="c">附录 C 语言水平考试</h2>
+<p>附录 C 说明所使用的公开考试、语言覆盖、选择题与写作题评分方法，以及通过线的计算方式。</p>
+<p><img alt="原论文第 62 页：附录 C 语言水平考试说明" src="资源/原页-062.png"></p>
+<h2 id="d">附录 D 负责任人工智能</h2>
+<p>附录 D 对预训练数据、评估方法、对话、分类、翻译、问答、语言建模、测量质量和模型卡进行详细说明，补充正文中的偏差、毒性、记忆和隐私分析。由于本附录包含大量表格、评分量表、调查问卷和逐项标注说明，按原文页码完整保留。</p>
+<p><img alt="原论文第 63 页：附录 D 数据集与语言分布" src="资源/原页-063.png">
+<img alt="原论文第 64 页：附录 D.1 数据集分析" src="资源/原页-064.png">
+<img alt="原论文第 65 页：预训练数据中的身份信号" src="资源/原页-065.png">
+<img alt="原论文第 66 页：高毒性数据子集" src="资源/原页-066.png">
+<img alt="原论文第 67 页：附录 D.2 评估方法" src="资源/原页-067.png">
+<img alt="原论文第 68 页：附录 D.3 对话使用" src="资源/原页-068.png">
+<img alt="原论文第 69 页：多语言毒性与代表性偏差" src="资源/原页-069.png">
+<img alt="原论文第 70 页：不同语言的毒性响应" src="资源/原页-070.png">
+<img alt="原论文第 71 页：身份群体毒性响应" src="资源/原页-071.png">
+<img alt="原论文第 72 页：分类使用与评估限制" src="资源/原页-072.png">
+<img alt="原论文第 73 页：多语言毒性分类" src="资源/原页-073.png">
+<img alt="原论文第 74 页：翻译中的性别误译" src="资源/原页-074.png">
+<img alt="原论文第 75 页：翻译使用设置" src="资源/原页-075.png">
+<img alt="原论文第 76 页：翻译性别一致性评分" src="资源/原页-076.png">
+<img alt="原论文第 77 页：问答使用与潜在伤害" src="资源/原页-077.png">
+<img alt="原论文第 78 页：问答响应分析" src="资源/原页-078.png">
+<img alt="原论文第 79 页：问答偏差结果" src="资源/原页-079.png">
+<img alt="原论文第 80 页：问答伤害分析" src="资源/原页-080.png">
+<img alt="原论文第 81 页：语言建模毒性评估" src="资源/原页-081.png">
+<img alt="原论文第 82 页：对话语言建模" src="资源/原页-082.png">
+<img alt="原论文第 83 页：测量质量量规" src="资源/原页-083.png">
+<img alt="原论文第 84 页：翻译测量量规" src="资源/原页-084.png">
+<img alt="原论文第 85 页：附录 D.9 CrowdWorksheets" src="资源/原页-085.png">
+<img alt="原论文第 86 页：Civil Comments 标注问卷" src="资源/原页-086.png">
+<img alt="原论文第 87 页：标注者背景与主观性" src="资源/原页-087.png">
+<img alt="原论文第 88 页：标注报酬与数据维护" src="资源/原页-088.png">
+<img alt="原论文第 89 页：翻译性别一致性问卷" src="资源/原页-089.png">
+<img alt="原论文第 90 页：翻译标注说明" src="资源/原页-090.png">
+<img alt="原论文第 91 页：数据集维护与一致性" src="资源/原页-091.png">
+<img alt="原论文第 92 页：PaLM 2 模型卡" src="资源/原页-092.png">
+<img alt="原论文第 93 页：PaLM 2 模型卡续页" src="资源/原页-093.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

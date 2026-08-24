@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OPT：开放预训练 Transformer 语言模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">OPT：开放预训练 Transformer 语言模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#opt-transformer">OPT：开放预训练 Transformer 语言模型</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1. 引言</a></li>
+<li><a href="#2">2. 方法</a><ul>
+<li><a href="#21">2.1 模型</a></li>
+<li><a href="#22">2.2 训练设置</a></li>
+<li><a href="#23">2.3 预训练语料</a></li>
+<li><a href="#24">2.4 训练效率</a></li>
+<li><a href="#25">2.5 训练过程中的调整</a><ul>
+<li><a href="#_2">硬件故障</a></li>
+<li><a href="#_3">损失发散</a></li>
+<li><a href="#_4">其他中途修改</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#3">3. 评估</a><ul>
+<li><a href="#31">3.1 提示与少样本学习</a><ul>
+<li><a href="#_5">零样本</a></li>
+<li><a href="#_6">单样本与少样本</a></li>
+</ul>
+</li>
+<li><a href="#32">3.2 对话</a></li>
+</ul>
+</li>
+<li><a href="#4">4. 偏差与毒性评估</a><ul>
+<li><a href="#41">4.1 仇恨言论检测</a></li>
+<li><a href="#42-crows-pairs">4.2 CrowS-Pairs</a></li>
+<li><a href="#43-stereoset">4.3 StereoSet</a></li>
+<li><a href="#44-realtoxicityprompts">4.4 RealToxicityPrompts</a></li>
+<li><a href="#45">4.5 对话安全</a></li>
+</ul>
+</li>
+<li><a href="#5">5. 局限性</a></li>
+<li><a href="#6">6. 发布考量</a></li>
+<li><a href="#7">7. 相关工作</a></li>
+<li><a href="#8">8. 结论</a></li>
+<li><a href="#_7">致谢</a></li>
+<li><a href="#a">附录 A：补充评估</a></li>
+<li><a href="#b">附录 B：贡献</a></li>
+<li><a href="#c">附录 C：数据表</a><ul>
+<li><a href="#c1">C.1 动机</a></li>
+<li><a href="#c2">C.2 组成</a></li>
+<li><a href="#c3">C.3 收集过程</a></li>
+<li><a href="#c4">C.4 预处理、清洗与标注</a></li>
+<li><a href="#c5-c6-c7">C.5 用途、C.6 分发与 C.7 维护</a></li>
+</ul>
+</li>
+<li><a href="#d">附录 D：模型卡</a></li>
+<li><a href="#e">附录 E：模型输出样例</a></li>
+<li><a href="#_8">参考文献</a></li>
+<li><a href="#_9">原论文逐页截图存档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="opt-transformer">OPT：开放预训练 Transformer 语言模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-05-02">2022 年 5 月 2 日</time></p>
+<p><strong>作者：</strong> Susan Zhang、Stephen Roller、Naman Goyal、Mikel Artetxe、Moya Chen、Shuohui Chen、Christopher Dewan、Mona Diab、Xian Li、Xi Victoria Lin、Todor Mihaylov、Myle Ott、Sam Shleifer、Kurt Shuster、Daniel Simig、Punit Singh Koura、Anjali Sridhar、Tianlu Wang、Luke Zettlemoyer
+<strong>机构：</strong> Meta AI
+<strong>论文版本：</strong> arXiv:2205.01068v4，2022 年 6 月 21 日</p>
+<h2 id="_1">摘要</h2>
+<p>大型语言模型通常需要数十万计算日才能训练，已经展现出令人瞩目的零样本和少样本能力，但高昂成本使其难以复现。对于少数通过 API 提供的模型，研究者无法获得完整权重，因而难以研究模型的行为和局限。本文介绍 OPT（开放预训练 Transformer）系列：一组 1.25 亿到 1750 亿参数的仅解码器预训练 Transformer。OPT-175B 的性能与 GPT-3 相当，但开发过程的碳足迹约为 GPT-3 的七分之一。作者公开 1.25 亿到 660 亿参数模型，并向符合条件的研究者提供 OPT-175B 访问；同时发布训练日志、训练代码和评估代码。论文描述工程故障、学习率调整、数据收集和去重，并在自然语言、对话、偏差、仇恨言论和毒性基准上进行评估，强调这些模型仍不适合商业部署。</p>
+<h2 id="1">1. 引言</h2>
+<p>在大规模文本上训练的语言模型出现了令人意外的涌现能力，能够生成连贯文本并进行零样本和少样本学习。公众有时可以通过付费 API 交互，但完整模型访问仍然集中在少数资源最充足的实验室。这限制了研究者理解大型语言模型如何工作、为什么工作，以及它们何时失败的能力，也限制了对鲁棒性、偏差和毒性的独立研究。</p>
+<p>本文提出 OPT 系列，目标是复现 GPT-3 级别的参数规模和性能，同时遵循更透明的数据收集和高效训练实践。系列包含 125M、350M、1.3B、2.7B、6.7B、13B、30B、66B 和 175B 九种规模。作者公开 125M--66B 的全部权重，并对学术研究者、政府、民间社会和工业研究实验室提供 OPT-175B 研究访问。训练代码 metaseq、训练日志和评估代码一并发布，以便复现训练动态和基础设施问题。</p>
+<p>OPT-175B 在 992 张 80GB A100 GPU 上训练，单 GPU 利用率最高约 147 TFLOP/s。使用新一代 NVIDIA 硬件和分片数据并行后，模型开发碳足迹约为 GPT-3 的七分之一；但训练仍然消耗大量电力，重复训练多个同规模模型会累积显著的计算和环境成本。作者认为，学术界、民间社会、政策制定者和产业界需要共同制定负责任的大语言模型准则，只有模型开放给更广泛的研究者，伦理问题才可能由更广泛的声音共同定义。</p>
+<p><img alt="表 1：OPT 各模型的架构、学习率和批大小（原页截图）" src="资源/原页-2.png"></p>
+<h2 id="2">2. 方法</h2>
+<h3 id="21">2.1 模型</h3>
+<p>OPT 是仅解码器的 Transformer 语言模型。架构大体沿用 GPT-3，以减少训练不稳定性并便于比较；不同规模的层数、注意力头数、隐藏维度、峰值学习率和全局批大小见表 1。模型均使用长度为 2048 的序列、ReLU 激活和 GPT-2 字节级 BPE 分词器。125M 模型有 12 层和 768 维隐藏状态，175B 模型有 96 层、96 个注意力头和 12288 维隐藏状态。</p>
+<h3 id="22">2.2 训练设置</h3>
+<p>权重初始化遵循 Megatron-LM：均值为 0、标准差为 0.006 的正态分布；输出层的标准差再乘以 <code>1/√(2L)</code>，其中 <code>L</code> 是总层数；偏置初始化为 0。优化器使用 AdamW，<code>β1=0.9</code>、<code>β2=0.95</code>、权重衰减 0.1。学习率从 0 线性预热到峰值，在 OPT-175B 的前 2000 步完成预热；小模型按 3.75 亿词元完成预热，随后在 3000 亿词元上衰减到峰值的 10%。训练中根据损失发散情况进行多次中途调整。</p>
+<p>批大小随模型规模从 50 万到 400 万词元不等，并在一次训练中保持不变。训练始终使用 0.1 dropout，但嵌入层不使用 dropout。梯度范数通常裁剪到 1.0，部分训练阶段为了稳定性降到 0.3；跨所有进程计算梯度时加入预除因子，降低上溢和下溢风险。Adam 状态以 FP32 保存，模型权重以 FP16 保存，并使用动态损失缩放。</p>
+<h3 id="23">2.3 预训练语料</h3>
+<p>语料由 RoBERTa 使用的数据、The Pile 的子集和 PushShift.io Reddit 数据拼接而成。所有数据主要是英文，但 CommonCrawl 中仍含少量非英语文本。作者使用 MinHashLSH 去除跨数据集重复文档，Jaccard 相似度阈值为 0.95；作者特别指出，The Pile 中重复文档很多，未来使用 The Pile 时应进一步去重。最终语料约 1800 亿词元。</p>
+<p>RoBERTa 部分包含 BookCorpus、Stories 和更新到 2021 年 9 月 28 日的 CCNews；The Pile 部分包含 CommonCrawl、DM Mathematics、Project Gutenberg、HackerNews、OpenSubtitles、OpenWebText2、USPTO 和 Wikipedia；Reddit 部分来自 Pushshift.io。为将对话树转换为语言模型文档，作者保留每个线程中最长的评论链，舍弃其余路径，使 Reddit 子集缩小约 66%。</p>
+<h3 id="24">2.4 训练效率</h3>
+<p>OPT-175B 使用完全分片数据并行与 Megatron-LM 张量并行训练，共 992 张 80GB A100 GPU。优化器状态在所有主机之间分片，模型权重保持 FP16。训练峰值利用率约 147 TFLOP/s/GPU。分片避免了把完整 Adam 状态复制到每张卡，从而使 175B 模型可以在可控内存占用下训练。</p>
+<p><img alt="图 1：经验学习率日程（原页截图）" src="资源/原页-3.png">
+<img alt="图 2：验证集困惑度随训练步变化（原页截图）" src="资源/原页-3.png"></p>
+<h3 id="25">2.5 训练过程中的调整</h3>
+<h4 id="_2">硬件故障</h4>
+<p>OPT-175B 训练集群出现大量硬件故障。两个月内至少 35 次人工重启，超过 100 台主机被轮换；估计还有 70 多次因硬件故障触发的自动重启。人工重启时暂停训练并运行诊断，将问题节点隔离，然后从最近的检查点恢复。</p>
+<h4 id="_3">损失发散</h4>
+<p>训练中多次出现损失发散。降低学习率并从更早检查点重启通常可以恢复。作者观察到损失发散与动态损失缩放因子归零、最终层激活范数尖峰相关，因此选择损失因子仍健康且激活范数会下降的检查点进行恢复。训练早期把梯度裁剪阈值从 1.0 降到 0.3 也有助于稳定。</p>
+<h4 id="_4">其他中途修改</h4>
+<p>作者尝试过切换到普通 SGD，但优化很快进入平台期，随后恢复 AdamW；重置动态损失因子可以恢复部分发散；切换到更新版本的 Megatron 减轻了激活范数压力并提高吞吐。图 1 和图 2 展示了学习率中途调整对验证困惑度的直接影响。</p>
+<h2 id="3">3. 评估</h2>
+<h3 id="31">3.1 提示与少样本学习</h3>
+<p>作者在 16 项标准 NLP 任务上评估 OPT，并沿用 GPT-3 的提示和总体实验设置。任务包括 HellaSwag、StoryCloze、PIQA、ARC Easy/Challenge、OpenBookQA、Winograd、Winogrande、SuperGLUE、BoolQ、CB、COPA、WiC、WSC、MultiRC、RTE 和 ReCoRD。报告准确率；MultiRC 和 ReCoRD 不使用 F1，以保持与其他任务的指标一致。WSC 按 GPT-3 的做法改写为多项选择题，因为任务形式会显著影响结果。</p>
+<h4 id="_5">零样本</h4>
+<p>14 项任务的平均零样本性能总体遵循 GPT-3 的规模趋势。OPT 与 GPT-3 在大多数任务上相近，但逐任务差异很大。OPT 在约 10 项任务上与 GPT-3 相当，在 ARC Challenge 和 MultiRC 上较弱；CB、BoolQ 和 WSC 的验证集很小，随规模变化的结果不稳定。OPT 在 WiC 上始终超过 GPT-3，但 GPT-3 论文报告的 0% 结果可能对应标签反转。PaLM 在相同参数量下通常更强，作者推测这主要来自更高质量、更丰富的预训练数据。</p>
+<h4 id="_6">单样本与少样本</h4>
+<p>平均多样本结果仍与 GPT-3 相近，但逐任务分解显示 BoolQ、CB、WSC 和 RTE 等任务随规模变化不一致，MultiRC 上 OPT 一贯落后。提示形式、示例数量和评估实现差异可能造成相当大的结果变化，因此不能只根据平均曲线评价少样本能力。</p>
+<p><img alt="图 3：14 项 NLP 任务的零样本平均准确率（原页截图）" src="资源/原页-4.png">
+<img alt="图 4：单样本和少样本平均性能（原页截图）" src="资源/原页-4.png">
+<img alt="图 6--7：完整零样本与多样本 NLP 规模曲线（原页截图）" src="资源/原页-16.png"></p>
+<h3 id="32">3.2 对话</h3>
+<p>作者在 ConvAI2、Wizard of Wikipedia、Empathetic Dialogues、Blended Skill Talk 和 Wizard of Internet 上评估 OPT-175B，并与 Reddit 2.7B、微调后的 BlenderBot 1 和 R2C2 BlenderBot 比较。指标是困惑度和 Unigram F1（UF1），所有困惑度归一化到 GPT-2 分词空间。OPT-175B 使用交替的 <code>Person 1:</code> 和 <code>Person 2:</code> 行，不额外加入提示，采用贪心解码，最多生成 32 个词元。</p>
+<p>OPT-175B 完全不进行对话微调，却在所有任务上显著超过无监督 Reddit 2.7B，并与有监督 BlenderBot 模型竞争，尤其在 ConvAI2 上表现接近。Wizard of Internet 上，OPT-175B 困惑度最低，但 UF1 仍低于使用 Wikipedia 监督的模型。作者检查了 ConvAI2 训练泄露，在训练语料中没有找到首段对话的重叠；隐藏测试集和 MultiSessionChat 上的结果也相近，说明模型可能确实学会了跨 PersonaChat 风格数据维持一致角色。</p>
+<p><img alt="表 2：OPT-175B 与对话模型的困惑度和 UF1（原页截图）" src="资源/原页-5.png"></p>
+<h2 id="4">4. 偏差与毒性评估</h2>
+<p>作者评估仇恨言论检测、刻板印象偏差和毒性生成，并主要与 GPT-3 Davinci 比较。这些基准存在构念有效性和文化覆盖不足等问题，但可以作为了解 OPT-175B 限制的第一步。</p>
+<h3 id="41">4.1 仇恨言论检测</h3>
+<p>在 ETHOS 数据集上，模型判断英文陈述是否带有种族主义或性别歧视。零样本、单样本和少样本二分类要求模型回答“是/否”，少样本多分类要求回答“是/否/都不是”。OPT-175B 在所有单样本和少样本设置上都明显超过 Davinci。作者推测，Davinci API 可能包含原始 GPT-3 论文中没有的安全控制；另一方面，OPT 训练语料中大量未经审核的社交媒体文本，可能提供了识别仇恨言论的额外语言偏置。</p>
+<p><img alt="表 3：仇恨言论检测 F1 结果（原页截图）" src="资源/原页-6.png"></p>
+<h3 id="42-crows-pairs">4.2 CrowS-Pairs</h3>
+<p>CrowS-Pairs 用成对句子测量句内刻板印象偏好，覆盖性别、宗教、种族/肤色、性取向、年龄、国籍、残障、外貌和社会经济地位九类。分数越高表示更偏向刻板印象。OPT-175B 在除宗教外的大多数类别上比 Davinci 更有刻板偏差。作者认为，Pushshift.io Reddit 的歧视性和刻板文本比例高于 Wikipedia 等来源，作为 OPT 的重要数据源，可能使模型学到更多歧视性关联。</p>
+<p><img alt="表 4：CrowS-Pairs 结果（原页截图）" src="资源/原页-6.png"></p>
+<h3 id="43-stereoset">4.3 StereoSet</h3>
+<p>StereoSet 测量职业、性别、宗教和种族四类刻板偏差，同时包含句内和句间两种形式。作者报告语言建模得分（LMS）、刻板印象得分（SS）和综合指标 ICAT，并按词元数量而非字符数量归一化。OPT-175B 与 Davinci 的总体 ICAT 相近；Davinci 在职业和种族上更好，OPT 在性别和宗教上更好。OPT 的 SS 整体更高，而 Davinci 通常 LMS 更高，说明语言能力与偏差之间存在权衡。</p>
+<p><img alt="表 5：StereoSet 的 LMS、SS 和 ICAT 结果（原页截图）" src="资源/原页-7.png"></p>
+<h3 id="44-realtoxicityprompts">4.4 RealToxicityPrompts</h3>
+<p>作者从 RealToxicityPrompts 随机抽取 10000 个提示，每个提示用 nucleus sampling（<code>p=0.9</code>）生成 25 个、每个 20 词元的延续，并按原提示毒性分桶，计算平均延续毒性。与 Davinci 和 PaLM 相比，OPT-175B 更容易生成有毒延续；三个模型都呈现相同趋势：提示越有毒，生成延续越有毒。作者推测，未经审核的社交媒体数据提高了模型识别和生成有毒语言的熟悉度，具体应用应加入额外缓解措施。</p>
+<p><img alt="图 5：RealToxicityPrompts 的提示毒性与延续毒性（原页截图）" src="资源/原页-8.png"></p>
+<h3 id="45">4.5 对话安全</h3>
+<p>SaferDialogues 测量模型从明确安全失败中恢复、道歉或承认错误的能力；Safety Bench 单元测试按 Safe、Realistic、Unsafe 和 Adversarial 四级主题敏感度测量不安全程度。OPT-175B 与无监督 Reddit 2.7B 大致相当，在 Safe 和 Adversarial 设置略好，但 Unsafe 设置明显更差。微调在精选对话数据上的 BlenderBot 整体毒性更低，因此 OPT 用于对话时应先进行显式安全微调。</p>
+<p><img alt="表 6：对话安全评估（原页截图）" src="资源/原页-9.png"></p>
+<h2 id="5">5. 局限性</h2>
+<p>标准 NLP 任务上，OPT 与 GPT-3 大体相当；安全、偏差和仇恨言论评估也显示相近但不完全相同的行为。然而这些基准不能覆盖模型全部限制。</p>
+<ul>
+<li>OPT-175B 不擅长声明式指令或直接提问，可能把指令当作对话开头并模拟后续对话，而不是执行指令；指令微调可能改善这一点。</li>
+<li>模型容易重复并陷入循环。采样可以降低重复概率，但单次生成仍可能重复；更现代的重复惩罚和解码方法值得研究。</li>
+<li>模型会生成事实错误内容，在医疗和科学发现等高准确性场景尤其危险；检索增强可能改善事实性。</li>
+<li>模型会生成毒性语言并强化刻板印象，即使提示看起来无害，对抗提示也很容易构造。本文首发版本没有应用安全缓解，以便保留对 GPT-3 的直接复现。</li>
+<li>数据选择与提示设置仍会影响结果。不同模型、不同示例和不同评估实现可能导致显著差异，未来需要更统一、可复现的评估流程。</li>
+</ul>
+<p>作者认为，这项技术仍过早进入商业部署。即使提供数据卡和模型卡，训练数据的来源、代表性、版权、个人信息和有毒内容仍需要更细致的描述和筛选。</p>
+<h2 id="6">6. 发布考量</h2>
+<p>OPT 的发布目标是让更多研究者可以复现、检查和改进大型语言模型。作者公开 125M--66B 权重，并为符合条件的研究者提供 OPT-175B；模型适用于语言模型和负责任 AI 研究，不适用于生产和真实世界高风险部署。非商业许可证旨在增加透明度、沟通和对问题的研究，而不是保证模型安全。</p>
+<p>开放访问带来双重影响。一方面，研究者可以研究偏差、毒性、记忆、对齐、环境影响和模型失败，并让更多社会群体参与伦理讨论；另一方面，公开模型可能被用于生成有害内容、虚假信息和自动化骚扰。作者强调，风险判断必须结合模型能力、发布范围、访问门槛、监控和缓解措施，不应把“开放”或“封闭”视为单一答案。</p>
+<p>OPT-175B 的开发约消耗 66.24MWh 电力、产生约 31.73 公吨二氧化碳当量，约为 GPT-3 估计排放的七分之一。这个数字仍然不可忽略，反复训练同规模模型会显著增加总体排放。发布训练日志和硬件故障记录，是让研究社区能在已有工作基础上继续推进、减少重复试错的一部分。</p>
+<p><img alt="第 6 节发布考量与环境影响（原页截图）" src="资源/原页-10.png"></p>
+<h2 id="7">7. 相关工作</h2>
+<p>Transformer、BERT、T5、Megatron-LM 和 GPT 系列推动了自监督预训练和规模扩展；GPT-2 和 GPT-3 进一步展示了生成质量和提示式零样本、少样本学习。OPT 与 GPT-NeoX、FairSeq、BigScience 等开放模型互补：它们在数据、语言范围、参数规模和发布方式上不同，使研究者可以比较预训练策略。</p>
+<p>提示已有较长历史，从完形填空、知识探测到统一 NLP 任务格式；近年来，指令微调、自动提示和软提示尝试改善模型对自然语言任务说明的理解。但提示对模板、示例选择和开发集高度敏感，模型也未必按人类预期理解指令。本文不解决提示工程问题，而是提供可复现的 OPT 基线，方便未来研究。</p>
+<h2 id="8">8. 结论</h2>
+<p>本文介绍 OPT，一组 1.25 亿到 1750 亿参数的自回归语言模型，目标是复现 GPT-3 的规模和性能，同时采用更透明的数据、训练和发布流程。OPT-175B 在标准 NLP 和对话任务上总体与 GPT-3 相当；在仇恨言论检测上表现较强，但会产生刻板偏差和较高毒性。论文记录硬件故障、损失发散、学习率中途修改和环境成本，并公开模型、代码、日志、数据卡和模型卡。</p>
+<p>作者希望更广泛的模型访问能够增加可复现研究和负责任 AI 研究的多样性，同时强调 OPT 仍不适合商业部署。大型语言模型的风险和价值需要由整个 AI 社区共同研究，而不是由少数模型持有者单独定义。</p>
+<h2 id="_7">致谢</h2>
+<p>作者感谢参与基础设施、可持续性、评估、负责任发布和论文审阅的同事，并感谢帮助解除训练集群阻塞、改进评估和讨论碳足迹的研究者。</p>
+<h2 id="a">附录 A：补充评估</h2>
+<p>附录 A 给出 16 项 NLP 任务的逐任务零样本、单样本和 32 样本结果，以及 OPT 与 GPT-3、PaLM、Chinchilla、Gopher、EleutherAI、Jurassic 等模型的可比曲线。数值密集表格保留原页截图，以便逐项核对。</p>
+<p><img alt="附录 A：完整 NLP 评估曲线（原页截图）" src="资源/原页-16.png">
+<img alt="附录 A：补充评估结果（原页截图）" src="资源/原页-17.png"></p>
+<h2 id="b">附录 B：贡献</h2>
+<p>附录列出预训练规划、训练基础设施、效率、数据去重、OPT-175B 训练、基线模型、NLP 与对话评估、负责任 AI 评估、论文写作、代码发布和负责任研究的贡献者。</p>
+<p><img alt="附录 B：项目贡献（原页截图）" src="资源/原页-18.png"></p>
+<h2 id="c">附录 C：数据表</h2>
+<h3 id="c1">C.1 动机</h3>
+<p>OPT 训练数据由 RoBERTa 的三个数据集、The Pile 子集和 Pushshift.io Reddit 数据组成，目的是在包含大量人类生成文本的广泛语料上预训练语言模型。数据由 Meta AI 创建和资助。</p>
+<h3 id="c2">C.2 组成</h3>
+<p>数据实例是文本文档，总计约 1800 亿词元、约 800GB。来源包括 1 万多本未出版书籍的 BookCorpus、符合 Winograd 风格的 CC-Stories、The Pile 的 Pile-CC/OpenWebText2/USPTO/Project Gutenberg/OpenSubtitles/Wikipedia/DM Mathematics/HackerNews，以及处理后的 Pushshift.io Reddit 和 CCNewsV2。数据不附带任务标签。</p>
+<h3 id="c3">C.3 收集过程</h3>
+<p>数据来自公开网页、书籍、新闻、论坛和 Reddit。不同来源有不同的许可、时间范围、语言和隐私特征；数据卡记录了来源和处理步骤，但不能保证完全覆盖所有个人信息、版权文本或社会群体。</p>
+<h3 id="c4">C.4 预处理、清洗与标注</h3>
+<p>预处理包括文档去重、空白规范化、语言过滤和格式转换。The Pile 子集经过额外筛选，部分组件因容易引起训练梯度尖峰或不适合作为预训练数据而被移除。Reddit 对话树只保留最长评论链。数据没有人工语义标签。</p>
+<h3 id="c5-c6-c7">C.5 用途、C.6 分发与 C.7 维护</h3>
+<p>数据用于 OPT 预训练和相关研究，不建议把模型用于生产。数据卡说明了数据分发限制、无当前更新计划、无扩展贡献机制以及旧版本维护状态。完整问题清单和回答保留在原页截图中。</p>
+<p><img alt="附录 C：数据表完整内容（原页截图）" src="资源/原页-19.png">
+<img alt="附录 C：数据组成、预处理与维护（原页截图）" src="资源/原页-20.png"></p>
+<h2 id="d">附录 D：模型卡</h2>
+<p>OPT-175B 由 Meta AI 开发，2022 年 5 月 3 日发布，版本 1.0.0，类型为大型仅解码器 Transformer。模型使用 AdamW，在 125M--175B 多种规模上训练，研究用途为语言模型和负责任 AI 研究；主要用户是研究者。模型不用于生产或真实世界部署，已知限制包括偏差、安全性、生成多样性不足和幻觉。模型权重和较小基线使用非商业许可证。</p>
+<p><img alt="附录 D：OPT-175B 模型卡（原页截图）" src="资源/原页-25.png">
+<img alt="附录 D：模型用途、限制与建议（原页截图）" src="资源/原页-26.png"></p>
+<h2 id="e">附录 E：模型输出样例</h2>
+<p>附录给出诗歌、对话、翻译、论文写作、算术和 Python 编程样例。样例刻意同时展示成功和失败：模型能围绕渡渡鸟、萨莫萨和绩效评审写有趣诗歌，但难以稳定遵守押韵和格律；在对话中可能形成“自由女神像”的爱国人格，也可能逐渐退化为简单重复的文本；简单德语、西班牙语、法语和中文翻译有一定成功率；算术从加法扩展到其他运算时容易出错；只改变一个变量名就可能改变代码生成结果。</p>
+<p><img alt="图 8：诗歌生成样例（原页截图）" src="资源/原页-28.png">
+<img alt="图 9：对话生成样例（原页截图）" src="资源/原页-28.png">
+<img alt="图 10：少样本翻译样例（原页截图）" src="资源/原页-29.png">
+<img alt="图 11：论文写作样例（原页截图）" src="资源/原页-29.png">
+<img alt="图 12：算术样例（原页截图）" src="资源/原页-30.png">
+<img alt="图 13：Python 编程样例（原页截图）" src="资源/原页-30.png"></p>
+<h2 id="_8">参考文献</h2>
+<p>参考文献包括 Transformer、GPT-3、RoBERTa、The Pile、Pushshift Reddit、对话模型、偏差与毒性评估、提示学习、指令微调、数据去重、检索增强和环境影响研究。完整作者、年份、出版信息和链接以原论文参考文献页截图保留。</p>
+<p><img alt="参考文献第 1 页（原页截图）" src="资源/原页-11.png">
+<img alt="参考文献第 2 页（原页截图）" src="资源/原页-12.png">
+<img alt="参考文献第 3 页（原页截图）" src="资源/原页-13.png">
+<img alt="参考文献第 4 页（原页截图）" src="资源/原页-14.png">
+<img alt="参考文献第 5 页（原页截图）" src="资源/原页-15.png"></p>
+<h2 id="_9">原论文逐页截图存档</h2>
+<p>以下截图按 PDF 页码顺序排列，保留正文图表、评估表格、训练日志、数据卡、模型卡和样例输出，便于与中文译文逐项核对。</p>
+<p><img alt="原论文第 1 页" src="资源/原页-1.png">
+<img alt="原论文第 2 页" src="资源/原页-2.png">
+<img alt="原论文第 3 页" src="资源/原页-3.png">
+<img alt="原论文第 4 页" src="资源/原页-4.png">
+<img alt="原论文第 5 页" src="资源/原页-5.png">
+<img alt="原论文第 6 页" src="资源/原页-6.png">
+<img alt="原论文第 7 页" src="资源/原页-7.png">
+<img alt="原论文第 8 页" src="资源/原页-8.png">
+<img alt="原论文第 9 页" src="资源/原页-9.png">
+<img alt="原论文第 10 页" src="资源/原页-10.png">
+<img alt="原论文第 11 页" src="资源/原页-11.png">
+<img alt="原论文第 12 页" src="资源/原页-12.png">
+<img alt="原论文第 13 页" src="资源/原页-13.png">
+<img alt="原论文第 14 页" src="资源/原页-14.png">
+<img alt="原论文第 15 页" src="资源/原页-15.png">
+<img alt="原论文第 16 页" src="资源/原页-16.png">
+<img alt="原论文第 17 页" src="资源/原页-17.png">
+<img alt="原论文第 18 页" src="资源/原页-18.png">
+<img alt="原论文第 19 页" src="资源/原页-19.png">
+<img alt="原论文第 20 页" src="资源/原页-20.png">
+<img alt="原论文第 21 页" src="资源/原页-21.png">
+<img alt="原论文第 22 页" src="资源/原页-22.png">
+<img alt="原论文第 23 页" src="资源/原页-23.png">
+<img alt="原论文第 24 页" src="资源/原页-24.png">
+<img alt="原论文第 25 页" src="资源/原页-25.png">
+<img alt="原论文第 26 页" src="资源/原页-26.png">
+<img alt="原论文第 27 页" src="资源/原页-27.png">
+<img alt="原论文第 28 页" src="资源/原页-28.png">
+<img alt="原论文第 29 页" src="资源/原页-29.png">
+<img alt="原论文第 30 页" src="资源/原页-30.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

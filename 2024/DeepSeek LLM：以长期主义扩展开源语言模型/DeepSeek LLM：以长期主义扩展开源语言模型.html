@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek LLM：以长期主义扩展开源语言模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">DeepSeek LLM：以长期主义扩展开源语言模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#deepseek-llm">DeepSeek LLM：以长期主义扩展开源语言模型</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#_2">目录</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 预训练</a><ul>
+<li><a href="#21">2.1 数据</a></li>
+<li><a href="#22">2.2 架构</a></li>
+<li><a href="#23">2.3 超参数</a></li>
+<li><a href="#24">2.4 基础设施</a></li>
+</ul>
+</li>
+<li><a href="#3">3 缩放定律</a><ul>
+<li><a href="#31">3.1 超参数缩放定律</a></li>
+<li><a href="#32">3.2 估计最优模型与数据扩展</a></li>
+<li><a href="#33">3.3 不同数据上的缩放定律</a></li>
+</ul>
+</li>
+<li><a href="#4">4 对齐</a></li>
+<li><a href="#5">5 评测</a><ul>
+<li><a href="#51">5.1 公开基准评测</a><ul>
+<li><a href="#511">5.1.1 基础模型</a></li>
+<li><a href="#512">5.1.2 聊天模型</a></li>
+</ul>
+</li>
+<li><a href="#52">5.2 开放式评测</a><ul>
+<li><a href="#521">5.2.1 中文开放式评测</a></li>
+<li><a href="#522">5.2.2 英文开放式评测</a></li>
+</ul>
+</li>
+<li><a href="#53">5.3 留出评测</a></li>
+<li><a href="#54">5.4 安全评测</a></li>
+<li><a href="#55">5.5 讨论</a></li>
+</ul>
+</li>
+<li><a href="#6">6 结论、局限与未来工作</a></li>
+<li><a href="#_3">参考文献</a></li>
+<li><a href="#a">附录 A</a><ul>
+<li><a href="#a1">A.1 致谢</a></li>
+<li><a href="#a2">A.2 不同模型规模表示</a></li>
+<li><a href="#a3">A.3 基准指标曲线</a></li>
+<li><a href="#a4">A.4 与代码或数学专项模型比较</a></li>
+<li><a href="#a5-dpo">A.5 DPO 阶段的基准结果</a></li>
+<li><a href="#a6">A.6 评测格式</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="deepseek-llm">DeepSeek LLM：以长期主义扩展开源语言模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2024-01-05">2024 年 1 月 5 日</time></p>
+<p><strong>作者：</strong> DeepSeek-AI 团队（原论文作者按姓氏字母顺序排列）<br>
+<strong>论文版本：</strong> arXiv:2401.02954v1，2024 年 1 月 5 日<br>
+<strong>译文说明：</strong> 本译文按原论文内容顺序逐段编排，标题、正文和图表说明均译为中文；模型名、数据集名、技术缩写与公式符号保留通行写法。原论文的图、表、曲线、公式、代码和参考文献以对应原页截图保留，每张截图均处于其原有内容位置。</p>
+<h2 id="_1">摘要</h2>
+<p>开源大型语言模型的快速发展令人瞩目。然而，既有文献描述的缩放定律得出了不同结论，为如何扩大大型语言模型蒙上一层阴影。本文深入研究缩放定律，并提出一组独特发现，用于指导两种常用开源配置——70 亿和 670 亿参数——的大规模模型扩展。</p>
+<p>在缩放定律指导下，我们提出 DeepSeek LLM：一项以长期视角推进开源语言模型的项目。为了支持预训练，我们构建了一个当前包含 2 万亿词元、且仍在持续扩充的数据集。随后，在 DeepSeek LLM Base 上进行监督微调与直接偏好优化，得到 DeepSeek Chat。</p>
+<p>评测结果表明，DeepSeek LLM 67B 在多项基准上超过 LLaMA 2 70B，尤其是在代码、数学和推理领域。开放式评测进一步显示，DeepSeek LLM 67B Chat 的表现优于 GPT-3.5。</p>
+<p><img alt="原论文第 1 页：标题、作者与摘要" src="资源/原页-01.png"></p>
+<h2 id="_2">目录</h2>
+<p>原论文目录依次包含：引言；预训练中的数据、架构、超参数和基础设施；缩放定律中的超参数缩放、最优模型与数据规模估计、不同数据上的缩放定律；对齐；公开基准、开放式、留出与安全评测；讨论；结论、局限与未来工作；以及附录。</p>
+<p><img alt="原论文第 2 页：完整目录" src="资源/原页-02.png"></p>
+<h2 id="1">1 引言</h2>
+<p>过去几年，基于纯解码器 Transformer（Vaswani et al., 2017）的大型语言模型日益成为实现通用人工智能的基石和重要路径。大型语言模型通过预测连续文本中的下一个词，在海量数据集上进行自监督预训练，从而能够完成创意生成、文本摘要、代码补全等多种任务，并拥有广泛能力。监督微调与奖励建模等后续发展，让大型语言模型更善于遵循用户意图与指令，赋予它们更丰富的对话能力，也迅速扩大了影响。</p>
+<p>这波浪潮由 ChatGPT（OpenAI, 2022）、Claude（Anthropic, 2023）和 Bard（Google, 2023）等闭源产品引发；这些产品依靠大量计算资源和高昂标注成本开发。它们显著提高了社区对开源大型语言模型能力的期待，并推动了一系列研究（Bai et al., 2023；Du et al., 2022；Jiang et al., 2023；Touvron et al., 2023a,b；Yang et al., 2023）。其中，LLaMA 系列（Touvron et al., 2023a,b）尤为突出：它综合多项工作，形成高效、稳定的架构，构建了从 7B 到 70B 的高性能模型，因此成为开源模型架构和性能的事实标准。</p>
+<p>LLaMA 之后，开源社区主要集中于训练 7B、13B、34B、70B 等固定规模的高质量模型，往往忽略对大型语言模型缩放定律的研究探索（Hoffmann et al., 2022；Kaplan et al., 2020）。然而，当前开源模型仍处于通用人工智能发展的初始阶段，缩放定律研究极其重要。早期工作对于计算预算增加时模型规模与数据规模如何扩展得出了不同结论，并且没有充分讨论超参数设置。</p>
+<p>本文广泛研究语言模型的缩放行为，并把发现应用到 7B 与 67B 两种广泛使用的大规模配置，目标是为开源大型语言模型未来扩展打下基础。首先考察批大小与学习率的缩放定律，找出它们随模型规模变化的趋势；随后全面研究数据与模型规模的缩放定律，揭示最优模型／数据扩展分配策略，并预测大模型的预期表现。</p>
+<p>开发过程中，我们还发现，不同数据集推得的缩放定律有显著差异。这意味着数据集选择会明显影响缩放行为，因此把某一数据集上的缩放定律推广到其他数据时必须谨慎。</p>
+<p>在缩放定律指导下，我们从零构建开源大型语言模型，并尽可能公开信息供社区参考。预训练收集 2 万亿词元，主要为中文和英文。模型总体沿用 LLaMA 架构，但用多阶段学习率调度替代余弦调度，在保持性能的同时方便持续训练。监督微调从不同来源收集超过一百万条样本（Ouyang et al., 2022）；本文分享不同监督微调策略的经验和数据消融发现，并采用直接偏好优化（Rafailov et al., 2023）提高对话表现。</p>
+<p><img alt="原论文第 3 页：开源大型语言模型背景、缩放研究动机与项目概览" src="资源/原页-03.png"></p>
+<p>我们对基础模型和聊天模型开展广泛评测。DeepSeek LLM 在多项基准上超过 LLaMA 2 70B，尤其是代码、数学和推理领域。经过监督微调与直接偏好优化后，DeepSeek 67B Chat 在中英文开放式评测中均超过 GPT-3.5，说明它能够生成高质量回答并进行有意义的双语对话。安全评测还表明，DeepSeek 67B Chat 在实践中可以给出无害回答。</p>
+<p>本文其余部分安排如下：第 2 节介绍 DeepSeek LLM 预训练基础，包括数据构成、模型架构、基础设施与超参数；第 3 节详细解释发现的缩放定律及其含义，并结合缩放分析说明预训练超参数选择依据；第 4 节讨论微调方法，包括数据组成以及监督微调与直接偏好优化的具体做法；第 5 节给出基础模型、聊天模型、开放式评测和安全评测的详细结果；第 6 节讨论局限与未来方向。</p>
+<h2 id="2">2 预训练</h2>
+<h3 id="21">2.1 数据</h3>
+<p>主要目标是全面提高数据集的丰富性与多样性。我们从 Computer（2023）、Gao et al.（2020）、Penedo et al.（2023）和 Touvron et al.（2023a）等可靠来源吸取经验，把流程分为三个关键阶段：去重、过滤和重混合。去重与重混合通过采样唯一实例，保证数据的多样化表示；过滤则提高信息密度，让模型训练更高效、更有效。</p>
+<p>我们采用激进的去重策略并扩大去重范围。分析表明，与只在单次 Common Crawl 快照内去重相比，对完整 Common Crawl 语料去重能移除更多重复实例。表 1 显示，跨 91 次快照去重移除的文档量，是单次快照方法的四倍。</p>
+<p>过滤阶段重点建立稳健的文档质量判定标准，结合语言与语义层面的详细分析，从个体和全局视角观察数据质量。重混合阶段则针对数据不平衡调整方法，提高代表不足领域的比例，以得到更均衡、更包容的数据集，充分呈现多种观点和信息。</p>
+<p>分词器基于 Hugging Face tokenizers 库实现字节级 BPE。与 GPT-2 相似，先进行预分词，避免换行、标点和中日韩符号等不同字符类别之间合并词元。依照 LLaMA 的方法，数字也被拆成单个数位。</p>
+<p><img alt="原论文第 4 页：预训练数据去重、过滤、重混合与去重率表" src="资源/原页-04.png"></p>
+<p>根据既往经验，常规词表包含 100,000 个词元。分词器在约 24 GB 的多语言语料上训练，并加入 15 个特殊词元，最终词表为 100,015。为了提高训练计算效率，并为未来可能新增的特殊词元预留空间，模型训练时把词表大小设为 102,400。</p>
+<h3 id="22">2.2 架构</h3>
+<p>DeepSeek LLM 的微观设计大体遵循 LLaMA（Touvron et al., 2023a,b）：采用带 RMSNorm（Zhang and Sennrich, 2019）的 Pre-Norm 结构；前馈网络使用 SwiGLU（Shazeer, 2020），中间层维度为 $\frac{8}{3}d_{model}$；位置编码使用旋转位置嵌入（Su et al., 2024）。为了降低推理成本，67B 使用分组查询注意力（Ainslie et al., 2023）替代传统多头注意力。</p>
+<p>宏观设计略有不同：DeepSeek LLM 7B 有 30 层，67B 有 95 层。在保持参数量与其他开源模型一致的同时，这些层数调整也有利于模型流水线切分，优化训练与推理。</p>
+<p>与多数采用分组查询注意力的工作不同，67B 没有通过加宽前馈网络中间层来增加参数，而是加深网络，以争取更好性能。详细规格见表 2：7B 的模型宽度为 4096、32 个注意力头与 32 个键值头；67B 的模型宽度为 8192、64 个注意力头与 8 个键值头；两者上下文均为 4096，并分别使用 2304 与 4608 的序列批大小，在 2 万亿词元上训练。</p>
+<h3 id="23">2.3 超参数</h3>
+<p>DeepSeek LLM 以 0.006 的标准差初始化，并使用 AdamW（Loshchilov and Hutter, 2017），其中 $\beta_1=0.9$、$\beta_2=0.95$、权重衰减为 0.1。</p>
+<p>预训练使用多阶段学习率调度，而不是常见的余弦调度。模型在 2000 个预热步骤后达到最大学习率；处理完 80% 的训练词元后，学习率降至最大值的 31.6%；处理完 90% 后进一步降至 10%。训练中的梯度裁剪设为 1.0。</p>
+<p><img alt="原论文第 5 页：词表、模型架构、详细规格与预训练超参数" src="资源/原页-05.png"></p>
+<p>虽然不同调度器的训练损失下降趋势不同，但图 1(a) 显示，多阶段学习率调度的最终表现与余弦调度基本一致。在模型规模固定、训练规模改变时，多阶段调度可以复用第一阶段训练，为持续训练提供独特便利，因此被选为默认设置。</p>
+<p>图 1(b) 还显示，调整多阶段调度各阶段占比能够带来轻微提升。不过，为了在持续训练复用比例和模型性能之间平衡，最终采用 80%、10%、10% 的三阶段分布。批大小与学习率随模型规模变化，7B 与 67B 的具体数值见表 2。</p>
+<h3 id="24">2.4 基础设施</h3>
+<p>我们使用高效、轻量的 HAI-LLM 框架（High-flyer, 2023）训练和评测大型语言模型。与 Megatron 相同，框架集成数据并行、张量并行、序列并行与 1F1B 流水线并行；还使用 FlashAttention 提高硬件利用率，并用 ZeRO-1 在数据并行进程间切分优化器状态。</p>
+<p>系统尽量让计算与通信重叠，减少等待开销，包括让最后一个微批次的反向传播与 ZeRO-1 的 reduce-scatter 重叠，以及让序列并行中的 GEMM 与 all-gather／reduce-scatter 重叠。LayerNorm、可行位置的 GEMM 和 Adam 更新等层或算子也经过融合以加速训练。</p>
+<p>为提高稳定性，模型使用 bf16 训练，但以 fp32 累积梯度。系统使用原地交叉熵减少 GPU 内存占用：不提前在高带宽显存中把 bf16 logits 转为 fp32，而是在交叉熵 CUDA 内核中即时转换，计算相应 bf16 梯度，再用梯度覆盖 logits。</p>
+<p>模型权重与优化器状态每五分钟异步保存一次，因此即使偶发硬件或网络故障，最坏也只损失五分钟训练。临时检查点会定期清理，以免占用过多存储。</p>
+<p><img alt="原论文第 6 页：学习率调度曲线与 HAI-LLM 训练基础设施" src="资源/原页-06.png"></p>
+<p>系统还支持从不同三维并行配置恢复训练，以适应计算集群负载的动态变化。评测方面，生成任务使用 vLLM（Kwon et al., 2023）；非生成任务使用连续批处理，避免手动调节批大小并减少词元填充。</p>
+<h2 id="3">3 缩放定律</h2>
+<p>缩放定律研究（Hestness et al., 2017）早于大型语言模型出现。既有缩放工作（Henighan et al., 2020；Hoffmann et al., 2022；Kaplan et al., 2020）表明，随着计算预算 $C$、模型规模 $N$ 和数据规模 $D$ 增加，模型性能可预测地提高。当用参数量表示 $N$、词元数表示 $D$ 时，$C$ 可近似为 $C=6ND$。因此，计算预算增加时如何优化模型与数据之间的分配，也是缩放定律的一项核心研究目标。</p>
+<p>大型语言模型的发展使更大模型获得意料之外的显著提升，也把缩放定律研究推向新高峰。缩放结果说明，增加计算预算仍会持续带来显著收益，进一步推动模型规模扩大。</p>
+<p>然而，表 4 所示的早期工作在最优模型／数据扩展分配上结论不同，引发对缩放定律通用性的怀疑。这些研究也常常没有完整说明超参数，因此无法确定不同计算预算下的模型是否真正达到最优表现。本文重新研究缩放定律，以消除不确定性，确保计算扩展方向正确。这种长期视角，是持续开发更强模型的关键。</p>
+<p>为了让不同计算预算下的模型达到最优性能，我们首先研究超参数缩放定律。经验上，多数训练参数的最优值不会随计算预算改变，因此沿用第 2.3 节设置；影响最大的批大小与学习率则重新考察。</p>
+<p>早期工作给出过批大小和学习率的经验观察，但初步实验发现其适用性有限。通过大量实验，我们建立计算预算 $C$ 与最优批大小、学习率之间的幂律关系，称为超参数缩放定律。它为确定最优超参数提供经验框架，使不同计算预算的模型都能达到接近最优的性能。</p>
+<p>随后研究模型与数据规模的缩放定律。为降低实验成本和拟合难度，我们采用 Chinchilla 的 IsoFLOP 曲线方法。为更准确表示模型规模，引入“每词元非嵌入 FLOPs” $M$，替代模型参数量 $N$，并用更准确的 $C=MD$ 代替近似式 $C=6ND$。</p>
+<p><img alt="原论文第 7 页：训练恢复、评测系统与缩放定律动机" src="资源/原页-07.png"></p>
+<p>实验揭示最优模型／数据扩展分配策略和性能预测，并准确预报 DeepSeek LLM 7B 与 67B 的预期表现。</p>
+<p>在探索缩放定律期间，数据历经多轮迭代，质量持续提高。不同数据集上拟合的缩放曲线表明，数据质量会显著影响最优分配策略：质量越高，新增计算预算越应投入模型规模。这意味着在数据规模相同的条件下，高质量数据能够支持更大模型训练。不同的最优分配策略还可能成为间接评价数据质量的方法。未来将继续关注数据质量变化及其对缩放定律的影响。</p>
+<p>本文在缩放定律方面的贡献可归纳为三点：</p>
+<ol>
+<li>建立超参数缩放定律，为确定最优超参数提供经验框架。</li>
+<li>使用每词元非嵌入 FLOPs $M$ 而不是参数量 $N$ 表示模型规模，得到更准确的最优模型／数据分配，以及更好的大模型泛化损失预测。</li>
+<li>预训练数据质量会影响最优分配；质量越高，新增计算预算越应投入模型规模。</li>
+</ol>
+<h3 id="31">3.1 超参数缩放定律</h3>
+<p>首先在 $10^{17}$ 计算预算的小规模实验中，对批大小与学习率进行网格搜索。图 2(a) 展示某个模型规模——每词元 1.77 亿 FLOPs——的结果。泛化误差在较宽的批大小和学习率选择范围内都保持稳定，说明相当宽的参数空间都可以获得接近最优的性能。</p>
+<p><img alt="原论文第 8 页：缩放定律主要发现与批大小、学习率网格实验" src="资源/原页-08.png"></p>
+<p>随后利用多阶段学习率调度复用第一阶段训练，高效训练多组使用不同批大小、学习率和 $10^{17}$ 至 $2\times10^{19}$ 计算预算的模型。考虑参数空间的冗余，凡泛化误差比最小值高不超过 0.25% 的模型，其参数都视为近似最优。</p>
+<p>对批大小 $B$、学习率 $\eta$ 与计算预算 $C$ 拟合后发现：最优批大小随计算预算增加而逐渐增大，最优学习率则逐渐减小。这符合扩展模型时的直觉经验。所有近似最优超参数都位于较宽带状范围内，说明在这一范围中选到近似最优参数相对容易。拟合公式为：</p>
+<div class="math-block">$$
+\eta_{opt}=0.3118\cdot C^{-0.1250},
+\qquad
+B_{opt}=0.2920\cdot C^{0.3271}.
+$$</div>
+<p>我们在一组计算预算为 $10^{20}$ 的模型上验证公式。图 2(b) 展示每词元 29.4 亿 FLOPs 的模型结果，拟合参数位于最优参数空间中心。后文也会表明，为 DeepSeek LLM 7B 与 67B 拟合的参数同样取得良好表现。</p>
+<p>不过，目前还没有考虑计算预算之外的因素如何影响最优超参数。这与部分早期工作不同；后者认为最优批大小可以只由泛化误差 $L$ 决定。我们还观察到，计算预算相同但模型／数据分配不同的模型，其最优参数空间略有变化。这说明超参数选择和训练动力学仍需进一步研究。</p>
+<p><img alt="原论文第 9 页：批大小与学习率缩放曲线、拟合公式及验证" src="资源/原页-09.png"></p>
+<h3 id="32">3.2 估计最优模型与数据扩展</h3>
+<p>得到近似最优超参数的拟合公式后，我们开始拟合缩放曲线并分析最优模型／数据扩展分配。目标是寻找模型缩放指数 $a$ 与数据缩放指数 $b$，使 $N_{opt}\propto C^a$、$D_{opt}\propto C^b$。</p>
+<p>数据规模 $D$ 可以统一用词元数表示。以往通常用模型参数量表示模型规模，包括非嵌入参数 $N_1$（Kaplan et al., 2020）和完整参数 $N_2$（Hoffmann et al., 2022），并用 $C=6ND$ 近似计算预算，即用 $6N_1$ 或 $6N_2$ 近似模型规模。然而，两者都没有计算注意力操作的开销；$6N_2$ 还包含对模型容量贡献较小的词表计算，因此在某些设置中存在明显误差。</p>
+<p>为减小误差，本文引入每词元非嵌入 FLOPs $M$。它包含注意力操作开销，但不计词表计算。此时计算预算可写为 $C=MD$。三种表示的具体差异为：</p>
+<div class="math-block">$$
+6N_1=72n_{layer}d_{model}^{2},
+$$</div>
+<div class="math-block">$$
+6N_2=72n_{layer}d_{model}^{2}+6n_{vocab}d_{model},
+$$</div>
+<div class="math-block">$$
+M=72n_{layer}d_{model}^{2}+12n_{layer}d_{model}l_{seq}.
+$$</div>
+<p>其中 $n_{layer}$ 是层数，$d_{model}$ 是模型宽度，$n_{vocab}$ 是词表大小，$l_{seq}$ 是序列长度。表 3 比较不同规模模型上的三种表示。$6N_1$ 与 $6N_2$ 会在不同规模上高估或低估计算成本，尤其小模型差异可达 50%，拟合缩放曲线时会引入显著统计误差。更多分析见附录 A.2。</p>
+<p>使用 $M$ 表示模型规模后，目标可更清楚地表述为：给定计算预算 $C=MD$，寻找使泛化误差最小的模型规模 $M_{opt}$ 与数据规模 $D_{opt}$：</p>
+<div class="math-block">$$
+M_{opt}(C),D_{opt}(C)=\underset{M,D\;\text{s.t.}\;C=MD}{\arg\min}\;L(N,D).
+$$</div>
+<p>为降低实验成本和拟合难度，我们使用 Chinchilla 的 IsoFLOP 曲线方法，并选择八种不同计算预算继续实验。</p>
+<p><img alt="原论文第 10 页：模型规模表示误差、每词元非嵌入 FLOPs 与优化目标" src="资源/原页-10.png"></p>
+<p>实验选择八种计算预算，从 $10^{17}$ 到 $3\times10^{20}$，每种预算设计约十种模型／数据规模分配。每种预算的超参数由公式（1）确定；泛化误差在一个独立验证集上计算，该验证集与训练集分布相似，包含一亿词元。</p>
+<p>图 4 展示 IsoFLOP 曲线，以及根据每种计算预算的最优模型／数据分配拟合的缩放曲线。最优每词元非嵌入 FLOPs 与最优词元数的公式为：</p>
+<div class="math-block">$$
+M_{opt}=M_{base}C^a,
+\quad M_{base}=0.1715,
+\quad a=0.5243,
+$$</div>
+<div class="math-block">$$
+D_{opt}=D_{base}C^b,
+\quad D_{base}=5.8316,
+\quad b=0.4757.
+$$</div>
+<p>此外，本文依据计算预算与最优泛化误差拟合损失缩放曲线，并预测 DeepSeek LLM 7B 与 67B 的泛化误差，见图 5。结果表明，小规模实验可以准确预测计算预算扩大一千倍后的模型表现，为训练更大模型提供信心与指导。</p>
+<p><img alt="原论文第 11 页：IsoFLOP、最优模型与数据分配以及性能缩放预测" src="资源/原页-11.png"></p>
+<h3 id="33">3.3 不同数据上的缩放定律</h3>
+<p>DeepSeek LLM 开发期间，数据集经历多轮迭代，在提高总体质量的同时调整不同来源比例，因此可以进一步分析不同数据集对缩放定律的影响。</p>
+<p>研究使用三种数据：早期内部数据、当前内部数据，以及 Kaplan et al.（2020）缩放研究使用的 OpenWebText2。内部评估表明，当前内部数据质量高于早期版本；OpenWebText2 规模更小，可以进行更细致处理，因此质量甚至超过当前内部数据。</p>
+<p>有趣的是，三个数据集上的最优模型／数据扩展分配，与数据质量呈一致关系。如表 4 所示，质量提高时，模型缩放指数 $a$ 逐渐增大，数据缩放指数 $b$ 减小，意味着新增计算预算应更多分配给模型而非数据。这一发现可能解释早期缩放研究为何得出差异显著的最优分配结论。</p>
+<p>一种直观推测是，高质量数据通常逻辑清晰，充分训练后预测难度较低，因此增加计算预算时扩大模型更有优势。未来将继续关注数据质量变化及其对缩放定律的影响。</p>
+<h2 id="4">4 对齐</h2>
+<p>我们收集约 150 万条中英文指令数据，覆盖广泛的有用性和无害性主题。120 万条有用数据中，一般语言任务占 31.2%，数学问题占 46.6%，编程练习占 22.2%；30 万条安全数据覆盖多类敏感话题。</p>
+<p>对齐流程包含两个阶段。</p>
+<p><strong>监督微调。</strong> 7B 微调四轮，67B 只微调两轮，因为 67B 的过拟合更严重。7B 在 GSM8K 与 HumanEval 上持续提高，而 67B 很快触及上限。7B 与 67B 的学习率分别为 $10^{-5}$ 和 $5\times10^{-6}$。</p>
+<p><img alt="原论文第 12 页：不同数据质量的缩放指数与对齐数据构成" src="资源/原页-12.png"></p>
+<p>除监控基准准确率外，微调过程中还评估聊天模型的重复率。团队收集 3868 条中英文提示，统计生成回答无法终止、反复循环同一文本的比例。随着数学监督微调数据增多，重复率往往上升。原因可能是数学数据偶尔含相似推理模式，较弱模型难以真正掌握，从而输出重复回答。两阶段微调和直接偏好优化都可以基本保持基准得分，同时显著减少重复。</p>
+<p><strong>直接偏好优化。</strong> 为进一步增强模型，使用简单而有效的大型语言模型对齐方法 DPO（Rafailov et al., 2023）。偏好数据同时覆盖有用性和无害性。有用性数据包含多语言提示，类别包括创意写作、问答、指令遵循等，再由 DeepSeek Chat 生成候选回答；无害性偏好数据以类似方式构建。</p>
+<p>DPO 训练一轮，学习率为 $5\times10^{-6}$、批大小为 512，并采用学习率预热与余弦调度。实验发现，DPO 能增强开放式生成能力，而标准基准表现变化很小。</p>
+<h2 id="5">5 评测</h2>
+<h3 id="51">5.1 公开基准评测</h3>
+<p>基于内部评测框架，我们在一系列中英文公开基准上评测模型：</p>
+<ul>
+<li>多学科多选题：MMLU、C-Eval、CMMLU；</li>
+<li>语言理解与推理：HellaSwag、PIQA、ARC、OpenBookQA、BigBench Hard；</li>
+<li>闭卷问答：TriviaQA、NaturalQuestions；</li>
+<li>阅读理解：RACE、DROP、C3；</li>
+<li>指代消歧：WinoGrande、CLUEWSC；</li>
+<li>语言建模：Pile；</li>
+<li>中文理解与文化：CHID、CCPM；</li>
+<li>数学：GSM8K、MATH、CMath；</li>
+<li>代码：HumanEval、MBPP；</li>
+<li>标准化考试：AGIEval。</li>
+</ul>
+<p><img alt="原论文第 13 页：监督微调重复问题、DPO 与公开评测基准" src="资源/原页-13.png"></p>
+<p>对于需要从多个选项中选择答案的数据集，采用基于困惑度的评测：计算每个选项的困惑度，选取最低者作为预测。ARC 与 OpenBookQA 使用无条件归一化（Brown et al., 2020），其他数据集使用长度归一化。</p>
+<p>TriviaQA、NaturalQuestions、DROP、MATH、GSM8K、HumanEval、MBPP、BBH、AGIEval、CLUEWSC 与 CMath 使用基于生成的评测：让模型自由生成文本，再解析结果，生成均采用贪心解码。Pile-test 使用语言建模评测，计算测试语料的每字节比特数。不同基准的最大序列长度为 2048 或 4096，具体格式见附录 A.6。</p>
+<h4 id="511">5.1.1 基础模型</h4>
+<p>表 5 给出主要结果。DeepSeek 在 2 万亿双语词元上预训练，仍能在英语理解基准上与同样使用 2 万亿词元、但以英语为主的 LLaMA 2 相当。DeepSeek 67B 在 MATH、GSM8K、HumanEval、MBPP、BBH 和中文基准上明显超过 LLaMA 2 70B。</p>
+<p>附录 A.3 的曲线显示，GSM8K 与 BBH 等任务会随模型扩大而显著提高。7B 与 67B 使用相同数据，因此提升的涌现可归因于大模型强大的少样本学习能力。不过，若增加数学数据比例，小模型与大模型的差距可能缩小。</p>
+<p>另一个有趣观察是，DeepSeek 67B 相对 LLaMA 2 70B 的优势，大于 DeepSeek 7B 相对 LLaMA 2 7B 的优势，凸显语言冲突对小模型影响更大。尽管 LLaMA 2 没有专门用中文训练，它在 CMath 等中文任务上仍很强，说明数学推理等基础能力可以跨语言迁移。但 CHID 等考查中文成语使用的任务，需要预训练时消化大量中文词元，LLaMA 2 因而明显落后 DeepSeek LLM。</p>
+<h4 id="512">5.1.2 聊天模型</h4>
+<p>表 6 展示 DeepSeek Chat 结果：微调后多数任务总体提高，但少数任务表现下降。</p>
+<p><img alt="原论文第 14 页：评测方法、基础模型分析与聊天模型章节开头" src="资源/原页-14.png"></p>
+<p>表 5 对比 LLaMA 2 与 DeepSeek 的 7B、70B／67B 基础模型。DeepSeek 67B 在 MMLU、MATH、GSM8K、HumanEval、MBPP、BBH、AGIEval 与多项中文任务上领先；例如 HumanEval 为 42.7，对比 LLaMA 2 70B 的 28.7；MBPP 为 57.4，对比 45.6；C-Eval 为 66.1，对比 51.4；CMMLU 为 70.8，对比 53.1。</p>
+<p><strong>知识。</strong> 基础模型与聊天模型在 TriviaQA、MMLU、C-Eval 等知识任务上有小幅波动，但这并不代表监督微调后获得或丢失知识。监督微调的价值，在于聊天模型以零样本达到基础模型少样本设置的相当得分，更符合真实使用。例如聊天模型零样本 MMLU 与基础模型五样本 MMLU 相当。</p>
+<p><strong>推理。</strong> 大量监督微调样本采用思维链格式，因此聊天模型在 BBH、NaturalQuestions 等推理任务上略有提高。但作者认为，监督微调并没有学习新的推理能力，而是学会正确的推理路径格式。</p>
+<p><img alt="原论文第 15 页：基础模型完整结果表与聊天模型知识、推理分析" src="资源/原页-15.png"></p>
+<p><strong>性能下降任务。</strong> 无论模型规模或预训练检查点如何，一些任务在微调后持续下降，通常是 HellaSwag 等完形填空或句子补全任务。纯语言模型本就更适合这类任务。</p>
+<p><strong>数学与代码。</strong> 微调后数学和代码显著提高，HumanEval 与 GSM8K 均提升 20 分以上。解释是基础模型在这些任务上最初没有充分拟合，监督微调通过大量数据补充了编程与数学知识。但能力可能主要集中在代码补全与代数问题；要形成全面数学与编程理解，仍需在预训练阶段加入更广泛数据，详见附录 A.4。</p>
+<p>7B 微调最初使用全部数据，随后增加不含数学与代码数据的第二阶段。第一阶段模型重复率为 2.0%，第二阶段降至 1.4%，且基准得分保持不变。67B 在第一阶段后重复率已低于 1%，第二阶段反而损害基准得分，所以 67B 只进行一阶段监督微调。</p>
+<p>表 6 对比基础与聊天模型。聊天模型在 MMLU、GSM8K、MATH、C-Eval 与 CMMLU 上使用零样本，基础模型仍使用少样本。DeepSeek 67B Chat 在 GSM8K 达到 84.1、MATH 为 32.6、HumanEval 为 73.8、BBH 为 71.7。</p>
+<p><img alt="原论文第 16 页：基础与聊天模型完整对比及微调后任务变化" src="资源/原页-16.png"></p>
+<h3 id="52">5.2 开放式评测</h3>
+<p>聊天模型除标准基准外，在开放领域与开放问题上生成结果的质量会直接影响真实用户体验，因此我们分别测试中英文开放式生成。</p>
+<h4 id="521">5.2.1 中文开放式评测</h4>
+<p>使用高质量开放问题集 AlignBench（Liu et al., 2023），评测聊天模型跨领域综合能力。AlignBench 包含 8 个一级类别、36 个二级类别与 683 道题；除提示外，每题还提供专业参考答案，以及供 GPT-4 判断回答质量的评分模板。</p>
+<p>我们使用官方 GitHub 仓库实现评测，并严格对齐关键的温度参数：角色扮演、写作和开放问题设为 0.7，其他任务设为 0.1。</p>
+<p>表 7 显示，DeepSeek 67B Chat 明显超过 ChatGPT 及其他基线模型，只落后两个 GPT-4 版本，说明它在基础中文任务与高级中文推理上表现出色。DPO 几乎改善所有领域。AlignBench 总分中，DeepSeek 67B Chat DPO 为 6.69，未经 DPO 为 6.43，GPT-3.5 Turbo 为 6.08。</p>
+<p><img alt="原论文第 17 页：AlignBench 中文开放式评测完整排行榜" src="资源/原页-17.png"></p>
+<p>在五类基础中文任务中，DeepSeek 位于所有模型第一梯队，DPO 版本的中文基础语言能力甚至高于最新版 GPT-4；在高级中文推理任务中，它明显超过其他中文大型语言模型，说明复杂中文逻辑推理与数学计算能力更强。</p>
+<h4 id="522">5.2.2 英文开放式评测</h4>
+<p>英文开放式评测采用 MT-Bench（Zheng et al., 2023），包含八类多轮问题。表 8 显示，DeepSeek LLM 67B Chat 超过 LLaMA 2 Chat 70B、Xwin 70B v0.1 与 TÜLU 2+DPO 70B 等开源模型，平均 8.35，与 GPT-3.5 Turbo 的 8.39 相当。DPO 后平均分进一步提高到 8.76，仅次于 GPT-4，说明 DeepSeek LLM 具有强大的多轮开放式生成能力。</p>
+<h3 id="53">5.3 留出评测</h3>
+<p>数据污染与基准过拟合是大型语言模型评测的两项挑战。常见做法是使用近期发布的测试集作为留出集。</p>
+<p><strong>LeetCode。</strong> 为评估编程能力，使用 2023 年 7 月至 11 月 LeetCode 周赛第 351—372 场、双周赛第 108—117 场的题目，共 126 道，每题超过 20 个测试用例。指标类似 HumanEval：只有输出通过全部测试用例才算解决。相关数据将随 DeepSeek Coder 技术报告发布。</p>
+<p><img alt="原论文第 18 页：中英文开放式评测与留出编程评测设计" src="资源/原页-18.png"></p>
+<p><strong>匈牙利全国高中考试。</strong> 与 Grok-1 相同，使用包含 33 道题的匈牙利全国高中考试评估数学能力，模型成绩由人工依据官方解答评分。</p>
+<p><strong>指令遵循评测。</strong> Google 于 2023 年 11 月 15 日发布指令遵循数据集（Zhou et al., 2023），识别 25 类可验证指令并构造约 500 条提示，每条包含一项或多项可验证要求。本文使用提示级宽松指标评测。</p>
+<p>表 9 显示，DeepSeek LLM 67B Chat 在 LeetCode、匈牙利考试与 IFEval 上分别为 17.5、58、55.5；7B 分别为 4.7、28.5、41.2。GPT-4 为 48.4、68、79.3。</p>
+<p>与 Qwen 72B Chat、ChatGLM3、Baichuan 2 和 Yi-34B Chat 比较发现，即使某些小模型在常规基准上成绩不错，留出数据仍显示大模型与小模型之间存在显著差距。例如 ChatGLM3 在代码基准 MBPP 上为 52.4，接近 DeepSeek 67B，但在新基准上远远落后。数学也有类似趋势：ChatGLM3 在 GSM8K 上达到 72.3，匈牙利考试却不如大模型。指令遵循同样显示总计算量至关重要。</p>
+<p>DeepSeek 7B 与 67B 使用相同训练流程，但表现差距巨大。主观评测也观察到，扩展到 67B 后，多类任务中的智能程度出现明显跃升。虽然 DeepSeek 7B 在标准基准上落后部分小型语言模型，但在留出任务上的相对表现仍相当不错。</p>
+<h3 id="54">5.4 安全评测</h3>
+<p>我们深知安全对通用人工智能的重要性。真正有帮助的人工智能，前提是价值观与人类一致并对人类友善。模型安全被纳入预训练、监督微调与直接偏好优化的完整训练流程。</p>
+<p>为验证安全性，我们组建一个来自多学科的 20 人专家团队，构建与人类价值一致的安全内容分类体系，见表 10。团队为每个安全子类别人工编写数十条高质量测试，不仅关注安全内容领域的多样性，也关注表达形式。著名的“祖母”漏洞说明，模型可能被查询的表面形式欺骗而生成不安全回答，因此问题还采用诱导、角色扮演、多轮对话、预设立场等多种方式，最终形成 2400 道安全测试。专家还为不同内容和形式建立基础安全审核准则。</p>
+<p><img alt="原论文第 19 页：留出评测结果、大模型优势与安全评测方法" src="资源/原页-19.png"></p>
+<p>对测试集输出进行人工安全检查，审核团队经过培训，并对标注结果交叉核验。每题标为安全、不安全或模型拒绝；安全回答与拒答都计作安全响应。表 10 显示 DeepSeek 67B Chat 在多类安全测试上表现良好：歧视偏见 486／500，侵害他人合法权益 473／500，商业秘密与知识产权 281／300，违法违规 290／300，其他安全问题 767／800。</p>
+<p>我们还使用“Do-Not-Answer”数据集（Wang et al., 2023）扩充评测。该数据集包含 939 条按风险分类的提示。DeepSeek 67B Chat 得分 97.8，高于 ChatGPT 与 GPT-4，既说明模型能安全处理敏感查询，也使其在领先模型中具备竞争力。</p>
+<h3 id="55">5.5 讨论</h3>
+<p>在开发过程中，我们发现了若干构建大型语言模型时值得讨论的现象。</p>
+<p><img alt="原论文第 20 页：安全分类体系、人工审核结果与讨论开头" src="资源/原页-20.png"></p>
+<p>表 11 的 Do-Not-Answer 得分越高，表示安全性越强。DeepSeek 67B Chat 得分 97.8，略高于 ChatGPT 的 97.7 与 GPT-4 的 96.5，位于最安全模型之列。</p>
+<p><strong>分阶段微调。</strong> 小模型需要在数学和代码数据上微调更久，但这会损害对话能力，例如增加重复。为解决问题，第一阶段使用全部数据，第二阶段只使用对话数据。表 12 显示，DeepSeek LLM 7B Chat 的 HumanEval 保持 48.2，GSM8K 从 63.9 略降到 63.0，重复率从 2.0% 降至 1.4%，IFEval 从 38.0 提高到 41.2。第二阶段没有牺牲代码和数学能力，同时减少重复并增强指令遵循。</p>
+<p><strong>多项选择题。</strong> MMLU、AGIEval、C-Eval 等多选题不仅要求模型拥有知识，还要理解选项指代。在对齐阶段加入两千万条中文多选题，并对 C-Eval 验证集和 CMMLU 测试集去重以避免污染。加入后，MMLU 从 49.4 提升到 60.9，C-Eval 从 47.0 到 71.3，CMMLU 从 49.7 到 73.8；但生成式 TriviaQA 与内部 ChineseQA 没有提高。</p>
+<p>这表明增加多选数据增强的是解决多选题的能力，用户在需要生成回答的对话中未必会感到模型更智能。因此，我们最终从预训练与微调阶段排除多选数据，避免对基准过拟合，也因为它无助于获得真正智能。</p>
+<p><img alt="原论文第 21 页：Do-Not-Answer、安全得分、分阶段微调与多选数据影响" src="资源/原页-21.png"></p>
+<p><strong>预训练中的指令数据。</strong> 普遍认为，在预训练后期加入指令数据能提高基础模型基准表现。我们在最后 10% 预训练阶段加入五百万条主要由多选题组成的指令数据，基础模型确实提高；但最终结果几乎等同于在监督微调阶段加入同一批数据。因此，这种做法增强基础模型的基准成绩，却没有提高整体潜力。如果指令数据量足够大，加入预训练是可以接受的；但我们倾向排除多选题，又缺乏足量非多选指令，所以最终没有在预训练中使用指令数据。</p>
+<p><strong>系统提示。</strong> 设计良好的系统提示应引导模型生成既有帮助又尊重用户的回答。我们在 LLaMA 2 的提示基础上略作修改：</p>
+<blockquote>
+<p>你是 DeepSeek Chat，由 DeepSeek 开发、乐于助人、尊重他人且诚实的 AI 助手。训练数据的知识截止到 2023 年 5 月。请在保证安全的同时，始终尽可能提供帮助。回答不得包含有害、不道德、种族主义、性别歧视、有毒、危险或违法内容，并应保持社会无偏见和积极。如果问题没有意义或事实不连贯，请解释原因，而不是给出错误答案；如果不知道答案，不要分享虚假信息。</p>
+</blockquote>
+<p>有趣的是，加入系统提示会让 7B 表现略降，却显著提升 67B。MT-Bench 上，7B 从 7.15 降到 7.11，67B 从 8.35 提升到 8.58。作者解释，大模型更能理解系统提示的意图，从而更好遵循指令并生成更优回答；小模型难以充分理解，训练与测试不一致反而可能损害表现。</p>
+<p><img alt="原论文第 22 页：预训练指令数据、系统提示及其规模差异" src="资源/原页-22.png"></p>
+<h2 id="6">6 结论、局限与未来工作</h2>
+<p>本文介绍 DeepSeek LLM：一系列从零开始，在 2 万亿中英文词元上训练的开源模型。论文深入解释超参数选择、缩放定律，以及多种微调尝试；校准既有缩放定律并提出新的最优模型／数据扩展分配策略；给出在指定计算预算下预测近似最优批大小与学习率的方法；还得出缩放定律与数据质量相关的结论，这可能是不同工作缩放行为各异的根本原因。</p>
+<p>在缩放定律指导下，模型使用最优超参数预训练，并接受全面评测。所有训练阶段都避免为了基准做装饰或使用不公开技巧。</p>
+<p>DeepSeek Chat 也具有其他大型语言模型常见局限：预训练后知识无法持续更新；可能生成未经验证建议等不符合事实的信息；容易产生幻觉。第一版中文数据并不完备，因此某些中文专门主题的表现可能不理想。数据主要来自中文和英文，其他语言能力仍不稳定，使用时应谨慎。</p>
+<p>DeepSeek LLM 是一项长期项目，致力于推进开源语言模型：</p>
+<ul>
+<li>团队将发布代码智能和混合专家技术报告，分别说明如何构建高质量代码预训练数据，以及如何设计可达到稠密模型性能的稀疏模型。</li>
+<li>正在为下一版 DeepSeek LLM 构建规模更大、质量更高的数据集，希望显著提高推理、中文知识、数学与代码能力。</li>
+<li>对齐团队将继续研究如何向公众提供有帮助、诚实、安全的模型。初步实验表明，强化学习可以提高复杂推理能力。</li>
+</ul>
+<p><img alt="原论文第 23 页：结论、局限、未来工作与参考文献开头" src="资源/原页-23.png"></p>
+<h2 id="_3">参考文献</h2>
+<p>以下参考文献按原论文顺序，以对应原页截图完整保留。</p>
+<p><img alt="原论文第 24 页：参考文献" src="资源/原页-24.png"></p>
+<p><img alt="原论文第 25 页：参考文献" src="资源/原页-25.png"></p>
+<p><img alt="原论文第 26 页：参考文献" src="资源/原页-26.png"></p>
+<p><img alt="原论文第 27 页：参考文献" src="资源/原页-27.png"></p>
+<p><img alt="原论文第 28 页：参考文献" src="资源/原页-28.png"></p>
+<p><img alt="原论文第 29 页：参考文献" src="资源/原页-29.png"></p>
+<h2 id="a">附录 A</h2>
+<h3 id="a1">A.1 致谢</h3>
+<p>本项目得以实现，离不开众多贡献者。原论文特别感谢数据标注、合规、商务和设计团队，并逐一列出成员；同一团队内姓名按姓氏字母顺序排列。</p>
+<h3 id="a2">A.2 不同模型规模表示</h3>
+<p>我们复用 IsoFLOP 实验，针对不同模型规模表示重新拟合缩放曲线。分别以 $6N_1$ 和 $6N_2$ 表示模型规模，重新计算 FLOPs 并拟合性能曲线。图 6 表明，在较高计算预算下，三种表示得到的最优模型／数据分配偏差不大；在较低预算下则差异明显。</p>
+<p>当使用 $6N_1$ 时，拟合曲线倾向于高估大模型表现；使用 $6N_2$ 时则倾向于低估；使用每词元非嵌入 FLOPs $M$ 可得到最准确的预测。</p>
+<p><img alt="原论文第 30 页：致谢与三种模型规模表示的性能缩放曲线" src="资源/原页-30.png"></p>
+<h3 id="a3">A.3 基准指标曲线</h3>
+<p>图 7 展示 DeepSeek LLM Base 在不同训练步骤上的基准曲线。ChineseQA 是内部测试集，构造方式类似 TriviaQA。从训练开始到结束，各基准都持续提高；如果继续训练，表现预计还能进一步改善。</p>
+<p>表 15 将模型与代码专项模型比较。预训练 DeepSeek LLM Base 67B 在 HumanEval Python、多语言 HumanEval 与 MBPP 上分别为 42.7%、37.2%、57.4%；指令微调后的 DeepSeek LLM Chat 67B 分别达到 73.8%、53.3%、61.4%。</p>
+<p><img alt="原论文第 31 页：基础模型训练曲线与代码专项模型比较" src="资源/原页-31.png"></p>
+<h3 id="a4">A.4 与代码或数学专项模型比较</h3>
+<p>DeepSeek LLM 67B 使用的代码数据更少，却能达到与 CodeLlama 相近的表现，而且在代码之外具有更广泛能力。</p>
+<p>数学方面，表 16 比较 GSM8K、MATH、MGSM-zh 与 CMath。DeepSeek 67B Chat 使用思维链时分别达到 84.1%、32.6%、74.0%、80.3%，在多语言数学任务上表现突出。模型还能用程序工具求解数学题，优于思维链：工具集成设置下分别达到 86.7%、51.1%、76.4%、85.4，并在这些基准上显著超过此前最佳 ToRA。</p>
+<h3 id="a5-dpo">A.5 DPO 阶段的基准结果</h3>
+<p>表 17 比较 DPO 前后。HellaSwag、TriviaQA、NaturalQuestions、GSM8K 和 CMMLU 略有提高；MMLU、MATH、HumanEval、BBH、AGIEval 与 C-Eval 略有下降。总体而言，DPO 不会显著影响大型语言模型的基础能力。</p>
+<h3 id="a6">A.6 评测格式</h3>
+<p>表 18 至表 40 给出不同基准的实际提示格式。以下页面按原论文顺序保留全部提示、选项、示例解答、代码与公式。</p>
+<p><img alt="原论文第 32 页：代码、数学专项比较与 DPO 前后基准结果" src="资源/原页-32.png"></p>
+<p><strong>表 18—19：AGIEval 与 ARC。</strong> AGIEval 示例是一道中国高考生物选择题；ARC 示例要求依据关于棉纤维与染料的说明，选择通过纸色谱法分离颜色。</p>
+<p><img alt="原论文第 33 页：AGIEval 与 ARC 评测提示示例" src="资源/原页-33.png"></p>
+<p><strong>表 20：BBH。</strong> 示例以多组随机布尔表达式和逐步求值演示思维链格式，要求继续判断新的布尔表达式。</p>
+<p><img alt="原论文第 34 页：BBH 布尔表达式思维链评测示例" src="资源/原页-34.png"></p>
+<p><strong>表 21：C-Eval。</strong> 示例提供多道中文教育学单选题及答案，最后要求模型回答一项关于文化如何影响和制约教育的问题。</p>
+<p><img alt="原论文第 35 页：C-Eval 中文教育学单选评测示例" src="资源/原页-35.png"></p>
+<p><strong>表 22—23：C3 与 CCPM。</strong> C3 示例根据“这些药怎么吃”的对话判断场景是医院；CCPM 根据现代中文描述匹配对应古诗文。</p>
+<p><img alt="原论文第 36 页：C3 对话理解与 CCPM 古诗匹配示例" src="资源/原页-36.png"></p>
+<p><strong>表 24：CMath。</strong> 通过多道带详细中文解答的小学数学题提供少样本示范，最后要求求解把圆锥铅锤放入圆柱容器后水面上升高度的问题。</p>
+<p><img alt="原论文第 37 页：CMath 中文数学逐步解答示例" src="资源/原页-37.png"></p>
+<p><strong>表 25：CMMLU。</strong> 示例提供多道人体解剖学单选题与答案，最后要求判断从脑干背侧出脑的脑神经。</p>
+<p><img alt="原论文第 38 页：CMMLU 解剖学单选评测示例" src="资源/原页-38.png"></p>
+<p><strong>表 26—27：DROP 与 CHID。</strong> DROP 根据城市年龄构成计算不在 25—44 岁区间的人口比例；CHID 根据关于疫情一线医生的新闻语境选择“精疲力竭”等成语。</p>
+<p><img alt="原论文第 39 页：DROP 数值阅读理解与 CHID 成语填空示例" src="资源/原页-39.png"></p>
+<p><strong>表 28：CLUEWSC。</strong> 通过多段中文文本与已标注指代关系提供示范，要求判断最后一段中的代词“他”指谁。</p>
+<p><img alt="原论文第 40 页：CLUEWSC 中文指代消歧示例" src="资源/原页-40.png"></p>
+<p><strong>表 29：GSM8K。</strong> 以多道英文小学应用题和逐步计算作为少样本示范，最后要求继续解答姓名字母数量问题。</p>
+<p><img alt="原论文第 41 页：GSM8K 英文数学思维链示例" src="资源/原页-41.png"></p>
+<p><strong>表 30—31：HellaSwag 与 HumanEval。</strong> HellaSwag 要求补全“男子坐在钢琴前”之后最合理的动作；HumanEval 要求实现一个函数，统计所有以 1 开头或结尾的 $n$ 位正整数。</p>
+<p><img alt="原论文第 42 页：HellaSwag 句子补全与 HumanEval 代码生成示例" src="资源/原页-42.png"></p>
+<p><strong>表 32：MATH。</strong> 通过定义域、行列式、重量比例、方程组等带完整 LaTeX 解答的问题提供少样本示范，最后要求计算 $\log_2 1$。</p>
+<p><img alt="原论文第 43 页：MATH 数学逐步解答提示示例" src="资源/原页-43.png"></p>
+<p><strong>表 33：MBPP。</strong> 示例要求编写 Python 函数，完成元组交集、判断非质数、用堆找最大元素和求约数和，并配有断言测试与参考代码。</p>
+<p><img alt="原论文第 44 页：MBPP Python 编程与测试用例示例" src="资源/原页-44.png"></p>
+<p><strong>表 34：MMLU。</strong> 以多道综合常识选择题与答案作为示范，最后询问喜剧组合 Three Stooges 中谁与其他成员没有亲属关系。</p>
+<p><img alt="原论文第 45 页：MMLU 综合常识多选示例" src="资源/原页-45.png"></p>
+<p><strong>表 35—37：NaturalQuestions、OpenBookQA 与 PIQA。</strong> 示例分别测试事实问答、根据季节变化判断情绪影响因素的开放书本推理，以及在橱柜底部更方便按垃圾处理器复位按钮的物理常识。</p>
+<p><img alt="原论文第 46 页：NaturalQuestions、OpenBookQA 与 PIQA 示例" src="资源/原页-46.png"></p>
+<p><strong>表 38：RACE。</strong> 阅读文章解释如何通过推断作者心中的问题理解文本，并以蚯蚓说明这一方法；模型需要回答文章主旨等阅读理解题。</p>
+<p><img alt="原论文第 47 页：RACE 长篇阅读理解示例" src="资源/原页-47.png"></p>
+<p><strong>表 39—40：TriviaQA 与 WinoGrande。</strong> TriviaQA 用多组事实问答提供少样本示范；WinoGrande 为同一个补全提供多个前缀，选择使补全文本困惑度最低的前缀。</p>
+<p><img alt="原论文第 48 页：TriviaQA 事实问答与 WinoGrande 前缀选择示例" src="资源/原页-48.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

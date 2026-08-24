@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek-R1 发布百日复盘综述</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">DeepSeek-R1 发布百日复盘综述</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#deepseek-r1">DeepSeek-R1 发布百日复盘综述</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#_2">内容框架</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 推理语言模型的监督微调</a><ul>
+<li><a href="#21-sft">2.1 SFT 数据集</a><ul>
+<li><a href="#211">2.1.1 收集与筛选流水线</a></li>
+<li><a href="#212">2.1.2 代表性数据集</a></li>
+<li><a href="#213">2.1.3 数据分析</a></li>
+</ul>
+</li>
+<li><a href="#22">2.2 训练与性能比较</a></li>
+</ul>
+</li>
+<li><a href="#3">3 可验证奖励强化学习</a><ul>
+<li><a href="#31-rl">3.1 RL 数据集</a></li>
+<li><a href="#32-rl">3.2 RL 组件</a><ul>
+<li><a href="#321">3.2.1 算法</a></li>
+<li><a href="#322-323">3.2.2 奖励与 3.2.3 采样</a></li>
+</ul>
+</li>
+<li><a href="#33">3.3 复现研究的共同结论</a><ul>
+<li><a href="#_3">数据配方</a></li>
+<li><a href="#_4">算法、模型与上下文</a></li>
+<li><a href="#kl">奖励建模与 KL</a></li>
+</ul>
+</li>
+<li><a href="#34-rlvr">3.4 RLVR 的其他任务</a></li>
+</ul>
+</li>
+<li><a href="#4">4 更多方向</a><ul>
+<li><a href="#41">4.1 替代性的推理增强方法</a><ul>
+<li><a href="#_5">过程奖励</a></li>
+<li><a href="#_6">偏好优化</a></li>
+</ul>
+</li>
+<li><a href="#42">4.2 泛化</a></li>
+<li><a href="#43">4.3 安全</a></li>
+<li><a href="#44">4.4 多模态与多语言</a></li>
+</ul>
+</li>
+<li><a href="#5">5 结论</a></li>
+<li><a href="#_7">参考文献</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="deepseek-r1">DeepSeek-R1 发布百日复盘综述</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2025-05-15">2025 年 5 月 15 日</time></p>
+<p><strong>原标题：</strong> 100 Days After DeepSeek-R1: A Survey on Replication Studies and More Directions for Reasoning Language Models</p>
+<p><strong>作者：</strong> Chong Zhang、Yue Deng、Xiang Lin、Bin Wang、Dianwen Ng、Hai Ye、Xingxuan Li、Yao Xiao、Zhanfeng Mo、Qi Zhang、Lidong Bing</p>
+<p><strong>机构：</strong> MiroMind、复旦大学、新加坡国立大学、新加坡科技设计大学、南洋理工大学</p>
+<p><strong>原文：</strong> <a href="https://arxiv.org/abs/2505.00551">arXiv:2505.00551</a></p>
+<h2 id="_1">摘要</h2>
+<p>推理语言模型（Reasoning Language Model，RLM）代表了大语言模型的一次新演进。DeepSeek-R1 的发布产生广泛社会影响，也激发了研究界对“显式推理”范式的热情。不过，DeepSeek-R1-Zero、DeepSeek-R1 及其蒸馏小模型的训练数据、配置和实现细节并未完全公开，于是大量复现研究开始用开放数据和相近训练流程逼近其表现。</p>
+<p>本文梳理发布后约百日内的复现进展，重点讨论两条路线：监督微调（SFT）与可验证奖励强化学习（RLVR）。综述覆盖数据构建、算法设计、奖励系统、采样策略和训练配置，并从已有实验中归纳共同经验。最后，作者扩展到过程奖励、偏好优化、泛化、安全、多模态和多语言等方向，试图为后续推理模型研究提供一张及时的路线图。</p>
+<p><img alt="原论文第 1 页：标题、作者与摘要" src="资源/原页-01.png"></p>
+<h2 id="_2">内容框架</h2>
+<p>全文分为五部分：引言；推理模型的监督微调；可验证奖励强化学习；其他研究方向；结论。方法部分又把工作拆成 SFT 数据与模型、RL 数据、算法、奖励、采样，以及训练配方的横向比较。</p>
+<p><img alt="原论文第 2 页：全文目录" src="资源/原页-02.png"></p>
+<h2 id="1">1 引言</h2>
+<p>以 OpenAI o 系列、DeepSeek-R1 和 QwQ 为代表的推理模型，不再只输出答案，还会显式展示逐步推理、自检和反思。它们对数学、代码和逻辑任务的价值，不只是提高准确率，也在于提供可追踪的理由，便于教育、关键决策和推理错误调试。</p>
+<p>DeepSeek-R1 把少量冷启动 SFT 与 RLVR 结合，以较低成本取得强推理能力。然而，复现仍缺少多项关键材料：SFT/RL 数据、训练超参数、GRPO 与奖励系统的最优设计，以及自检和反思行为究竟如何稳定出现。发布后的开源项目分别从数据来源、采样、训练配置和算法细节切入，却缺少统一整理。</p>
+<p>本文按训练流程组织相关工作：</p>
+<ul>
+<li><strong>SFT：</strong> 数据集构造、起始检查点、训练惯例与性能比较；</li>
+<li><strong>RLVR：</strong> 可验证数据、PPO/GRPO 及其变体、奖励与采样策略；</li>
+<li><strong>其他技术：</strong> 过程奖励、偏好优化、泛化、安全、多模态和多语言。</li>
+</ul>
+<p>图 1 给出总体分类：监督微调负责把强模型的长思维链蒸馏到较小模型；RLVR 围绕数据筛选、策略优化、奖励和采样继续提升；过程奖励与偏好优化则补充只看最终答案的局限。</p>
+<p><img alt="原论文第 3 页：推理模型训练方法分类与引言" src="资源/原页-03.png"></p>
+<h2 id="2">2 推理语言模型的监督微调</h2>
+<p>DeepSeek-R1 的蒸馏模型证明，小模型也能通过模仿强模型的长思维链获得明显推理能力。后续复现通常收集数学、代码、科学或谜题，再为每道题生成一条或多条经验证的长 CoT，用作 SFT 目标。</p>
+<h3 id="21-sft">2.1 SFT 数据集</h3>
+<h4 id="211">2.1.1 收集与筛选流水线</h4>
+<p>常见流程是：从基准和网页收集题目；用嵌入相似度或 n-gram 去重；按模型通过率挑选有难度的题；让教师模型生成推理轨迹；最后按领域验证答案。数学使用 Math-Verify 等工具，代码通过执行和单元测试，开放任务常由 LLM 评审。困难度、覆盖面和轨迹正确性共同决定数据价值。</p>
+<p>现有数据明显偏向数学与代码，科学、逻辑谜题和开放问题较少。少数综合数据在收集和蒸馏时同时覆盖推理与非推理任务，以争取更强的通用性。</p>
+<p><img alt="原论文第 4 页：综述贡献与 SFT 数据构建流程" src="资源/原页-04.png"></p>
+<h4 id="212">2.1.2 代表性数据集</h4>
+<p>论文比较九组数据：</p>
+<ul>
+<li><strong>DeepSeek-R1 蒸馏数据：</strong> 80 万条，其中 60 万条推理样本、20 万条写作和角色扮演等非推理样本；具体生成过程与数据本身未公开。</li>
+<li><strong>AM：</strong> 140 万条，覆盖多领域；以嵌入去重、难题上采样、DeepSeek-R1 补充 CoT，并用数学验证器、指令模型和代码执行复核。</li>
+<li><strong>Synthetic-1：</strong> 89.4 万条，覆盖数学、代码和 STEM；按领域分别使用规则、执行和 LLM 判断。</li>
+<li><strong>OpenThoughts：</strong> 11.4 万条，覆盖数学、科学、代码和谜题，教师轨迹经过答案或单元测试验证。</li>
+<li><strong>Bespoke-Stratos：</strong> 1.67 万条；拒绝采样移除错误轨迹，LLM 评审使数学样本保留率由规则法的 25% 提高到 73%。</li>
+</ul>
+<p><img alt="原论文第 5 页：SFT 数据规模、领域与代表项目" src="资源/原页-05.png"></p>
+<ul>
+<li><strong>Light-R1：</strong> 先从百万数学题中按小模型低通过率筛出难题，再由强教师生成正确长 CoT，得到约 7.6 万条；第二阶段继续挑选强蒸馏模型仍不稳定的题，压缩到约 3,000 条更难样本。</li>
+<li><strong>Open-R1：</strong> 22 万道 NuminaMath 题，每题生成 2–4 条 CoT；其中 9.4 万条高质量子集优于更大的扩展集，提示“更多”可能只是加入了更容易的题。</li>
+<li><strong>s1K-1.1：</strong> 从 16 个来源的 5.9 万道题经消重、去污染和三阶段筛选，仅保留 1,000 条高质量、多样且困难的样本。</li>
+<li><strong>LIMO：</strong> 从数千万候选题中去掉容易样本，再结合人类与多种强模型轨迹，按结构组织、认知脚手架和严格验证筛出 817 条；极少样本仍能取得强结果。</li>
+</ul>
+<p><img alt="原论文第 6 页：Light-R1、Open-R1、s1K 与 LIMO 的筛选方式" src="资源/原页-06.png"></p>
+<h4 id="213">2.1.3 数据分析</h4>
+<p>虽然多数长 CoT 来自同一教师，不同数据集的长度分布仍差异明显。AM 与 Synthetic-1 偏短；Light-R1 与 Open-R1 长尾更宽，通常意味着包含更多复杂问题。</p>
+<p>去污染仍是薄弱环节：文中只有 Light-R1 与 LIMO 明确说明针对 AIME24/25、MATH500、GPQA Diamond 等基准做了系统处理；MATH500 在多个公开集合中已有部分污染。</p>
+<p>另一个问题是来源交叉。很多数学数据都直接或间接来自 NuminaMath、Omni-Math、Hendrycks MATH、OpenMathInstruct 等根数据，彼此并不独立。若不追踪谱系，训练集质量和评测公平性很难判断。</p>
+<p><img alt="原论文第 7 页：SFT 数据长度分布、去污染与来源重叠" src="资源/原页-07.png"></p>
+<h3 id="22">2.2 训练与性能比较</h3>
+<p>SFT 以问题 $q$ 和长思维链 $c$ 为样本，通过最小化负对数似然，让策略模型提高参考推理轨迹的条件概率。它本质上是对高质量示范的模仿学习。</p>
+<p>横向结果说明两个结论。第一，LIMO 和 s1K-1.1 证明精心筛选的小数据可以接近甚至超过大规模数据，规模不是唯一变量。第二，除 DeepSeek-R1 蒸馏系列与 AM 外，多数复现从更强的 Qwen2.5-Instruct 起步，而不是基础模型；已有研究也显示指令模型的学习效率更高，因此不能只比较数据集而忽略起始检查点。</p>
+<p>DeepSeek 方案还独特地混入非推理数据，其他项目几乎只训练数学与代码。推理数据和通用指令数据如何配比，仍缺少系统研究。</p>
+<p><img alt="原论文第 8 页：数据来源关系与 SFT 基准比较" src="资源/原页-08.png"></p>
+<p>长上下文训练常调整 RoPE 缩放与最大长度。例如 Open-R1 使用 $\theta=300{,}000$、32,768 词元上下文。常见学习率为 $10^{-5}$ 或 $5\times10^{-5}$，批大小约 96 或 128，并通过 packing 提高利用率。</p>
+<h2 id="3">3 可验证奖励强化学习</h2>
+<p>RLVR 用可以自动判断的最终结果作为奖励，主要覆盖数学与代码。它避免昂贵的人工过程标注，却把成败高度依赖于三件事：题目是否可验证、策略优化是否稳定、奖励与采样是否会产生偏差。</p>
+<p><img alt="原论文第 9 页：SFT 超参数与 RLVR 章节开篇" src="资源/原页-09.png"></p>
+<h3 id="31-rl">3.1 RL 数据集</h3>
+<p>论文汇总多组开放 RL 数据：DeepScaleR 4 万道数学题，Skywork-OR1 12.9 万条数学/代码，Open-Reasoner-Zero 12.9 万条数学与通用推理，Big-Math 25.1 万条，DeepMath-103K 10.3 万条，DAPO-Math-17k 1.7 万条，LIMR 仅 1,000 条；代码侧包括 Synthetic-1 子集 14.4 万、DeepCoder 2.4 万、CodeForces 1 万、KodCode-V1 48.4 万和 Code-r1-12k。</p>
+<p>高质量构造的共同点是：删除外链、图表、多问、证明题、选择题和无法稳定解析的答案；严格去重与基准去污染；按当前模型通过率标注难度；数学用规则验证，代码必须有完整测试。Skywork-OR1 还要求代码解答通过全部单元测试。</p>
+<p><img alt="原论文第 10 页：DeepScaleR、Skywork-OR1 与 Open-Reasoner-Zero 数据" src="资源/原页-10.png"></p>
+<p>DeepMath-103K 要求三条独立解法提取出相同最终答案才保留。DAPO 把题目改写为整数答案，降低公式解析器噪声。LIMR 用“学习影响”选择与模型整体学习轨迹互补的少量样本。代码数据则强调边界、异常、性能和分支覆盖，不能只依赖一个示例测试。</p>
+<p>RLVR 也开始扩展到一般领域。Multi-Subject-RLVR 含 63.8 万条由领域专家编写的大学考试题，跨至少 48 个一级学科；II-Thought 含 34.2 万条数学、科学、代码和谜题。开放答案通常由 LLM 验证，因此验证器本身成为新风险来源。</p>
+<p><img alt="原论文第 11 页：数学、代码与一般领域 RL 数据集" src="资源/原页-11.png"></p>
+<h3 id="32-rl">3.2 RL 组件</h3>
+<h4 id="321">3.2.1 算法</h4>
+<p>论文用统一框架解释 REINFORCE、PPO、GRPO 及其变体。目标都是最大化模型回答的期望奖励；每个问题采样 $G$ 个回答的过程称为 rollout。REINFORCE 必须用最新策略做 on-policy 采样；重要性采样可以复用旧策略轨迹，但需要概率比校正。</p>
+<p>奖励稀疏会增大梯度方差，常见稳定手段有三类：对组内奖励归一化或训练价值模型估计优势；裁剪新旧策略概率比；用 KL 惩罚限制当前策略偏离参考模型。</p>
+<p>表 4 显示复现系统从 1.5B 到 32B 采用 PPO、GRPO、Dr. GRPO、DAPO、VAPO、REINFORCE++、GPG 等不同方案，奖励多由准确性、格式和长度组成。</p>
+<p><img alt="原论文第 12 页：RLVR 系统、初始模型、算法与奖励对比" src="资源/原页-12.png"></p>
+<p><strong>PPO。</strong> 同时训练策略模型与 critic，使用 GAE 估计每个生成状态的优势，并裁剪概率比。价值模型能缓和稀疏奖励，但增加显存与训练复杂度。</p>
+<p><strong>GRPO。</strong> 删除 critic 与 GAE，以同一问题的一组 rollout 奖励做标准化优势估计，并加入 KL 惩罚。它更省资源，也被证明能在大模型上稳定诱发长思维链。</p>
+<p><img alt="原论文第 13 页：策略梯度、PPO 与 GRPO 统一推导" src="资源/原页-13.png"></p>
+<p><strong>REINFORCE++ 与 Kimi 式 REINFORCE。</strong> 前者把逐词元 KL 惩罚并入奖励，再做组内标准化；后者以中心化奖励和另一种 KL 估计，在 72B 模型上展示了简单 REINFORCE 路线的可扩展性。</p>
+<p><strong>DAPO。</strong> 针对 GRPO 的熵坍塌、全对题零优势和长度偏差，采用不对称裁剪、动态采样与词元级损失。动态采样只保留同一组中既有正确也有错误回答的问题；词元级平均让长序列不再被每条样本内部平均稀释。</p>
+<p><img alt="原论文第 14 页：REINFORCE++、Kimi REINFORCE 与 DAPO" src="资源/原页-14.png"></p>
+<p><strong>Dr. GRPO。</strong> 去掉按回答长度和奖励标准差归一化，试图消除“偏爱短正确/长错误”及对低方差题过度加权的偏差。</p>
+<p><strong>CPPO。</strong> 过滤绝对优势太小的 completion，跳过其前向与反向计算，降低 GRPO 多候选采样的成本。</p>
+<p><strong>GPG。</strong> 回到更直接的组策略梯度，不再依赖 critic 与参考模型，追求分布式训练的简单可扩展性。</p>
+<p><strong>VC-PPO。</strong> 针对长 CoT 中的价值初始化偏差和早期词元奖励衰减，先用 Monte Carlo 回报预训练价值模型，再让 actor 与 critic 使用不同的 GAE 衰减率。</p>
+<p><img alt="原论文第 15 页：Dr. GRPO、CPPO、GPG 与 VC-PPO" src="资源/原页-15.png"></p>
+<p><strong>VAPO。</strong> 在价值模型路线中整合价值预训练、解耦 GAE、词元级损失、长度自适应衰减、不对称裁剪和正确 rollout 的 NLL 项。NLL 项相当于对成功轨迹额外做一次 SFT，缓和稀疏奖励。</p>
+<p><img alt="原论文第 16 页：VAPO 目标与长思维链稳定化设计" src="资源/原页-16.png"></p>
+<h4 id="322-323">3.2.2 奖励与 3.2.3 采样</h4>
+<p>奖励主要分为：准确性奖励；格式奖励；长度奖励。准确性最基础，也最不容易引入多余目标。格式奖励可能很快饱和，甚至诱发奖励黑客；有研究发现只靠准确性配合良好提示也能学会格式。长度奖励既可鼓励充分思考，也可鼓励正确前提下的简洁，关键在于避免模型只为赚取长度分数而拖延。</p>
+<p>采样方面，课程学习逐步增加难度；动态采样删除全对或全错组；历史重采样把已完全掌握的问题降权。MiMo 反对彻底丢弃简单题，而是维护简单题池，以约 10% 概率重新采样，减少策略坍塌风险。</p>
+<p><img alt="原论文第 17 页：奖励类型、动态采样与历史重采样" src="资源/原页-17.png"></p>
+<h3 id="33">3.3 复现研究的共同结论</h3>
+<h4 id="_3">数据配方</h4>
+<p>数量和领域多样性有价值，但难度校准更关键。Light-R1、Skywork-OR1 等用当前模型多次采样，只保留中等通过率问题：通过率过高没有学习空间；始终为 0 的问题往往不可解、不可验证或含错误。最有效的题通常让当前模型“可能成功，也可能失败”，这种不确定性才能形成有效优势信号。</p>
+<p>数据还必须清理外链、图表、多问、非目标语言和难以解析的答案，并做去重、去污染。Open-Reasoner-Zero 先在全量数据训练 1,100 步，再按模型成功率选出 1.3 万道难题继续课程学习。</p>
+<p><img alt="原论文第 18 页：RL 数据的数量、多样性、难度与清洗原则" src="资源/原页-18.png"></p>
+<h4 id="_4">算法、模型与上下文</h4>
+<p>PPO、REINFORCE++、GRPO 及变体在不同任务上互有胜负。部分逻辑任务中，$\lambda=\gamma=1$ 的 PPO 明显优于 GRPO；但 DAPO、MiMo 和 Dr. GRPO 也展示了 GRPO 变体的强结果。作者判断，很多改进更像工程适配，理论差异并没有宣传得那么大。</p>
+<p>RL 已在 1.5B、7B、14B、32B 多个规模和基础模型、长 CoT 蒸馏模型上有效。上下文过短会截断本可成功的推理并错误赋零分，因此常把最大长度从 8k 逐阶段提升到 16k、24k、32k。Light-R1 的训练输出最终约 9k，DAPO 约 5k。</p>
+<p><img alt="原论文第 19 页：算法比较、模型规模与上下文长度" src="资源/原页-19.png"></p>
+<h4 id="kl">奖励建模与 KL</h4>
+<p>简单准确性奖励减少意外优化空间，但规则验证器仍会在边角案例失败，复杂任务可能需要 LLM 验证器。格式奖励常在几十步内饱和，严谨消融仍不足。对截断样本施加惩罚可降低训练噪声。</p>
+<p>KL 正则也没有统一答案。多项工作完全移除 KL 仍获得强表现；一些消融显示 KL 会把策略锁在参考模型附近，压制输出长度增长与探索。但另一些系统保留 KL 同样取得进步。是否使用、使用多强，应由起始模型、任务和训练动态决定。</p>
+<p><img alt="原论文第 20 页：准确性、格式、长度奖励与 KL 讨论" src="资源/原页-20.png"></p>
+<h3 id="34-rlvr">3.4 RLVR 的其他任务</h3>
+<p>只要结果可验证，RLVR 不限于数学和代码。倒数游戏、数独和逻辑谜题可按格式、合法性与最终正确性评分；GitHub issue 修复可比较补丁并运行测试；机器翻译可组合规则与指标；RAG 多跳问答可同时奖励答案、引用召回和格式；化学任务可借助 RDKit 验证合成、逆合成与分子生成。</p>
+<p>更激进的探索包括：只用格式奖励把 3.5 亿参数模型训练成遵循诗体的写作模型；让模型用执行时间奖励改进排序算法，并在特定高斯分布数据上发现比基线 Timsort 快 47.92 倍的混合分区/QuickSelect 方案。这些结果提示，强化学习可能发现监督数据中不存在的策略，但也更依赖奖励是否准确代表真实目标。</p>
+<p><img alt="原论文第 21 页：逻辑、软件修复、翻译、RAG、化学与探索性任务" src="资源/原页-21.png"></p>
+<h2 id="4">4 更多方向</h2>
+<h3 id="41">4.1 替代性的推理增强方法</h3>
+<h4 id="_5">过程奖励</h4>
+<p>最终答案奖励无法定位中间哪一步出错。过程奖励模型（PRM）逐步评估推理轨迹，提供更细的信用分配。仅看奖励模型的分类准确率也不够：一个准确但输出方差极低的奖励模型会让优化地形过平，几乎无法教学；同一个奖励模型对不同策略模型的有效性也可能不同。</p>
+<p>rStar-Math 用过程偏好模型在蒙特卡洛树搜索中区分更有希望的中间步骤，并让策略与评审模型迭代自演化。PRIME 则只用最终标签训练隐式 PRM，避免人工逐步标注，并在线更新过程奖励。</p>
+<p><img alt="原论文第 22 页：过程奖励、隐式 PRM 与偏好优化开篇" src="资源/原页-22.png"></p>
+<h4 id="_6">偏好优化</h4>
+<p>DPO 只需构造 chosen/rejected 对，计算成本低于在线 PPO/GRPO。Light-R1 在两阶段 SFT 后，用教师的正确 rollout 作正例、当前模型的错误 rollout 作负例。迭代 DPO、多轮规则验证配对和 SFT 预热都能提升推理能力；部分实验中 DPO 优于 PPO，另一些实验则略逊，说明配对质量和起始策略仍是关键。</p>
+<p><img alt="原论文第 23 页：DPO、迭代偏好优化与在线 RL 比较" src="资源/原页-23.png"></p>
+<h3 id="42">4.2 泛化</h3>
+<p>持续数学预训练不仅提高数学，也可能改善 MMLU、BBH 等通用推理。SFT 以高质量示范提供稳定的归纳偏置和输出格式；RL 则在代码修复训练后迁移到函数编程、库使用、数学和通用理解，甚至让主要在英语上训练的诗歌模型遵循多语言诗体。</p>
+<p>但泛化并非单向改善。部分研究认为 RL 主要提高采样效率，却可能缩窄基础模型原有的解空间，导致大 $k$ 下的 pass@k 反而下降；小模型的先验知识不足时，RL 可利用的能力也有限。SFT 与 RL 更像互补：前者稳定格式和初始策略，后者推动超出模仿的探索。</p>
+<p><img alt="原论文第 24 页：持续预训练、SFT 与 RL 的域外泛化" src="资源/原页-24.png"></p>
+<h3 id="43">4.3 安全</h3>
+<p>推理模型引入三类突出风险：自演化中的奖励黑客；专门针对推理轨迹构造的越狱；以及过度思考。奖励黑客源于环境和奖励无法完整表达真实目标；越狱可能利用长推理绕过安全边界；OverThink 一类攻击则诱发无谓长推理，增加成本与环境负担。</p>
+<p>推理能力与安全对齐还可能相互牵制。一些报告发现，安全训练会损伤推理，推理模型的有用性与无害性也可能低于基线。防护需要结合更稳健的奖励和训练、推理策略约束、专用安全数据，以及同样具备推理能力的守护模型。</p>
+<p><img alt="原论文第 25 页：奖励黑客、推理越狱、过度思考与防护" src="资源/原页-25.png"></p>
+<h3 id="44">4.4 多模态与多语言</h3>
+<p>多模态推理通常通过后对齐或混合模态预训练获得，但推理能力仍弱于纯文本模型。视觉、音频、3D、表格和传感器数据上的测试时扩展已开始出现，单模态推理能力也能迁移到多模态；真正把高级 RL 与 PRM 扩展到多模态仍很困难。</p>
+<p>多语言问题的瓶颈更多来自低资源语言的基础能力不足。英语训练的推理能力并不会均匀迁移到所有语言，“顿悟”是否需要语言专属能力也尚无定论。未来需要更高效的多语言 SFT/RL，并重点改善低资源语言。</p>
+<h2 id="5">5 结论</h2>
+<p>发布百日内的开源复现已经形成清晰经验：SFT 质量取决于难度、多样性、验证和去污染，不是单纯样本数；RLVR 的有效问题应让当前模型有成有败；算法变体大多围绕长序列偏差、熵坍塌、稀疏奖励与采样效率做工程修正；格式奖励、KL 和长度约束均没有放之四海而皆准的配置。</p>
+<p>下一阶段的关键，是把推理能力扩展到数学和代码以外，同时改善过程信用分配、泛化、安全、可解释性、多模态和多语言包容性。</p>
+<p><img alt="原论文第 26 页：多模态、多语言与结论" src="资源/原页-26.png"></p>
+<h2 id="_7">参考文献</h2>
+<p><img alt="原论文第 27 页：参考文献" src="资源/原页-27.png"></p>
+<p><img alt="原论文第 28 页：参考文献" src="资源/原页-28.png"></p>
+<p><img alt="原论文第 29 页：参考文献" src="资源/原页-29.png"></p>
+<p><img alt="原论文第 30 页：参考文献" src="资源/原页-30.png"></p>
+<p><img alt="原论文第 31 页：参考文献" src="资源/原页-31.png"></p>
+<p><img alt="原论文第 32 页：参考文献" src="资源/原页-32.png"></p>
+<p><img alt="原论文第 33 页：参考文献" src="资源/原页-33.png"></p>
+<p><img alt="原论文第 34 页：参考文献" src="资源/原页-34.png"></p>
+<p><img alt="原论文第 35 页：参考文献" src="资源/原页-35.png"></p>
+<p><img alt="原论文第 36 页：参考文献" src="资源/原页-36.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

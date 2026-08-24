@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>训练计算最优的大型语言模型</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">训练计算最优的大型语言模型</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#_1">训练计算最优的大型语言模型</a><ul>
+<li><a href="#_2">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 相关工作</a><ul>
+<li><a href="#21">2.1 大型语言模型</a></li>
+<li><a href="#22">2.2 缩放行为建模</a></li>
+<li><a href="#23">2.3 大模型超参数估计</a></li>
+<li><a href="#24">2.4 改进模型架构</a></li>
+</ul>
+</li>
+<li><a href="#3">3 估计最优的参数量与训练词元分配</a><ul>
+<li><a href="#31">3.1 方法一：固定模型大小，改变训练词元数</a></li>
+<li><a href="#32-flops">3.2 方法二：等 FLOPs 曲线</a></li>
+<li><a href="#33">3.3 方法三：拟合参数化损失函数</a></li>
+<li><a href="#34">3.4 最优模型缩放</a></li>
+</ul>
+</li>
+<li><a href="#4-chinchilla">4 Chinchilla</a><ul>
+<li><a href="#41">4.1 模型与训练细节</a></li>
+<li><a href="#42">4.2 结果</a><ul>
+<li><a href="#421">4.2.1 语言建模</a></li>
+<li><a href="#422-mmlu">4.2.2 MMLU</a></li>
+<li><a href="#423">4.2.3 阅读理解</a></li>
+<li><a href="#424-big-bench">4.2.4 BIG-bench</a></li>
+<li><a href="#425">4.2.5 常识与真实性</a></li>
+<li><a href="#426">4.2.6 封闭书本问答</a></li>
+<li><a href="#427">4.2.7 性别偏见与毒性</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#5">5 讨论与结论</a></li>
+<li><a href="#_3">致谢</a></li>
+<li><a href="#a">附录 A：训练数据集</a></li>
+<li><a href="#b">附录 B：最优余弦周期长度</a></li>
+<li><a href="#c">附录 C：缩放结果在不同数据集上的一致性</a></li>
+<li><a href="#d">附录 D：缩放方法的更多细节</a></li>
+<li><a href="#e">附录 E：高算力前沿曲率</a></li>
+<li><a href="#fflops">附录 F：FLOPs 计算与训练设置</a></li>
+<li><a href="#g">附录 G：优化器与训练实现</a></li>
+<li><a href="#h">附录 H：评估、模型卡与完整结果</a></li>
+<li><a href="#_4">参考文献</a></li>
+<li><a href="#_5">原论文逐页截图存档</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="_1">训练计算最优的大型语言模型</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2022-03-29">2022 年 3 月 29 日</time></p>
+<p><strong>作者：</strong> Jordan Hoffmann、Sebastian Borgeaud、Arthur Mensch、Elena Buchatskaya、Trevor Cai、Eliza Rutherford、Diego de Las Casas、Lisa Anne Hendricks、Johannes Welbl、Aidan Clark、Tom Hennigan、Eric Noland、Katie Millican、George van den Driessche、Bogdan Damoc、Aurelia Guy、Simon Osindero、Karen Simonyan、Erich Elsen、Jack W. Rae、Oriol Vinyals、Laurent Sifre<br>
+<strong>机构：</strong> DeepMind<br>
+<strong>论文版本：</strong> arXiv:2203.15556v1，2022 年 3 月 29 日</p>
+<h2 id="_2">摘要</h2>
+<p>本文研究：在给定训练计算预算下，Transformer 语言模型的最优参数量和训练词元数应如何分配。作者发现，当时的大型语言模型普遍训练不足，原因是社区倾向于不断扩大模型规模，却基本维持训练数据量不变。通过训练 400 多个模型，参数规模从 7000 万到超过 160 亿、训练词元从 50 亿到 5000 亿，研究发现计算最优训练应让模型大小和训练词元数以相同速率扩展：模型参数每翻倍，训练词元数也应翻倍。</p>
+<p>作者用这一规律训练 Chinchilla：它与 Gopher 使用相同训练算力，但只有 700 亿参数，并用四倍更多的数据训练。Chinchilla 在大范围下游评估上稳定且显著超过 Gopher（2800 亿）、GPT-3（1750 亿）、Jurassic-1（1780 亿）和 MT-NLG（5300 亿）。由于模型更小，其微调和推理计算成本也大幅下降。它在 MMLU 上达到 67.5% 左右的当时最佳平均准确率，比 Gopher 高 7 个百分点以上。</p>
+<h2 id="1">1 引言</h2>
+<p>近年来出现了一系列大型语言模型，最大的稠密自回归 Transformer 已超过 5000 亿参数，并在零样本、少样本和微调等评估协议上展示出强大能力。但训练这类模型的计算与能耗成本很高，而且会随模型规模增长。在实践中，训练预算通常预先确定，例如可用加速器数量和可使用时长；而大模型通常只能训练一次，因此必须在训练之前准确估计最优超参数。</p>
+<p>Kaplan 等人的缩放定律表明，自回归语言模型参数量与性能之间具有幂律关系，推动了不断扩大模型的趋势。其一个重要结论是：为了实现计算最优，大模型不必训练到可能达到的最低损失。本文同意这一点，但认为大模型应使用远多于原先建议的训练词元。对于计算预算增加 10 倍，Kaplan 定律建议模型规模增加约 5.5 倍、训练词元只增加约 1.8 倍；本文则发现模型大小和训练词元应以相同的比例增长。</p>
+<p>遵循 GPT-3 的训练设置，许多当时的大模型都只训练约 3000 亿词元。本文重新提出问题：在固定 FLOPs 预算下，模型规模与训练词元数应如何权衡？作者把最终预训练损失写为参数量 <code>N</code> 和训练词元数 <code>D</code> 的函数 <code>L(N, D)</code>，在计算预算 <code>C</code> 的约束下寻找最优解：</p>
+<div class="math-block">$$
+N_{opt}(C),D_{opt}(C)=\underset{N,D\;\mathrm{s.t.}\;\mathrm{FLOPs}(N,D)=C}{\operatorname{argmin}}\;L(N,D)
+$$</div>
+<p>作者用超过 400 个实验模型的数据估计这些函数。模型从不足 7000 万到超过 160 亿参数，每个配置采用多个训练长度。结果与 Kaplan 定律明显不同：以 Gopher 的算力预算为例，最优模型应小 4 倍、训练词元多 4 倍。为验证预测，作者在 1.4 万亿词元上训练 700 亿参数的 Chinchilla。它不仅超过 Gopher，更小的模型还降低了推理成本、内存占用和下游微调成本。</p>
+<p><img alt="图 1：三种方法对计算最优参数规模的预测（原页截图）" src="资源/原页-2.png"></p>
+<p><img alt="表 1：当时大型稠密语言模型的参数量与训练词元数（原页截图）" src="资源/原页-3.png"></p>
+<p>表 1 显示，除 LaMDA 外，GPT-3、Jurassic、Gopher 和 MT-NLG 多数只训练约 2700 亿至 3000 亿词元；Chinchilla 以 700 亿参数训练 1.4 万亿词元，形成鲜明对比。</p>
+<h2 id="2">2 相关工作</h2>
+<h3 id="21">2.1 大型语言模型</h3>
+<p>近年出现了大量稠密 Transformer 和混合专家模型。扩大参数量确实持续改善多项语言建模任务的最佳结果，但大模型也面对巨大的训练与推理成本，以及获取更多高质量训练数据的需求。本文认为，进一步扩展语言模型时，高质量数据集规模将成为关键限制。</p>
+<h3 id="22">2.2 缩放行为建模</h3>
+<p>理解语言模型的缩放行为和迁移性质，是近年大模型发展的重要基础。Kaplan 等人最早在多个数量级上展示参数量与损失之间的可预测关系，并研究在固定算力下选择最优模型规模的问题。本文与其差异主要有两点。</p>
+<p>第一，先前工作对所有模型使用固定训练词元数与学习率日程，无法建模这些超参数对损失的影响。本文发现，无论模型规模如何，让学习率日程长度大致匹配训练词元数，可得到最佳最终损失。若固定使用 1300 亿词元的余弦日程，再从中间训练点估计短训练模型性能，会高估短训练的损失，从而低估“更小模型、较少数据”设置的效果，并最终得出参数扩张快于数据扩张的结论。</p>
+<p>第二，本文纳入最大 160 亿参数模型，并观察到 FLOP—损失前沿存在轻微曲率。参与本文分析的大多数模型超过 5 亿参数，而 Kaplan 分析中多数运行远小于 1 亿参数。近期对混合专家模型的缩放研究同样常固定训练词元数，因此也可能低估增加训练数据的价值。</p>
+<h3 id="23">2.3 大模型超参数估计</h3>
+<p>训练过程不仅需要选择模型规模和训练词元数，还要确定学习率、日程、批大小、优化器与宽深比。本文聚焦参数量与训练步数，其他超参数依赖已有研究和经验法则。例如，最优批大小对模型规模的依赖较弱；更大的批次可能可行；深宽比也会影响效率。本文使用稍浅的模型以提升硬件上的实际训练吞吐。</p>
+<h3 id="24">2.4 改进模型架构</h3>
+<p>条件计算的混合专家模型能以较低训练和推理 FLOPs 获得很大的有效模型规模，但模型极大时路由模型的计算优势可能递减。另一条正交路线是为 Transformer 增加显式检索机制，它相当于显著增加模型可利用的数据词元。这进一步说明，语言模型性能可能比以往认为的更依赖训练数据规模。</p>
+<h2 id="3">3 估计最优的参数量与训练词元分配</h2>
+<p>作者采用三种方法回答固定 FLOPs 预算下的权衡问题。三种方法都先训练在参数量和训练词元数上变化的一组模型，再从训练曲线拟合经验缩放估计器。三者都假设算力与模型规模之间遵循幂律关系，虽然未来可研究大规模下的曲率。结果一致显示：增加算力时，参数量与训练词元数应近似等比例增加。</p>
+<h3 id="31">3.1 方法一：固定模型大小，改变训练词元数</h3>
+<p>第一种方法固定模型家族（7000 万至超过 100 亿参数），对每个模型训练四个不同长度。每种参数规模以相差 16 倍的训练词元范围训练四次，并在相应长度上将学习率按 10 倍衰减。对每条训练损失曲线进行平滑和插值后，可以得到“FLOPs 到损失”的连续映射。</p>
+<p>对于每个 FLOP 值，作者从全部运行中选择损失最低的模型与对应训练词元数。在 1500 个对数均匀的算力点上选取最低损失配置，再拟合幂律：</p>
+<div class="math-block">$$
+N_{opt}\propto C^a,\qquad D_{opt}\propto C^b
+$$</div>
+<p>得到 <code>a=0.50</code>、<code>b=0.50</code>。在 <code>10^21</code> FLOPs 的正面对比中，本文推荐的模型规模明显优于 Kaplan 定律建议的规模。</p>
+<p><img alt="图 2：训练曲线包络与最优参数、最优词元的预测（原页截图）" src="资源/原页-5.png"></p>
+<h3 id="32-flops">3.2 方法二：等 FLOPs 曲线</h3>
+<p>第二种方法固定九个训练 FLOPs 预算（从 <code>6×10^18</code> 到 <code>3×10^21</code>），改变模型大小，并测量各点的最终训练损失。每个算力预算下，训练词元数由参数量和总 FLOPs 决定，余弦学习率日程长度匹配目标词元数。</p>
+<p>对每个预算，绘制最终损失相对于参数量的曲线。每条等 FLOPs 曲线都有清晰谷底，说明存在最佳参数量。作者用抛物线拟合谷底位置，再把最优参数量与最优词元数对 FLOPs 拟合为幂律，得到 <code>a=0.49</code>、<code>b=0.51</code>，与方法一几乎一致。</p>
+<p><img alt="图 3：等 FLOPs 曲线及其最优谷底（原页截图）" src="资源/原页-6.png"></p>
+<h3 id="33">3.3 方法三：拟合参数化损失函数</h3>
+<p>第三种方法把前两种实验的最终损失直接建模为参数量和已见词元数的函数：</p>
+<div class="math-block">$$
+\hat L(N,D)=E+\frac{A}{N^\alpha}+\frac{B}{D^\beta}
+$$</div>
+<p>第一项 <code>E</code> 表示数据分布上的理想生成过程损失，可视为自然文本熵；第二项表示参数量有限、即使充分训练的 Transformer 仍与理想过程存在差距；第三项表示模型只在有限词元和优化步数上训练，尚未收敛。</p>
+<p>作者使用 L-BFGS 最小化预测损失与观测对数损失之间的 Huber 损失，并通过多个初始化规避局部最优。Huber 损失对离群点更稳健，对未见实验点具有更好预测效果。根据近似 <code>FLOPs(N,D)≈6ND</code>，可在固定算力约束下解析求解计算高效前沿。该方法得到 <code>a=0.46</code>、<code>b=0.54</code>，仍然支持数据和参数近似等比例扩展，只是对超大模型预测更小的最优参数量。</p>
+<p><img alt="图 4：参数化损失拟合与计算高效前沿（原页截图）" src="资源/原页-7.png"></p>
+<h3 id="34">3.4 最优模型缩放</h3>
+<p>三种方法虽然使用不同拟合方法和不同训练样本，却得出相近预测。它们都表明，随着算力预算增加，模型规模和数据量应近似等比例增加。方法三因高 FLOPs 区域的前沿存在负曲率，对大预算预测更小参数模型。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th style="text-align: right;"><code>Nopt</code> 指数 <code>a</code></th>
+<th style="text-align: right;"><code>Dopt</code> 指数 <code>b</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>训练曲线最小值</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+</tr>
+<tr>
+<td>等 FLOPs 曲线</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">0.51</td>
+</tr>
+<tr>
+<td>参数化损失拟合</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">0.54</td>
+</tr>
+<tr>
+<td>Kaplan 等人（2020）</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+</tbody>
+</table>
+<p>当前一代模型因此普遍偏大、偏短训。按方法一估计，1750 亿参数模型要位于计算最优前沿，需要约 <code>4.41×10^24</code> FLOPs 与超过 4.2 万亿词元；2800 亿参数 Gopher 类模型需要约 <code>10^25</code> FLOPs 与 6.8 万亿词元。除非预算达到约 <code>10^26</code> FLOPs，即超过 Gopher 训练算力 250 倍，1 万亿参数模型不太可能是最优选择。虽然跨多个数量级外推存在不确定性，分析明确表明：在许多现有 LLM 的训练预算下，更小模型配合更多词元可以获得更强性能。C4 与 GitHub 代码的等 FLOPs 复现实验也得出相同结论。</p>
+<p><img alt="表 2 与表 3：缩放指数和不同模型规模的最优训练预测（原页截图）" src="资源/原页-8.png"></p>
+<h2 id="4-chinchilla">4 Chinchilla</h2>
+<p>根据第 3 节，Gopher 算力预算的最优模型规模位于 400 亿到 700 亿参数之间。作者选择区间较大端，训练一个 700 亿参数模型，并用 1.4 万亿词元训练，命名为 Chinchilla。它和 Gopher 消耗相同 FLOPs，但参数量为后者四分之一、训练词元约为后者四倍。</p>
+<p>预训练成本固然很高，但下游微调和推理同样会贡献大量总计算。Chinchilla 比 Gopher 小四倍，因此内存占用和推理成本都更低。</p>
+<h3 id="41">4.1 模型与训练细节</h3>
+<p>Chinchilla 采用与 Gopher 相同的基本结构和训练设置，主要差异包括：</p>
+<ol>
+<li>在同一 MassiveText 数据集上训练，但为适应更长训练词元，略微调整了各数据子集的采样权重。</li>
+<li>使用 AdamW 而非 Adam，因为它改善语言建模损失和微调后下游性能。</li>
+<li>使用稍微修改的 SentencePiece 分词器，不执行 NFKC 归一化；与 Gopher 分词器有 94.15% 的词元相同，对数学和化学表示尤其有帮助。</li>
+<li>前向与反向传播使用 bfloat16，但在分布式优化器状态中保留一份 float32 权重副本。</li>
+</ol>
+<p>Chinchilla 与 Gopher 均为 80 层；Chinchilla 使用 64 个注意力头、<code>dmodel=8192</code>、最大学习率 <code>1×10^-4</code>、批大小从 150 万词元增至 300 万；Gopher 使用 128 头、<code>dmodel=16384</code>、最大学习率 <code>4×10^-5</code>、批大小从 300 万增至 600 万。前馈层大小都设为 <code>4×dmodel</code>。</p>
+<p><img alt="表 4：Chinchilla 与 Gopher 的架构细节（原页截图）" src="资源/原页-9.png"></p>
+<h3 id="42">4.2 结果</h3>
+<p>作者在语言建模、阅读理解、封闭书本问答、常识、MMLU、BIG-bench、性别偏见和毒性等任务上评估 Chinchilla。大部分任务沿用 Gopher 论文设置，以便直接比较。</p>
+<h4 id="421">4.2.1 语言建模</h4>
+<p>在 The Pile 的所有评估子集上，Chinchilla 都超过 Gopher。与 Jurassic-1 相比，它只在 <code>dm_mathematics</code> 和 <code>ubuntu_irc</code> 两个子集上较弱。Wikitext-103 的困惑度为 7.16，低于 Gopher 的 7.75。由于 Chinchilla 使用四倍训练数据，训练测试泄露可能人为抬高语言建模评估，因此作者更强调 MMLU、BIG-bench 和封闭书本问答等泄露风险较小的任务。</p>
+<p><img alt="图 5：Chinchilla 在 The Pile 各子集上相对 Gopher 的改进（原页截图）" src="资源/原页-10.png"></p>
+<h4 id="422-mmlu">4.2.2 MMLU</h4>
+<p>MMLU 包含多个学科的考试式问题。Chinchilla 五样本平均准确率为 67.6%，Gopher 为 60.0%，提升 7.6 个百分点；它还超过了当时人类预测者对 2023 年 6 月最佳成绩的 63.4% 预测。Chinchilla 在高中政府与政治、国际法、社会学和美国外交政策四项上超过 90%。57 个任务中，它在 51 个上超过 Gopher、2 个持平、4 个较差。</p>
+<p><img alt="表 6：MMLU 五样本平均准确率（原页截图）" src="资源/原页-11.png">
+<img alt="图 6：MMLU 各任务相对 Gopher 的改进（原页截图）" src="资源/原页-11.png"></p>
+<h4 id="423">4.2.3 阅读理解</h4>
+<p>在 LAMBADA 最后词预测中，Chinchilla 准确率 77.4%，高于 Gopher 的 74.5% 和 MT-NLG 530B 的 76.6%。在 RACE-m 与 RACE-h 上，Chinchilla 分别为 86.8% 和 82.3%，相对 Gopher 的 75.1% 和 71.6% 均提升超过 10 个百分点。</p>
+<p><img alt="表 7：LAMBADA 与 RACE 阅读理解结果（原页截图）" src="资源/原页-11.png"></p>
+<h4 id="424-big-bench">4.2.4 BIG-bench</h4>
+<p>在与 Gopher 相同的 62 个 BIG-bench 任务上，Chinchilla 平均准确率 65.1%，Gopher 为 54.4%，提升 10.7 个百分点。Chinchilla 仅在四个任务上低于 Gopher：<code>crash_blossom</code>、<code>dark_humor_detection</code>、<code>mathematical_induction</code> 与 <code>logical_args</code>。</p>
+<p><img alt="图 7：BIG-bench 各任务相对 Gopher 的改进（原页截图）" src="资源/原页-12.png"></p>
+<h4 id="425">4.2.5 常识与真实性</h4>
+<p>在 HellaSwag、PIQA、Winogrande、SIQA 与 BoolQ 上，Chinchilla 超过 Gopher 和 GPT-3；除一个任务外，也超过 530B MT-NLG。TruthfulQA 上，Chinchilla 的零样本、五样本、十样本准确率分别为 43.6%、58.5%、66.7%；Gopher 的零样本和十样本分别只有 29.5% 与 43.7%。这说明只通过更充分地建模预训练数据，也可能显著改善真实性基准。</p>
+<p><img alt="表 8：常识基准的零样本对比（原页截图）" src="资源/原页-13.png"></p>
+<h4 id="426">4.2.6 封闭书本问答</h4>
+<p>在 Natural Questions 上，Chinchilla 五样本和 64 样本准确率分别为 31.5% 和 35.5%，Gopher 为 24.5% 和 28.2%。在 TriviaQA 的过滤版和未过滤版上，Chinchilla 都显著超过 Gopher；过滤版上距离检索式开放书本最佳结果仅差 7.9 个百分点，未过滤版上还超过 GPT-3。</p>
+<p><img alt="表 9：Natural Questions 与 TriviaQA 的封闭书本问答结果（原页截图）" src="资源/原页-14.png"></p>
+<h4 id="427">4.2.7 性别偏见与毒性</h4>
+<p>大型语言模型仍可能产生冒犯性语言、传播社会偏见和泄露私人信息。由于 Chinchilla 和 Gopher 使用相同数据、架构相近，作者预期风险大致相似，并选择性别—职业偏见和无提示毒性作初步检查，而非声称评估已经充分。</p>
+<p>在 Winogender 零样本代词消解中，Chinchilla 对所有群体的准确率都高于 Gopher：总体 78.3% 对 71.4%，男性代词 71.2% 对 68.0%，女性代词 79.6% 对 71.3%，中性代词 84.2% 对 75.0%。在与社会性别刻板印象相冲突的 “gotcha” 样例上，Chinchilla 也更好，女性 gotcha 的提升最大，达到 10 个百分点。改进在不同群体间不均匀，说明性能提升并不意味着偏见被消除。</p>
+<p>对 25000 条无提示生成样本，Gopher 的平均（中位）Perspective API 毒性分数为 0.081（0.064），Chinchilla 为 0.087（0.066）；95 分位数分别为 0.230 与 0.238，差异很小。大多数样本都被判为非毒性，说明无条件生成的毒性水平大体独立于语言建模损失，更好的数据建模不必然更有毒。</p>
+<p><img alt="表 10：Winogender 代词消解与性别刻板印象样例结果（原页截图）" src="资源/原页-15.png"></p>
+<h2 id="5">5 讨论与结论</h2>
+<p>过去的大模型训练趋势是扩大模型规模，却常不增加训练词元；从 GPT-3 的 1700 多亿参数到 MT-NLG 的 5300 亿参数，训练词元仍大多在 3000 亿左右。作者认为，对“更大模型”的竞赛虽推动了工程创新，却使模型远低于相同算力下本可达到的性能。</p>
+<p>三种独立预测方法都认为 Gopher 明显过大：同等预算下，较小模型配合更多数据会更好。700 亿参数 Chinchilla 的训练实验直接验证了这一点，它超过 Gopher 和几乎所有更大的比较模型，同时更轻量、更适于下游使用。</p>
+<p>方法也有局限。由于大模型昂贵，作者在大规模上只有 Chinchilla 与 Gopher 两个可比较运行，缺少中间规模验证；同时假设计算预算、模型规模和训练词元之间是幂律，但高预算下观察到 <code>log Nopt</code> 的凹性，意味着最优大模型规模可能仍被高估。所有分析运行都训练不到一个数据轮次，未来应研究多轮训练的区域。</p>
+<p>本文主张未来更加关注数据集扩展，但只有高质量数据才可能有效。更大数据集需要负责地收集，严格处理训练—测试重叠，也要正视数万亿词元训练中的伦理与隐私风险：网页数据包含有毒语言、偏见和私人信息，数据更大时这类信息的总量会增加。Chinchilla 仍有偏见与毒性，只是与 Gopher 相比似乎略受影响较小。模型性能与毒性的关系仍是重要研究问题。</p>
+<p>虽然本文研究自回归语言模型，作者预计其他模态也存在模型规模与数据量的相似权衡。由于大模型训练非常昂贵，应在训练前确定最优模型大小与训练步数；本文提出的方法易于在新场景中复现。</p>
+<h2 id="_3">致谢</h2>
+<p>作者感谢 DeepMind 内外多位研究者对手稿和研究方向提出意见，并感谢 JAX、XLA 团队提供支持。</p>
+<h2 id="a">附录 A：训练数据集</h2>
+<p>Chinchilla 与缩放实验使用 MassiveText。其采样组成包括 MassiveWeb 45%、图书 30%、C4 10%、新闻 10%、GitHub 4%、Wikipedia 1%；由于 MassiveWeb 与 Wikipedia 子集会使用多于一次，因此实际训练轮次可能超过 1。附录表 A1 给出各子集磁盘大小、文档数、采样比例和在 1.4 万亿词元下的轮次。</p>
+<h2 id="b">附录 B：最优余弦周期长度</h2>
+<p>学习率余弦日程长度应正确校准到目标训练步数。若余弦周期远长于目标训练步数，模型会训练不足。本文采用 10 倍学习率衰减，并在主分析中让周期匹配给定 FLOP 预算可达到的最大步数。</p>
+<h2 id="c">附录 C：缩放结果在不同数据集上的一致性</h2>
+<p>作者在 C4 与 GitHub 代码上重复等 FLOPs 分析，缩放行为与 MassiveText 高度相似，表明主要结论在未训练超过一个数据轮次时不依赖于具体数据集。</p>
+<h2 id="d">附录 D：缩放方法的更多细节</h2>
+<p>本附录说明方法一、方法二、参数化损失拟合、最优缩放外推和方法间对比。它还给出在 <code>10^21</code> FLOPs 下，本文推荐模型与 Kaplan 定律推荐模型的直接训练对照，支持本文关于“模型与数据同速扩展”的结论。</p>
+<h2 id="e">附录 E：高算力前沿曲率</h2>
+<p>本文检验了高算力区域中最优参数量前沿的曲率。观察到的负曲率意味着简单幂律外推可能高估超大模型的最优参数量，因此对远超实验范围的预测需要谨慎。</p>
+<h2 id="fflops">附录 F：FLOPs 计算与训练设置</h2>
+<p>本附录给出 Transformer 训练 FLOPs 的计算方式、各模型架构表、批大小与训练日程。它说明本文主要用约 <code>6ND</code> 近似预训练计算量，并列出 400 多个缩放实验的具体模型配置。</p>
+<h2 id="g">附录 G：优化器与训练实现</h2>
+<p>本附录对比 Adam、AdamW、权重精度、学习率日程和批大小等实现选择。AdamW 在训练后期超越 Adam，并在最终语言建模和下游评估中更优；高精度优化器状态与相关实现细节也是 Chinchilla 训练配置的一部分。</p>
+<h2 id="h">附录 H：评估、模型卡与完整结果</h2>
+<p>本附录提供语言建模、MMLU、BIG-bench、常识、问答、Winogender 与毒性评估的完整设置、提示格式、逐任务结果和 Chinchilla 模型卡。长表格、曲线、模型配置和评估示例均以下列原页截图保留，保证数值与原论文页码对应。</p>
+<p><img alt="附录 A：MassiveText 数据组成（原页截图）" src="资源/原页-22.png">
+<img alt="附录 B--C：余弦周期与跨数据集缩放结果（原页截图）" src="资源/原页-23.png">
+<img alt="附录 D：三种缩放方法的补充结果（原页截图）" src="资源/原页-24.png">
+<img alt="附录 E--F：前沿曲率、FLOPs 与模型配置（原页截图）" src="资源/原页-27.png">
+<img alt="附录 G：优化器与实现消融（原页截图）" src="资源/原页-30.png">
+<img alt="附录 H：完整评估和模型卡（原页截图）" src="资源/原页-34.png"></p>
+<h2 id="_4">参考文献</h2>
+<p>参考文献包括 Transformer、GPT-3、Gopher、LaMDA、混合专家、检索增强、缩放定律、训练优化、MMLU、BIG-bench、语言模型安全与偏见评估等工作。作者、年份、刊物、页码与链接以原论文参考文献页截图完整保留。</p>
+<p><img alt="参考文献第 16 页（原页截图）" src="资源/原页-16.png">
+<img alt="参考文献第 17 页（原页截图）" src="资源/原页-17.png">
+<img alt="参考文献第 18 页（原页截图）" src="资源/原页-18.png">
+<img alt="参考文献第 19 页（原页截图）" src="资源/原页-19.png">
+<img alt="参考文献第 20 页（原页截图）" src="资源/原页-20.png">
+<img alt="参考文献第 21 页（原页截图）" src="资源/原页-21.png"></p>
+<h2 id="_5">原论文逐页截图存档</h2>
+<p>下列截图与 PDF 页码一一对应，保留了附录内完整表格、图形、提示格式和实验数值，供与中文译文逐项核对。</p>
+<p><img alt="原论文第 1 页（原页截图）" src="资源/原页-1.png">
+<img alt="原论文第 2 页（原页截图）" src="资源/原页-2.png">
+<img alt="原论文第 3 页（原页截图）" src="资源/原页-3.png">
+<img alt="原论文第 4 页（原页截图）" src="资源/原页-4.png">
+<img alt="原论文第 5 页（原页截图）" src="资源/原页-5.png">
+<img alt="原论文第 6 页（原页截图）" src="资源/原页-6.png">
+<img alt="原论文第 7 页（原页截图）" src="资源/原页-7.png">
+<img alt="原论文第 8 页（原页截图）" src="资源/原页-8.png">
+<img alt="原论文第 9 页（原页截图）" src="资源/原页-9.png">
+<img alt="原论文第 10 页（原页截图）" src="资源/原页-10.png">
+<img alt="原论文第 11 页（原页截图）" src="资源/原页-11.png">
+<img alt="原论文第 12 页（原页截图）" src="资源/原页-12.png">
+<img alt="原论文第 13 页（原页截图）" src="资源/原页-13.png">
+<img alt="原论文第 14 页（原页截图）" src="资源/原页-14.png">
+<img alt="原论文第 15 页（原页截图）" src="资源/原页-15.png">
+<img alt="原论文第 16 页（原页截图）" src="资源/原页-16.png">
+<img alt="原论文第 17 页（原页截图）" src="资源/原页-17.png">
+<img alt="原论文第 18 页（原页截图）" src="资源/原页-18.png">
+<img alt="原论文第 19 页（原页截图）" src="资源/原页-19.png">
+<img alt="原论文第 20 页（原页截图）" src="资源/原页-20.png">
+<img alt="原论文第 21 页（原页截图）" src="资源/原页-21.png">
+<img alt="原论文第 22 页（原页截图）" src="资源/原页-22.png">
+<img alt="原论文第 23 页（原页截图）" src="资源/原页-23.png">
+<img alt="原论文第 24 页（原页截图）" src="资源/原页-24.png">
+<img alt="原论文第 25 页（原页截图）" src="资源/原页-25.png">
+<img alt="原论文第 26 页（原页截图）" src="资源/原页-26.png">
+<img alt="原论文第 27 页（原页截图）" src="资源/原页-27.png">
+<img alt="原论文第 28 页（原页截图）" src="资源/原页-28.png">
+<img alt="原论文第 29 页（原页截图）" src="资源/原页-29.png">
+<img alt="原论文第 30 页（原页截图）" src="资源/原页-30.png">
+<img alt="原论文第 31 页（原页截图）" src="资源/原页-31.png">
+<img alt="原论文第 32 页（原页截图）" src="资源/原页-32.png">
+<img alt="原论文第 33 页（原页截图）" src="资源/原页-33.png">
+<img alt="原论文第 34 页（原页截图）" src="资源/原页-34.png">
+<img alt="原论文第 35 页（原页截图）" src="资源/原页-35.png">
+<img alt="原论文第 36 页（原页截图）" src="资源/原页-36.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

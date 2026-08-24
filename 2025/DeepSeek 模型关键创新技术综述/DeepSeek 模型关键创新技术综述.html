@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepSeek 模型关键创新技术综述</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">DeepSeek 模型关键创新技术综述</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#deepseek">DeepSeek 模型关键创新技术综述</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 创新技术</a><ul>
+<li><a href="#21">2.1 多头潜在注意力</a><ul>
+<li><a href="#211">2.1.1 标准多头注意力</a></li>
+<li><a href="#212">2.1.2 低秩键值联合压缩</a></li>
+<li><a href="#213">2.1.3 解耦旋转位置编码</a></li>
+</ul>
+</li>
+<li><a href="#22">2.2 混合专家</a><ul>
+<li><a href="#221">2.2.1 细粒度专家分割</a></li>
+<li><a href="#222">2.2.2 共享专家隔离</a></li>
+<li><a href="#223">2.2.3 负载均衡</a></li>
+</ul>
+</li>
+<li><a href="#23">2.3 多词元预测</a></li>
+<li><a href="#24">2.4 算法、框架与硬件协同设计</a><ul>
+<li><a href="#241-dualpipe">2.4.1 DualPipe</a></li>
+<li><a href="#242-fp8">2.4.2 FP8 混合精度训练</a></li>
+</ul>
+</li>
+<li><a href="#25">2.5 群组相对策略优化</a></li>
+<li><a href="#26">2.6 基础模型后训练</a><ul>
+<li><a href="#261">2.6.1 纯强化学习</a></li>
+<li><a href="#262">2.6.2 带冷启动的强化学习</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#3">3 讨论</a></li>
+<li><a href="#4">4 结论</a></li>
+<li><a href="#_2">参考文献</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="deepseek">DeepSeek 模型关键创新技术综述</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2025-03-14">2025 年 3 月 14 日</time></p>
+<p><strong>作者：</strong> Chengen Wang、Murat Kantarcioglu</p>
+<p><strong>机构：</strong> University of Texas at Dallas、Virginia Tech</p>
+<p><strong>原文：</strong> <a href="https://arxiv.org/abs/2503.11486">arXiv:2503.11486</a></p>
+<h2 id="_1">摘要</h2>
+<p>DeepSeek-V3 与 DeepSeek-R1 是面向通用任务和推理任务的领先开源大语言模型。它们只使用顶尖闭源模型训练成本的一小部分，性能却可与 OpenAI、Anthropic 等公司的先进模型竞争。理解这些成果背后的关键创新，对于继续推进大语言模型研究十分重要。</p>
+<p>本文综述促成这些模型高效果与高效率的核心技术，包括 Transformer 架构改进、多头潜在注意力（Multi-Head Latent Attention，MLA）、混合专家（Mixture of Experts，MoE）、多词元预测（Multi-Token Prediction，MTP）、算法—框架—硬件协同设计、群组相对策略优化（Group Relative Policy Optimization，GRPO），以及纯强化学习和监督微调与强化学习交替进行的迭代式后训练。作者还指出若干尚未回答的问题，并据此提出潜在研究方向。</p>
+<p><strong>关键词：</strong> DeepSeek、多头潜在注意力、混合专家、群组相对策略优化</p>
+<h2 id="1">1 引言</h2>
+<p>ChatGPT 于 2022 年末出现后，大语言模型研究进入新阶段。GPT、Claude 等模型快速演进；LLaMA 等开源模型虽然已在部分指标上具备竞争力，整体表现仍落后于专有模型。2025 年 1 月，DeepSeek-V3 和新发布的 DeepSeek-R1 以明显更低的训练资源取得接近先进 GPT 模型的性能，引发市场与研究界广泛关注。</p>
+<p>本文把相关创新归纳为五条主线：</p>
+<ul>
+<li>用 MLA 和 MoE 改造 Transformer 的注意力与前馈网络；</li>
+<li>用 MTP 提高训练数据的样本效率；</li>
+<li>联合优化算法、训练框架与硬件；</li>
+<li>用 GRPO 降低大模型强化学习的显存成本；</li>
+<li>在基础模型上进行纯强化学习，或交替使用监督微调（SFT）与强化学习（RL）完成多阶段后训练。</li>
+</ul>
+<p>这些技术集中应用于 DeepSeek-V3 与 DeepSeek-R1，其中一部分最早出现于更早的 DeepSeek 模型。除梳理机制外，本文尤其关注技术报告和消融实验没有充分解释的问题。</p>
+<p><img alt="原论文第 1 页：摘要、引言与创新技术概览" src="资源/原页-01.png"></p>
+<h2 id="2">2 创新技术</h2>
+<h3 id="21">2.1 多头潜在注意力</h3>
+<p>Transformer 的标准多头注意力（Multi-Head Attention，MHA）在推理时缓存已经计算过的键和值，即 KV cache，以避免重复计算。上下文越长，KV cache 的显存占用越容易成为瓶颈。多查询注意力（MQA）和分组查询注意力（GQA）通过减少键值头数量降低缓存，但性能通常不及 MHA。</p>
+<p>DeepSeek-V2 提出的 MLA 走了另一条路线：不直接缓存各注意力头完整的键和值，而是把它们压缩到低维潜在向量中。这样既显著减少 KV cache，又能保持乃至超过 MHA 的效果。</p>
+<h4 id="211">2.1.1 标准多头注意力</h4>
+<p>设第 $t$ 个词元的输入为 $h_t\in\mathbb{R}^d$，标准 MHA 通过三个投影矩阵得到查询、键和值：</p>
+<div class="math-block">$$
+q_t=W^Qh_t,\qquad k_t=W^Kh_t,\qquad v_t=W^Vh_t.
+$$</div>
+<p>它们各自被切分为 $n_h$ 个头，每头维度为 $d_h$。第 $i$ 个头计算查询与历史键的相似度，对对应的值加权求和，最后再拼接所有头并通过输出投影。若模型共有 $l$ 层，则推理时每个词元需要缓存 $2n_hd_hl$ 个元素。</p>
+<p>图 1 对比 MHA、GQA、MQA 与 MLA：前三者缓存不同数量的完整键和值；MLA 只缓存联合压缩后的潜在 KV 表示。</p>
+<h4 id="212">2.1.2 低秩键值联合压缩</h4>
+<p>MLA 把原投影矩阵分解为下投影与上投影两个低秩矩阵。键和值共用下投影，把输入压缩为一个潜在向量：</p>
+<div class="math-block">$$
+c_t^{KV}=W^{DKV}h_t,\qquad c_t^{KV}\in\mathbb{R}^{d_c},\qquad d_c\ll d_hn_h.
+$$</div>
+<p>随后分别通过上投影恢复键和值。推理时，键的上投影可吸收到查询投影中，值的上投影可吸收到输出投影中，因此无须显式恢复完整键和值。模型只需缓存大小为 $d_cl$ 的 $c_t^{KV}$，而非大小为 $2d_hn_hl$ 的完整 KV。MLA 还对查询做低秩压缩，以减少训练时的激活显存。</p>
+<p><img alt="原论文第 2 页：四种注意力机制与 MLA 的低秩联合压缩" src="资源/原页-02.png"></p>
+<h4 id="213">2.1.3 解耦旋转位置编码</h4>
+<p>旋转位置编码（RoPE）会把相对位置信息写入查询与键。若直接对低秩恢复后的键使用 RoPE，键的上投影矩阵便无法吸收到查询投影中，推理成本会明显增加。</p>
+<p>DeepSeek-V2 因此把 RoPE 解耦到另一组查询与键上：每个注意力头拥有独立的 RoPE 查询，但所有头共享一个 RoPE 键。内容注意力使用压缩恢复出的查询与键，位置注意力使用解耦后的查询与键；两组结果拼接后共同计算注意力。推理时除潜在 KV 外，只需额外缓存维度较小的共享 RoPE 键，总缓存规模为 $(d_c+d_h^R)l$。按 DeepSeek-V2 的配置，每个词元的 KV cache 约为 $\frac{9}{2}d_hl$。</p>
+<p>已有结果显示 MLA 的性能优于 MHA。作者认为这值得进一步追问：低秩矩阵理论上承载的信息少于原始键值投影，性能提升可能不只来自压缩本身，而与解耦 RoPE 有关。然而现有报告没有单独给出解耦 RoPE 的消融实验，因此无法确认各部分的独立贡献。</p>
+<p><img alt="原论文第 3 页：解耦 RoPE 计算与 DeepSeekMoE 架构" src="资源/原页-03.png"></p>
+<h3 id="22">2.2 混合专家</h3>
+<p>混合专家架构通过稀疏激活降低计算成本，同时扩大模型参数规模。它通常以 MoE 层替换 Transformer 中部分前馈网络（FFN）：每个专家的结构与标准 FFN 相同，但每个词元只被路由到少量专家。DeepSeekMoE 在常规 MoE 基础上引入两项关键设计：细粒度专家分割与共享专家隔离。</p>
+<h4 id="221">2.2.1 细粒度专家分割</h4>
+<p>设常规 MoE 有 $N$ 个专家，每个词元激活 $K$ 个。DeepSeekMoE 沿隐藏维度把每个 FFN 均分为 $m$ 个更小的专家，于是专家总数变为 $mN$，每个词元激活 $mK$ 个。总专家参数量和单词元计算量保持不变，但可选专家组合大幅增加，使不同知识更容易被分配到更专门的专家子空间。</p>
+<h4 id="222">2.2.2 共享专家隔离</h4>
+<p>不同路由专家可能重复学习跨语境通用知识。为减少这种参数冗余，DeepSeekMoE 固定保留 $K_s$ 个共享专家，每个词元都会经过它们；其余专家仍由路由器按词元选择。为了保持计算成本不变，路由专家总数调整为 $mN-K_s$，每个词元选中的路由专家数调整为 $mK-K_s$。</p>
+<p>共享专家负责吸收共通知识，路由专家则更专注于差异化知识。图 2 展示从常规 Top-2 路由，到细粒度分割，再到共享专家隔离的演进过程；三种架构的专家参数量与计算量相同。</p>
+<p><img alt="原论文第 4 页：细粒度专家分割、共享专家隔离与 MoE 计算" src="资源/原页-04.png"></p>
+<h4 id="223">2.2.3 负载均衡</h4>
+<p>自动学习的路由容易失衡：少数专家被频繁选中、其他专家训练不足；或者同一批激活专家分散在多台设备上，造成高昂的跨设备通信。传统方法加入专家级负载均衡辅助损失，同时还可设置设备级和通信级均衡损失。</p>
+<p>作者指出，常见专家级辅助损失的理论解释并不充分。在某些条件下，即使实际词元分配并不均匀，该损失仍可能保持常数，无法推动专家使用率趋于均衡。由于这一公式已被多项工作采用，其成立条件与改进方式值得专门研究。</p>
+<p>辅助损失本身还可能损害模型性能。DeepSeek-V3 因此使用无辅助损失的负载均衡策略：为每个路由专家维护偏置 $b_i$，只在 Top-K 选择时把它加到亲和分数 $s_{i,t}$ 上。专家过载时降低偏置，负载不足时提高偏置；真正用于门控加权的仍是原始亲和分数，而不是加偏后的分数。这样可调节选择频率，又不会让均衡信号直接污染专家输出权重。模型另加一个轻量的序列级辅助损失，防止单条序列内部出现极端失衡。</p>
+<h3 id="23">2.3 多词元预测</h3>
+<p>传统自回归语言模型在每个位置只预测下一个词元。DeepSeek-V3 使用 MTP，在主模型之后串联 $D$ 个预测模块，沿完整因果链额外预测后续多个词元。每一深度都复用主模型的词嵌入层与输出头，同时拥有独立的 Transformer 块和线性投影层；当前深度的词嵌入与上一深度的输出拼接后，作为该层的输入。</p>
+<p>训练目标是各预测深度交叉熵损失的平均值。一个样本因而能同时提供多个未来位置的监督信号，提高训练数据的利用率与样本效率。作者同时提醒，串联的 MTP 模块会带来传统单词元预测之外的训练时间开销，而 DeepSeek-V3 的 MTP 消融实验没有报告这项代价。</p>
+<p><img alt="原论文第 5 页：负载均衡机制与 MTP 因果预测链" src="资源/原页-05.png"></p>
+<h3 id="24">2.4 算法、框架与硬件协同设计</h3>
+<p>DeepSeek-V3 不只依赖单一算法创新，而是通过训练算法、系统框架和硬件的联合优化提高效率。模型在 14.8 万亿词元上完成预训练，总消耗为 278.8 万 H800 GPU 小时。</p>
+<h4 id="241-dualpipe">2.4.1 DualPipe</h4>
+<p>跨节点专家并行会引入大量通信。DualPipe 把前向和反向计算切成更小的块，并把反向计算进一步拆为输入梯度与权重梯度两部分，使计算和通信能够重叠，从而减少流水线气泡。系统还固定划出一部分 GPU 流式多处理器（SM）负责通信，让 all-to-all 通信尽量隐藏在计算期间。</p>
+<p>DualPipe 使用双向流水线调度，从流水线两端同时送入微批次。图 4 给出 8 个流水线并行 rank、20 个双向微批次的调度示例。它的代价是需要保留两份模型参数，增加显存占用。后续研究指出，双向部分并非必要，可以通过“对半切开”的方式移除并继续改进调度。</p>
+<p><img alt="原论文第 6 页：MTP 目标、DualPipe 调度与协同设计" src="资源/原页-06.png"></p>
+<h4 id="242-fp8">2.4.2 FP8 混合精度训练</h4>
+<p>DeepSeek-V3 的混合精度框架把大多数通用矩阵乘法（GEMM）核心算子放在 FP8 精度下执行，以提高吞吐；嵌入层、输出头、MoE 门控、归一化和注意力等对低精度敏感的算子则保留原有精度，在效率与数值稳定性之间取平衡。</p>
+<p>为扩大 FP8 可表示的动态范围，框架采用细粒度量化：按 $1\times N_c$ 的 tile 或 $N_c\times N_c$ 的 block 分组，DeepSeek-V3 中 $N_c=128$。低精度 GEMM 的准确性又高度依赖高精度累加，因此系统每隔 $N_c$ 个中间结果便把数据提升到 CUDA Core 的 FP32 寄存器中，以完整 FP32 精度累加。</p>
+<h3 id="25">2.5 群组相对策略优化</h3>
+<p>GRPO 是近端策略优化（PPO）的高效变体。PPO 通常同时训练策略模型和价值模型，再由奖励与价值估计优势；但在大语言模型任务中，奖励往往只落在输出末尾，价值函数难以训练，额外的价值模型也占用大量显存。</p>
+<p>GRPO 取消价值模型。对于同一个问题，它从旧策略中采样一组 $G$ 个输出，由奖励模型分别打分，再以组内奖励的相对水平估计优势。结果监督把每个输出的最终奖励标准化，并赋给该输出的全部词元；过程监督则在中间步骤给出奖励，每个词元的优势由其后续步骤的标准化奖励累加得到。</p>
+<p>优化目标仍采用 PPO 式裁剪，限制新旧策略概率比的变化，并加入相对于参考策略的 KL 惩罚。参考策略通常是初始基础模型或 SFT 模型。图 5 直观显示：PPO 需要参考、奖励和价值模型；GRPO 用组内计算替代价值模型，在保持效果的同时显著降低显存需求。</p>
+<p><img alt="原论文第 7 页：FP8 训练细节以及 PPO 与 GRPO 对比" src="资源/原页-07.png"></p>
+<h3 id="26">2.6 基础模型后训练</h3>
+<h4 id="261">2.6.1 纯强化学习</h4>
+<p>DeepSeek-R1-Zero 直接在 DeepSeek-V3-Base 上进行纯强化学习，不使用任何 SFT 数据。随着训练推进，模型性能持续提高，并自然涌现反思、尝试替代路径等推理行为。这说明基础模型能够只依靠强化学习学习并泛化推理策略。</p>
+<p>它使用 GRPO，奖励分为两类：准确性奖励判断答案是否正确；格式奖励要求模型把思考过程放在指定标签内。训练模板先引导模型生成推理过程，再输出最终答案。</p>
+<p>纯强化学习虽然取得突出效果，也造成可读性差和语言混杂。DeepSeek-R1 随后采用 SFT 与 RL 交替的迭代流程，以缓解这些问题并继续提升通用能力。</p>
+<h4 id="262">2.6.2 带冷启动的强化学习</h4>
+<p>DeepSeek-R1 的训练流程包含四个阶段：</p>
+<ol>
+<li><strong>冷启动。</strong> 收集数千条长思维链样本，对 DeepSeek-V3-Base 做监督微调，以降低强化学习早期阶段的不稳定性，并为后续训练提供起点。</li>
+<li><strong>面向推理的强化学习。</strong> 在冷启动模型上复用 R1-Zero 的强化学习流程，同时增加语言一致性奖励，以思维链中目标语言词语的比例抑制语言混杂。</li>
+<li><strong>拒绝采样与监督微调。</strong> 推理强化学习收敛后，从检查点通过拒绝采样收集 60 万条推理数据，只保留答案正确的样本；另收集约 20 万条写作、角色扮演等非推理数据。后者来自 DeepSeek-V3 的部分 SFT 数据，或由 DeepSeek-V3 生成。</li>
+<li><strong>强化学习对齐。</strong> 同时改善有用性、无害性和推理能力。有用性依据答案的效用与相关性评估；无害性覆盖完整回答，以减少风险、偏见和有害内容。</li>
+</ol>
+<p><img alt="原论文第 8 页：GRPO 目标与四阶段后训练流程" src="资源/原页-08.png"></p>
+<h2 id="3">3 讨论</h2>
+<p>作者把后续机会归纳为四个方向。</p>
+<p><strong>Transformer 架构改进。</strong> MLA 改造注意力模块，MoE 改造前馈网络，两者共同支撑 DeepSeek-V3。架构创新会同时影响训练效果与效率。值得补做的工作包括：单独消融解耦 RoPE，以及为现行 MoE 负载均衡目标提供更严格的理论依据。</p>
+<p><strong>提高样本效率。</strong> MTP 证明，同一训练数据可以通过更有效的预测目标释放更多监督价值。但多层预测链也拉长训练时间，后续算法需要同时衡量样本效率和实际墙钟成本。</p>
+<p><strong>算法、框架与硬件协同。</strong> DualPipe 和 FP8 混合精度训练表明，高效大模型训练需要从架构、算法、通信调度和硬件执行方式整体设计，而不能只优化其中一层。对 DualPipe 双向调度的后续改进也说明，系统方案仍有继续简化的空间。</p>
+<p><strong>强化学习。</strong> 纯 RL 在后训练阶段展现出的能力，为推理模型提供了新的研究路线；SFT 与 RL 交替的迭代训练同样具有启发性。GRPO 则说明，重新设计经典强化学习算法的组成部分，可以在大模型场景显著节省 GPU 显存。</p>
+<h2 id="4">4 结论</h2>
+<p>本文综述了 DeepSeek 模型成功背后的关键技术：Transformer 架构中的 MLA 与 MoE、提高样本效率的 MTP、算法—框架—硬件协同设计、GRPO，以及基础模型后训练阶段的强化学习应用。它们共同解释了 DeepSeek 如何兼顾模型能力、训练成本和推理效率；与此同时，解耦 RoPE 的独立贡献、MoE 均衡目标的理论基础、MTP 的墙钟开销等问题仍有待系统验证。</p>
+<h2 id="_2">参考文献</h2>
+<p>原论文参考文献从第 9 页开始，涵盖 GQA、DeepSeekMoE、MTP、DeepSeek-V2/V3、GRPO、PPO、RoPE、零气泡流水线并行与思维链提示等相关工作。</p>
+<p><img alt="原论文第 9 页：讨论、结论与参考文献开篇" src="资源/原页-09.png"></p>
+<p><img alt="原论文第 10 页：参考文献" src="资源/原页-10.png"></p>
+<p><img alt="原论文第 11 页：参考文献" src="资源/原页-11.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>

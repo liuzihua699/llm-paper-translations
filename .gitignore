@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+*.log
+
+# 原论文只保留外部链接，不纳入项目版本管理。
+*.[pP][dD][fF]

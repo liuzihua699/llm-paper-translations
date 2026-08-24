@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InternLM2 技术报告</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --accent: #0f766e;
+      --ink: #20201e;
+      --muted: #706f6a;
+      --canvas: #ffffff;
+      --paper: #ffffff;
+      --rule: #dedbd4;
+    }
+    html { scroll-behavior: smooth; overflow-x: clip; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow-x: clip;
+    }
+    body.nav-open { overflow: hidden; }
+    .layout { display: grid; grid-template-columns: 304px minmax(0, 1fr); align-items: start; min-height: 100vh; }
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: 304px;
+      height: 100vh;
+      height: 100dvh;
+      align-self: start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 30px 22px 36px;
+      color: #4f514d;
+      background: #f6f7f4;
+      border-right: 1px solid #e4e7e1;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: #c9cec6 transparent;
+      scroll-behavior: auto;
+    }
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: #c9cec6; border-radius: 999px; }
+    .sidebar-heading {
+      margin: 0;
+      color: #1f2926;
+      font-size: 18px;
+      font-weight: 760;
+      line-height: 1.25;
+      letter-spacing: -.01em;
+    }
+    .toc-count {
+      margin: 5px 0 22px;
+      color: #8a8f88;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .toc { margin: 0; padding: 0 0 10vh; font-size: 13px; line-height: 1.35; }
+    .toc ul { margin: 0; padding: 0; list-style: none; }
+    .toc li { min-width: 0; margin: 0; padding: 0; }
+    .toc a {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 7px;
+      transition: color .14s ease, background-color .14s ease, box-shadow .14s ease;
+    }
+    .toc > ul > li { margin: 0; }
+    .toc > ul > li > a {
+      margin: 0 0 18px;
+      padding: 12px 13px;
+      color: #28554f;
+      background: #e8efec;
+      font-size: 12.5px;
+      font-weight: 720;
+      line-height: 1.42;
+    }
+    .toc > ul > li > ul { margin: 0; padding: 0; }
+    .toc > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li + li { margin-top: 2px; }
+    .toc > ul > li > ul > li > a {
+      padding: 7px 10px 7px 14px;
+      color: #303531;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+    .toc > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul {
+      margin: 2px 0 6px 11px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li { margin: 0; }
+    .toc > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > a {
+      padding: 5px 9px 5px 15px;
+      color: #656963;
+      font-size: 12px;
+      font-weight: 520;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > a:hover { color: #0f766e; background: #ecefeb; }
+    .toc > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 5px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > a {
+      padding: 4px 9px 4px 17px;
+      color: #7b7f78;
+      font-size: 11.5px;
+      line-height: 1.4;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul {
+      margin: 1px 0 4px 13px;
+      padding: 0;
+    }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li + li { margin-top: 1px; }
+    .toc > ul > li > ul > li > ul > li > ul > li > ul > li > a { padding: 4px 9px 4px 19px; color: #8b8e88; font-size: 11px; line-height: 1.4; }
+    .toc a.is-ancestor { color: #356b64; }
+    .toc a.is-current {
+      color: #0d6b61 !important;
+      background: #e2eeea !important;
+      box-shadow: inset 3px 0 0 #198578;
+      font-weight: 700 !important;
+    }
+    main { grid-column: 2; min-width: 0; padding: 54px 58px 96px; background: var(--canvas); }
+    article {
+      width: min(880px, 100%);
+      margin: 0 auto;
+      padding: 24px 46px 88px;
+      color: var(--ink);
+      background: var(--paper);
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", SimSun, Georgia, serif;
+      font-size: 16.5px;
+      line-height: 1.95;
+    }
+    article h1, article h2, article h3, article h4, article h5, article h6 {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      scroll-margin-top: 24px;
+      text-wrap: balance;
+    }
+    article h1 { margin: 0 0 14px; color: #151513; font-size: 36px; font-weight: 790; line-height: 1.26; letter-spacing: -.02em; }
+    article .publication-date {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 30px;
+      color: #77746d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    article .publication-date-label { padding-right: 10px; color: #4e514d; font-weight: 680; border-right: 1px solid #d8d5ce; }
+    article .publication-date time { font-variant-numeric: tabular-nums; }
+    article h2 { margin: 76px 0 25px; padding-top: 20px; color: #181816; font-size: 25px; font-weight: 780; line-height: 1.38; border-top: 2px solid #292925; }
+    article h3 { margin: 44px 0 17px; color: #292925; font-size: 20px; font-weight: 750; line-height: 1.45; }
+    article h4 { margin: 34px 0 14px; padding-left: 13px; color: #3d3b36; font-size: 17px; font-weight: 720; line-height: 1.5; border-left: 3px solid #14b8a6; }
+    article h5 { margin: 29px 0 11px; color: #57544d; font-size: 14.5px; font-weight: 720; line-height: 1.55; letter-spacing: .015em; }
+    article h6 { margin: 25px 0 9px; color: #67635b; font-size: 13.5px; line-height: 1.55; }
+    p { margin: 0 0 20px; }
+    ul, ol { margin: 0 0 22px; padding-left: 1.7em; }
+    li { margin: 8px 0; padding-left: .15em; }
+    strong { color: #262520; }
+    blockquote { margin: 27px 0; padding: 16px 20px; color: #57544d; background: #f4f1ea; border-left: 3px solid #a8a29e; }
+    code { padding: .12em .34em; color: #134e4a; background: #e9f4f1; border-radius: 3px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .88em; }
+    pre { max-width: 100%; overflow: auto; margin: 24px 0; padding: 18px 20px; color: #e5e7eb; background: #171d26; border-radius: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    pre code { padding: 0; color: inherit; background: transparent; }
+    img { display: block; max-width: 100%; height: auto; margin: 32px auto 14px; background: #fff; border: 1px solid #dedbd4; box-shadow: 0 3px 16px rgba(41,37,31,.07); }
+    table { display: block; max-width: 100%; overflow-x: auto; margin: 28px 0; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; font-size: 13px; line-height: 1.55; }
+    th, td { padding: 9px 11px; border: 1px solid #d8d4cc; text-align: left; vertical-align: top; }
+    th { background: #eeeae2; font-weight: 720; }
+    .math-block { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; margin: 27px 0; padding: 9px 0; text-align: center; }
+    .math-block > mjx-container { display: block; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; }
+    mjx-container { max-width: 100%; min-width: 0; }
+    article li mjx-container { display: inline-block; max-width: 100% !important; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+    .footnote { color: #625f58; font-size: .91em; }
+    .footnote li { overflow-wrap: anywhere; word-break: break-word; }
+    article a { color: #0f766e; text-decoration-color: #99d5cc; text-underline-offset: 3px; overflow-wrap: anywhere; }
+    article a:hover { color: #115e59; text-decoration-color: currentColor; }
+    .mobile-bar { display: none; }
+    .nav-backdrop { display: none; }
+    @media (max-width: 720px) {
+      .layout { display: block; min-height: 100vh; }
+      .mobile-bar {
+        display: flex;
+        position: fixed;
+        z-index: 70;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        align-items: center;
+        gap: 13px;
+        padding: 0 16px;
+        color: #272724;
+        background: #ffffff;
+        border-bottom: 1px solid #e1e1dc;
+      }
+      .nav-toggle { display: grid; flex: 0 0 36px; width: 36px; height: 36px; place-items: center; padding: 0; color: #0f766e; background: transparent; border: 1px solid #d2d2cc; border-radius: 4px; cursor: pointer; }
+      .nav-toggle svg { width: 18px; height: 18px; }
+      .mobile-title { min-width: 0; overflow: hidden; color: #393936; font-size: 13px; font-weight: 680; text-overflow: ellipsis; white-space: nowrap; }
+      aside {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 90;
+        width: min(350px, 90vw);
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: auto;
+        padding-top: 27px;
+        transform: translateX(-102%);
+        background: #ffffff;
+        box-shadow: none;
+        transition: transform .22s ease;
+      }
+      body.nav-open aside { transform: translateX(0); }
+      .nav-backdrop { position: fixed; inset: 0; z-index: 85; background: rgba(15,23,42,.55); opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+      body.nav-open .nav-backdrop { display: block; opacity: 1; pointer-events: auto; }
+      main { padding: 82px 16px 66px; }
+      article { padding: 42px 28px 62px; font-size: 16px; line-height: 1.9; }
+      article h1 { font-size: 30px; }
+      article h2 { margin-top: 62px; font-size: 23px; }
+      article h3 { margin-top: 38px; font-size: 19px; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 72px 0 54px; }
+      article { width: 100%; padding: 35px 20px 58px; border-right: 0; border-left: 0; }
+      article h1 { font-size: 28px; line-height: 1.32; }
+      article h2 { font-size: 21px; }
+      article h3 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+    </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <header class="mobile-bar">
+    <button class="nav-toggle" type="button" aria-label="打开文章目录" aria-controls="reader-toc" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div class="mobile-title">InternLM2 技术报告</div>
+  </header>
+  <div class="layout">
+    <aside id="reader-toc" aria-label="文章目录">
+      <p class="sidebar-heading">目录</p>
+      <p class="toc-count">正在载入目录</p>
+      <div class="toc">
+<ul>
+<li><a href="#internlm2">InternLM2 技术报告</a><ul>
+<li><a href="#_1">摘要</a></li>
+<li><a href="#_2">目录</a></li>
+<li><a href="#1">1 引言</a></li>
+<li><a href="#2">2 基础设施</a><ul>
+<li><a href="#21-internevo">2.1 InternEvo</a><ul>
+<li><a href="#211">2.1.1 降低通信开销</a></li>
+<li><a href="#212">2.1.2 通信与计算重叠</a></li>
+<li><a href="#213">2.1.3 长序列训练</a></li>
+<li><a href="#214">2.1.4 容错</a></li>
+<li><a href="#215">2.1.5 交互式训练</a></li>
+</ul>
+</li>
+<li><a href="#22">2.2 模型结构</a></li>
+</ul>
+</li>
+<li><a href="#3">3 预训练</a><ul>
+<li><a href="#31">3.1 预训练数据</a><ul>
+<li><a href="#311">3.1.1 文本数据</a><ul>
+<li><a href="#_3">数据来源分布</a></li>
+<li><a href="#_4">数据处理流水线</a></li>
+<li><a href="#_5">数据格式化</a></li>
+<li><a href="#_6">基于规则的阶段</a></li>
+<li><a href="#_7">去重</a></li>
+<li><a href="#_8">安全过滤</a></li>
+<li><a href="#_9">质量过滤</a></li>
+</ul>
+</li>
+<li><a href="#312">3.1.2 代码数据</a><ul>
+<li><a href="#_10">数据来源分布</a></li>
+<li><a href="#_11">格式清理</a></li>
+<li><a href="#_12">代码去重</a></li>
+<li><a href="#_13">质量过滤</a></li>
+<li><a href="#_14">依赖排序</a></li>
+</ul>
+</li>
+<li><a href="#313">3.1.3 长上下文数据</a><ul>
+<li><a href="#_15">数据过滤流水线</a></li>
+<li><a href="#_16">统计过滤</a></li>
+<li><a href="#_17">困惑度过滤</a></li>
+<li><a href="#_18">阈值选择</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#32">3.2 预训练设置</a><ul>
+<li><a href="#321">3.2.1 分词</a></li>
+<li><a href="#322">3.2.2 预训练超参数</a></li>
+</ul>
+</li>
+<li><a href="#33">3.3 预训练阶段</a><ul>
+<li><a href="#331-4k">3.3.1 4K 上下文训练</a></li>
+<li><a href="#332">3.3.2 长上下文训练</a></li>
+<li><a href="#333">3.3.3 能力专项增强训练</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#4">4 对齐</a><ul>
+<li><a href="#41">4.1 监督微调</a></li>
+<li><a href="#42-cool">4.2 COOL 人类反馈强化学习</a><ul>
+<li><a href="#421">4.2.1 条件奖励模型</a><ul>
+<li><a href="#_19">数据构成</a></li>
+<li><a href="#_20">损失函数</a></li>
+<li><a href="#_21">训练细节</a></li>
+</ul>
+</li>
+<li><a href="#422-rlhf">4.2.2 在线 RLHF</a><ul>
+<li><a href="#_22">快速路径</a></li>
+<li><a href="#_23">慢速路径</a></li>
+<li><a href="#_24">实现</a></li>
+</ul>
+</li>
+<li><a href="#423-ppo">4.2.3 PPO 训练细节</a><ul>
+<li><a href="#_25">模型初始化</a></li>
+<li><a href="#_26">条件奖励</a></li>
+<li><a href="#_27">预训练梯度</a></li>
+<li><a href="#_28">超参数</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#43">4.3 长上下文微调</a></li>
+<li><a href="#44">4.4 工具增强大型语言模型</a><ul>
+<li><a href="#441">4.4.1 通用工具调用</a></li>
+<li><a href="#442">4.4.2 代码解释器</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#5">5 评估与分析</a><ul>
+<li><a href="#51">5.1 概览</a></li>
+<li><a href="#52">5.2 下游任务表现</a><ul>
+<li><a href="#521">5.2.1 综合考试</a></li>
+<li><a href="#522">5.2.2 语言与知识</a></li>
+<li><a href="#523">5.2.3 推理与数学</a><ul>
+<li><a href="#_29">推理结果</a></li>
+<li><a href="#_30">数学结果</a></li>
+</ul>
+</li>
+<li><a href="#524">5.2.4 编程</a></li>
+<li><a href="#525">5.2.5 能力增强训练前后表现</a></li>
+<li><a href="#526">5.2.6 长上下文建模</a><ul>
+<li><a href="#_31">长上下文理解与推理</a></li>
+<li><a href="#_32">大海捞针</a></li>
+</ul>
+</li>
+<li><a href="#527">5.2.7 工具使用</a></li>
+</ul>
+</li>
+<li><a href="#53">5.3 对齐表现</a><ul>
+<li><a href="#531">5.3.1 英文主观评估</a><ul>
+<li><a href="#alpacaeval">AlpacaEval</a></li>
+<li><a href="#mtbench">MTBench</a></li>
+</ul>
+</li>
+<li><a href="#532">5.3.2 中文主观评估</a><ul>
+<li><a href="#compassarena">CompassArena</a></li>
+<li><a href="#alignbench">AlignBench</a></li>
+</ul>
+</li>
+<li><a href="#533">5.3.3 指令遵循评估</a></li>
+<li><a href="#534">5.3.4 条件奖励模型消融</a></li>
+</ul>
+</li>
+<li><a href="#54">5.4 数据污染讨论</a></li>
+</ul>
+</li>
+<li><a href="#6">6 结论</a></li>
+<li><a href="#_33">参考文献</a></li>
+<li><a href="#a">附录 A</a><ul>
+<li><a href="#a1">A.1 致谢</a></li>
+<li><a href="#a2">A.2 评估提示</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+    </aside>
+    <main><article><h1 id="internlm2">InternLM2 技术报告</h1>
+<p class="publication-date"><span class="publication-date-label">论文发布日期</span><time datetime="2024-03-26">2024 年 3 月 26 日</time></p>
+<p><strong>作者：</strong> Zheng Cai、Maosong Cao、Haojiong Chen、Kai Chen、Keyu Chen、Xin Chen、Xun Chen、Zehui Chen、Zhi Chen、Pei Chu、Xiaoyi Dong、Haodong Duan、Qi Fan、Zhaoye Fei、Yang Gao、Jiaye Ge、Chenya Gu、Yuzhe Gu、Tao Gui、Aijia Guo、Qipeng Guo、Conghui He、Yingfan Hu、Ting Huang、Tao Jiang、Penglong Jiao、Zhenjiang Jin、Zhikai Lei、Jiaxing Li、Jingwen Li、Linyang Li、Shuaibin Li、Wei Li、Yining Li、Hongwei Liu、Jiangning Liu、Jiawei Hong、Kaiwen Liu、Kuikun Liu、Xiaoran Liu、Chengqi Lv、Haijun Lv、Kai Lv、Li Ma、Runyuan Ma、Zerun Ma、Wenchang Ning、Linke Ouyang、Jiantao Qiu、Yuan Qu、Fukai Shang、Yunfan Shao、Demin Song、Zifan Song、Zhihao Sui、Peng Sun、Yu Sun、Huanze Tang、Bin Wang、Guoteng Wang、Jiaqi Wang、Jiayu Wang、Rui Wang、Yudong Wang、Ziyi Wang、Xingjian Wei、Qizhen Weng、Fan Wu、Yingtong Xiong、Chao Xu、Ruiliang Xu、Hang Yan、Yirong Yan、Xiaogui Yang、Haochen Ye、Huaiyuan Ying、Jia Yu、Jing Yu、Yuhang Zang、Chuyu Zhang、Li Zhang、Pan Zhang、Peng Zhang、Ruijie Zhang、Shuo Zhang、Songyang Zhang、Wenjian Zhang、Wenwei Zhang、Xingcheng Zhang、Xinyue Zhang、Hui Zhao、Qian Zhao、Xiaomeng Zhao、Fengzhe Zhou、Zaida Zhou、Jingming Zhuo、Yicheng Zou、Xipeng Qiu、Yu Qiao、Dahua Lin</p>
+<p><strong>机构：</strong> 上海人工智能实验室、商汤科技、香港中文大学、复旦大学</p>
+<p><strong>论文版本：</strong> arXiv:2403.17297v1，2024 年 3 月 26 日</p>
+<p><strong>译文说明：</strong> 本文按原论文内容顺序逐段翻译。模型名、数据集名、算法名与通行技术缩写保留原写法；图、表、公式、代码、复杂评估提示及参考文献使用原论文整页截图，每一页截图均按原页顺序出现一次。</p>
+<h2 id="_1">摘要</h2>
+<p>ChatGPT、GPT-4 等大型语言模型的演进，引发了关于通用人工智能即将到来的讨论；但要在开源模型中复现这些进展仍很困难。本文介绍 InternLM2：一个开源大型语言模型。通过创新的预训练和优化技术，它在覆盖 6 个维度、30 项基准的综合评估、长上下文建模以及开放式主观评估中均超过前代模型。</p>
+<p>论文详细说明 InternLM2 的预训练过程，重点介绍文本、代码和长上下文等多类数据的准备方法。InternLM2 先以 4K 词元训练，再在预训练和微调阶段扩展到 32K，从而高效捕捉长期依赖，并在 200K 上下文的“大海捞针”测试中取得出色表现。模型随后通过监督微调和新提出的条件式在线人类反馈强化学习策略 COOL RLHF 完成对齐；该策略面向人类偏好冲突与奖励黑客问题。我们发布不同训练阶段、不同规模的 InternLM2 模型，让社群可以观察模型能力的演化过程。</p>
+<p><img alt="原论文第 1 页：标题、作者、机构与摘要" src="资源/原页-01.png"></p>
+<h2 id="_2">目录</h2>
+<p>原论文目录列出六个正文部分：引言、基础设施、预训练、对齐、评估与分析、结论；附录包含致谢与评估提示。后文严格按此顺序翻译。</p>
+<p><img alt="原论文第 2 页：目录前半部分" src="资源/原页-02.png"></p>
+<p><img alt="原论文第 3 页：目录后半部分与引言开篇" src="资源/原页-03.png"></p>
+<h2 id="1">1 引言</h2>
+<p>ChatGPT 和 GPT-4 问世后，大型语言模型在学术界和工业界迅速普及。使用数十亿词元训练的模型表现出深刻的共情能力与解决问题能力，使人们普遍推测通用人工智能时代可能即将到来。尽管热情高涨，如何开发能力可与 ChatGPT 或 GPT-4 相比的模型依然没有明确答案。开源社群一直努力缩小专有大型语言模型与开源模型之间的差距。过去一年里，LLaMA、Qwen、Mistral 和 DeepSeek 等著名开源大型语言模型取得显著进展。本文提出的新模型 InternLM2 进一步超过了上述模型。</p>
+<p>大型语言模型开发主要包括预训练、监督微调和基于人类反馈的强化学习三个阶段。预训练以规模达到数万亿词元的自然文本语料为基础，目标是让模型获得广泛知识与基本技能；这一阶段最重要的因素被认为是数据质量。然而，以往大型语言模型技术报告很少讨论预训练数据的处理。InternLM2 因而详细披露文本、代码和长上下文预训练数据的准备方式。</p>
+<p>有效扩展大型语言模型上下文长度是当前研究热点，因为检索增强生成和智能体等许多下游应用都依赖长上下文。InternLM2 首先采用分组查询注意力，在长序列推理时减少内存占用。预训练时先用 4K 上下文文本训练，再切换到高质量 32K 文本继续训练。训练完成后，配合位置编码外推，模型能在 200K 上下文范围内的“大海捞针”测试中表现良好。</p>
+<p>长上下文预训练结束后，我们使用监督微调和基于人类反馈的强化学习，使模型能够良好遵循人类指令并与人类价值观对齐。两个阶段同样构造 32K 数据，进一步提升 InternLM2 的长上下文处理能力。我们还提出条件式在线 RLHF，即 COOL RLHF：它通过条件奖励模型调和多样、可能互相冲突的偏好，并执行多轮近端策略优化，缓解每个阶段出现的奖励黑客问题。为帮助社群理解 RLHF 的影响，我们同时发布 RLHF 前后的模型，分别命名为 <code>InternLM2-Chat-{规模}-SFT</code> 与 <code>InternLM2-Chat-{规模}</code>。</p>
+<p>本文贡献可以概括为四点：</p>
+<ol>
+<li><strong>开源高性能 InternLM2。</strong> 发布 1.8B、7B 和 20B 等多种规模，均在主观与客观评估中表现良好；同时发布不同训练阶段的模型，便于社群分析 SFT 和 RLHF 带来的变化。</li>
+<li><strong>面向 200K 上下文窗口设计。</strong> 在 200K“大海捞针”实验中，InternLM2 几乎完美识别全部目标信息；报告还提供覆盖预训练、SFT 和 RLHF 全阶段的长上下文训练经验。</li>
+<li><strong>全面的数据准备指南。</strong> 详细说明预训练数据、领域能力增强数据、SFT 数据和 RLHF 数据的准备方法，帮助社群更好地训练大型语言模型。</li>
+<li><strong>创新的 RLHF 训练技术。</strong> 通过 COOL RLHF 调和多种偏好，显著提升 InternLM2 在多项主观对话评估中的表现；同时初步分析、比较 RLHF 的主观和客观结果。</li>
+</ol>
+<p><img alt="原论文第 4 页：引言贡献总结与 InternEvo 开篇" src="资源/原页-04.png"></p>
+<h2 id="2">2 基础设施</h2>
+<p>本节介绍贯穿预训练、SFT 和 RLHF 的训练框架 InternEvo。</p>
+<h3 id="21-internevo">2.1 InternEvo</h3>
+<p>我们使用高效、轻量的预训练框架 InternEvo 训练模型。它组合数据并行、张量并行、序列并行和流水线并行，使训练可以扩展到数千块 GPU。InternEvo 还集成多种 ZeRO 策略，显著减少训练内存占用；并采用 FlashAttention 以及 BF16 混合精度训练，提高硬件利用率。</p>
+<p>InternEvo 在数千块 GPU 上训练 InternLM 时表现出很强的扩展能力。如图 1 所示，在 8 块 GPU 上以全局批量 400 万词元训练 InternLM-7B 时，模型浮点运算利用率达到 64%；扩展至 1024 块 GPU 且保持相同全局批量后，仍达到 53%。由于批量不变而计算通信比随 GPU 数量上升而下降，实现这种扩展效率尤其困难。相比之下，DeepSpeed 在 1024 块 GPU 上以 ZeRO-1 和 MiCS 训练 InternLM-7B 时只有约 36%。</p>
+<p>InternEvo 在序列长度方面也有很强的扩展性，可支持不同模型规模下的 256,000 词元训练。以 256,000 词元序列训练 InternLM-7B 时，它能够达到接近 88% 的模型浮点运算利用率，而 DeepSpeed-Ulysses 和 Megatron-LM 只有约 65%。30B、70B 等更大模型上也能观察到相同的训练性能提升。</p>
+<p><img alt="原论文第 5 页：InternEvo 扩展效率与降低通信开销" src="资源/原页-05.png"></p>
+<h4 id="211">2.1.1 降低通信开销</h4>
+<p>分布式大型语言模型训练需要在内存利用与通信成本之间权衡。降低通信范围，把通信限制在较小的一组 GPU、甚至同一节点内，可以有效降低成本。基于这一原则，InternEvo 通过一组自适应分片技术获得强扩展性，包括全复制、全分片和部分分片。参数、梯度、优化器状态等每种模型状态组件都能独立选择最合适的分片方式与设备网格配置，从而更细致地在 GPU 基础设施上分配模型状态。InternEvo 还提供优化框架，寻找通信成本最低且满足 GPU 内存约束的分片因子。</p>
+<h4 id="212">2.1.2 通信与计算重叠</h4>
+<p>InternEvo 进一步协调通信和计算来降低通信开销。使用参数分片时，完整模型参数分布在多块 GPU 上。每个训练步骤中，每个微批次执行前向、反向传播时，系统一边计算当前层，一边通过 AllGather 预取后续层的完整参数。生成的梯度先在参数分片组内通过 ReduceScatter 同步，再跨参数分片组通过 AllReduce 同步；这些通信与反向计算重叠。优化器状态分片场景中，GPU 通过 Broadcast 在组内广播更新参数，InternEvo 则让广播与下一训练步骤的前向计算重叠。这些机制平衡通信开销与计算时间，显著提高系统整体性能。</p>
+<h4 id="213">2.1.3 长序列训练</h4>
+<p>长序列训练的一项核心难题，是计算速度与通信开销的权衡。InternEvo 把 GPU 内存管理分解为分层空间：数据、张量、序列、流水线四个并行维度，以及参数、梯度、优化器状态三个分片维度。系统全面分析每个维度的内存和通信成本，再用执行模拟器确定并实施最优并行策略。训练规模、序列长度、模型规模和批量给定后，系统可以自动搜索最优执行方案。借助这套方案，InternEvo 训练时能够处理最长 100 万词元的上下文。</p>
+<p>InternEvo 还使用内存管理技术减少 GPU 内存碎片。系统通过内存池统一管理内存，并主动合并小内存块，避免长序列训练中常见的内存不足错误。</p>
+<h4 id="214">2.1.4 容错</h4>
+<p>GPU 数据中心训练大型语言模型时，常遇到硬件故障频繁、并行策略复杂、资源利用不均等问题。我们深入分析 GPU 数据中心中连续六个月的大型语言模型开发工作负载轨迹，找出大型语言模型与传统深度学习负载的差异，并研究资源利用模式和作业失败的影响。</p>
+<p>根据分析，我们构建两套系统：第一套是容错预训练系统，通过大型语言模型参与故障诊断和自动恢复来增强容错能力；第二套是面向评估任务的解耦调度系统，及时反馈模型性能。实现中使用异步保存机制，按预定间隔把模型权重和优化器状态归档到分布式文件与对象存储。每块 GPU 先在本地保存模型状态，再异步上传到远程分布式存储。系统自动检测偶发硬件或网络故障后，这种两步机制可把训练进度损失降到最低。临时检查点还会从热存储系统性迁移到成本较低的冷存储。即使并行配置发生变化，系统也可以无缝恢复模型训练，为流水线提供灵活性和连续性。</p>
+<h4 id="215">2.1.5 交互式训练</h4>
+<p>在需要部署多个大型语言模型开展交互训练的 RLHF 阶段，InternEvo 同样表现高效。例如 PPO 使用四个规模相同的模型并训练其中两个，InternEvo 能让每个模型都以最优配置运行。为改善多模型协调，我们以 InternEvo 和 Ray 为基础开发灵活、可扩展的 RLHF 框架；它可以集成不同大型语言模型执行引擎，并支持多种算法设计。</p>
+<p><img alt="原论文第 6 页：容错、交互式训练与模型结构开篇" src="资源/原页-06.png"></p>
+<h3 id="22">2.2 模型结构</h3>
+<p>Transformer 具有出色的并行能力，可充分发挥 GPU 性能，因此一直是大型语言模型的主要骨干。LLaMA 在 Transformer 基础上以 RMSNorm 代替 LayerNorm，并把激活函数设为 SwiGLU，提高训练效率和表现。LLaMA 发布后，社群大力扩展其架构生态，包括高效推理、算子优化等成果。为了让 InternLM2 与成熟生态以及 Falcon、Qwen、Baichuan、Mistral 等著名模型顺畅兼容，我们遵循 LLaMA 的结构设计原则。</p>
+<p>为提高效率，我们合并 $W_k$、$W_q$、$W_v$ 矩阵，使预训练速度提高超过 5%。为更好地支持不同张量并行规模的转换，我们还重新设计矩阵布局：不再直接堆叠三个矩阵，而是按每个注意力头交错排列 $W_k$、$W_q$、$W_v$，如图 2 所示。这样只需沿矩阵最后一个维度拆分或拼接，就能调整张量并行规模，提升模型在不同分布式计算环境中的灵活性。</p>
+<p>InternLM2 的目标是支持超过 32K 上下文的推理，因此整个系列都使用分组查询注意力，使极长上下文推理同时具备较高速度和较低 GPU 内存占用。</p>
+<p><img alt="原论文第 7 页：权重矩阵布局、分组查询注意力与预训练数据开篇" src="资源/原页-07.png"></p>
+<h2 id="3">3 预训练</h2>
+<p>本节介绍预训练数据、预训练设置和三个预训练阶段。</p>
+<h3 id="31">3.1 预训练数据</h3>
+<p>数据对大型语言模型预训练具有决定性影响，同时带来多方面挑战：处理敏感信息、覆盖全面知识、平衡效率与质量。本节说明通用领域文本、编程语言相关数据和长文本数据的处理流水线。</p>
+<h4 id="311">3.1.1 文本数据</h4>
+<p>预训练文本按来源分为网页、论文、专利和书籍。我们先把所有来源标准化为指定格式，按类型和语言分类，以 JSON Lines 格式保存；之后依次执行基于规则的过滤、数据去重、安全过滤和质量过滤，最终得到丰富、安全、高质量的文本数据集。</p>
+<h5 id="_3">数据来源分布</h5>
+<p>表 1 按来源统计文档数量、存储规模和字节占比。中英文网页合计占 86.46%，是主要来源。书籍和技术文献等来源体量较小，但平均文档更长、内容质量更高，因此同样重要。</p>
+<h5 id="_4">数据处理流水线</h5>
+<p>图 3 展示本文的数据处理流程。不同来源的数据先标准化为格式化数据；启发式统计规则过滤后得到清洗数据；再用局部敏感哈希去重，得到去重数据；随后应用复合安全策略，得到安全数据；最后针对不同来源采用不同质量过滤策略，得到高质量预训练数据。</p>
+<p><img alt="原论文第 8 页：文本数据来源、处理流水线与格式化" src="资源/原页-08.png"></p>
+<h5 id="_5">数据格式化</h5>
+<p>以网页数据为例，原始数据主要来自 Common Crawl。首先解压 WARC 文件，使用 Trafilatura 解析 HTML 并提取正文；再用 <code>pycld2</code> 检测正文语言并分类；最后分配唯一标识符，以 JSON Lines 保存，形成格式化数据。</p>
+<h5 id="_6">基于规则的阶段</h5>
+<p>从互联网随机抽取的网页常包含解析错误、格式错误、非自然语言文本等大量低质量内容。参考 Gopher、C4 和 RefinedWeb 的做法，我们根据数据观察设计一系列启发式过滤规则，重点检查异常分隔与换行、异常字符频率、标点分布等问题，得到清洗数据。</p>
+<h5 id="_7">去重</h5>
+<p>互联网存在大量重复文本，会对模型训练造成负面影响。我们使用基于局部敏感哈希的方法进行模糊去重：对文档 5-gram 以 128 个哈希函数建立 MinHash 签名，阈值设为 0.7。去重时优先保留最新数据，即优先选择 Common Crawl 转储编号较大的样本，最后得到去重数据。</p>
+<h5 id="_8">安全过滤</h5>
+<p>互联网充斥有毒和色情内容，用于训练会损害性能并提高生成不安全内容的概率。我们组合域名屏蔽、词语屏蔽、色情分类器和毒性分类器进行过滤。初步过滤使用约 1300 万个不安全域名组成的屏蔽列表，以及包含 36,289 个不安全词语的屏蔽词表。由于词语屏蔽可能误删大量数据，词表构建较为谨慎。</p>
+<p>为进一步提高不安全内容检出率，我们使用 Kaggle 的 Toxic Comment Classification Challenge 数据微调 BERT，得到毒性分类器；再从去重数据中采样并用 Perspective API 标注，构建色情分类数据集，用它微调 BERT 得到色情分类器。两个分类器对数据进行二次过滤，去除超过不安全阈值的内容，形成安全数据。</p>
+<h5 id="_9">质量过滤</h5>
+<p>与书籍、论文、专利相比，互联网数据中低质量内容很多，主要原因有二：其一，网络营销广告高度重复、信息量低；其二，许多网页只是文章摘要或商品描述列表，提取后的文本难以阅读且缺乏逻辑连贯性。</p>
+<p>我们组织人工标注来过滤这类内容。广告分类任务要求标注数据是否包含整体或局部广告，两者都判为低质量；流畅度分类任务从一致性、噪声、信息量和语法四个维度评分，得到综合流畅度。随后用人工标注数据微调 BERT，形成广告分类器与流畅度分类器，再执行二次过滤，得到高质量预训练数据。</p>
+<p><img alt="原论文第 9 页：安全过滤、质量过滤与代码数据来源" src="资源/原页-09.png"></p>
+<h4 id="312">3.1.2 代码数据</h4>
+<p>编程是大型语言模型的重要技能，可以支持代码助手、软件开发、工具智能体等下游应用。代码通常比自然语言结构更清晰、更严谨且更可预测，因此代码训练还可能增强推理能力。</p>
+<h5 id="_10">数据来源分布</h5>
+<p>我们从 GitHub 直接抓取、公共数据集以及问答论坛、教程网站、API 文档等在线编程资源收集数据，统计见图 4。表 2 使用训练得到的评分模型评估质量。高质量数据具有更高采样权重，可在预训练中重复训练；中等质量数据使用正常权重，一般训练一次；低质量数据被排除。经验表明，即使低质量样本占比较小，移除它们对于优化性能和稳定训练仍很重要。低资源编程语言数据会被保留，不纳入质量比例统计。</p>
+<h5 id="_11">格式清理</h5>
+<p>全部数据转换为统一 Markdown 格式。极少数数据仍含损坏的 HTML 或 XML，我们使用一组启发式规则尽量减少这种情况，但没有过度投入格式净化。选择 Markdown 是因为格式词元开销较小，又能自然交错代码与自然语言。实际预训练格式更复杂，会按依赖关系连接多个代码文件；这种交错数据对于教授模型编程非常关键。</p>
+<h5 id="_12">代码去重</h5>
+<p>代码去重与自然语言处理相似，但分词方式会影响超参数选择。例如，Python 可能用两个空格、四个空格或制表符表示缩进；传统空白分词器或自然语言分词器可能错误地把这些样本判断为不同数据。我们的核心认识是：有效分词器是实现通用去重策略的关键。虽然近期研究探索段落级、行级细粒度去重，本文仍在文件级去重，以保持上下文完整。</p>
+<h5 id="_13">质量过滤</h5>
+<p>质量是大型语言模型预训练中的关键却模糊的概念，因为很难按数据规模量化其对性能的影响。我们采用规则评分器与模型评分器结合的多阶段混合过滤。规则评分器使用不同启发式标准，但实验发现代码风格并不是可靠质量指标，会把过多代码误判为低质量。</p>
+<p>模型评分方面，我们评估多种骨干模型，并使用约 50,000 个标注样本训练。评分器与人工判断的相关性在不同编程语言间存在差异，扩大训练集也没有显著提高准确率。因此，只在人工标注验证集上与人工评价高度一致的语言中使用模型评分。</p>
+<p><img alt="原论文第 10 页：代码数据质量、格式、去重与质量过滤" src="资源/原页-10.png"></p>
+<p>为得到可靠的模型评分标注，我们针对“代码质量定义模糊”这一问题提出迭代标注流程，如图 5 所示。即使对人类专家而言，判断何种代码最有助于教授大型语言模型也不容易；例如广受认可的代码仓库对初学者可能过于复杂。迭代流程允许标注者验证模型预测并据此完善准则。为提高效率，只要求标注者检查评分器高置信度判为高质量或低质量的样本。每轮还有自动验证环节，确保评分器仍能正确分类此前已经标注的样本。实际经过三轮迭代后，评分模型定型。</p>
+<h5 id="_14">依赖排序</h5>
+<p>InternLM2 的训练上下文扩展到 32,000 词元，可以利用整个代码仓库的上下文。扩展名过滤、去重等先前步骤可能破坏仓库结构，因此先重新聚合同一仓库的代码文件，再按依赖关系排序，确定拼接顺序。一个仓库最终被视为包含多个代码块的长 Markdown 文件，使模型学习跨文件依赖。</p>
+<p>我们用正则表达式检测不同编程语言的 <code>import</code> 关系，通过拓扑排序决定文件拼接顺序。文件排列可能跨越目录边界，形成来自多个子目录的交错序列；Markdown 与其他文档等非代码文件放在同一子目录第一个代码文件之前。若祖先与后代之间存在多条路径，则选择较短路径；若导入图存在环，则按字母顺序决定起点。对于 <code>__init__.py</code> 或 <code>#include xx.h</code> 等批量导入形式，启发式规则会去除大量未使用依赖，以更精确地识别、处理导入关系。</p>
+<h4 id="313">3.1.3 长上下文数据</h4>
+<p>处理超过 32K 词元的超长上下文，是大型语言模型研究中越来越受关注的方向。它可以扩展书籍摘要、长期对话以及包含复杂推理步骤的任务。预训练数据是扩展上下文窗口的关键因素。本文遵循相关长文本预训练数据准备流程，并只概述 InternLM2 实际采用的方法。</p>
+<p><img alt="原论文第 11 页：迭代代码标注、依赖排序与长上下文数据开篇" src="资源/原页-11.png"></p>
+<h5 id="_15">数据过滤流水线</h5>
+<p>长文本处理流水线分三阶段去除低质量数据：第一，长度选择，以规则筛选超过 32K 字节的样本；第二，统计过滤，根据统计特征识别并移除异常数据；第三，困惑度过滤，通过文本片段间困惑度差异衡量连贯性，去除含干扰上下文的样本。所有长上下文训练数据都是标准预训练语料的子集，因此会在预训练中至少学习两次。</p>
+<h5 id="_16">统计过滤</h5>
+<p>我们利用多种词汇和语言特征构造统计过滤器，不符合既定规则的样本被排除。一个值得注意的特征是是否出现连接词及其他暗示篇章结构的词。设计原则是删除无意义数据，而不是只选择质量最高的数据。长文本的统计特征远比短文本稳定：20 词元文本很难提供可靠统计，而 32K 词元文本会呈现清晰得多的特征分布。</p>
+<h5 id="_17">困惑度过滤</h5>
+<p>困惑度通常用来估计文本序列概率 $P(X)$。本文稍作改变，用它估计两个文本片段间的条件概率 $P(S_2|S_1)$，其中 $S_1$ 位于 $S_2$ 之前。若两者高度相关，条件概率应高于只估计 $S_2$ 的概率，即困惑度差为负；若变化方向相反，说明 $S_1$ 是干扰上下文，应从预训练语料中移除。</p>
+<p>理想情况下，增加上下文不应降低后续文本的可预测性；但不正确的文本拼接会造成例外，例如 HTML 解析失败、随机社交媒体片段，以及复杂版面来源的识别错误。本文只根据困惑度差而非困惑度绝对值过滤，从而大幅减轻估计器本身，也就是选择何种模型计算困惑度，所带来的偏差。</p>
+<h5 id="_18">阈值选择</h5>
+<p>为大量过滤器选择适当阈值既困难又必要。我们得到两点经验。</p>
+<p>第一，应按领域定制阈值，不要追求通用方案。例如连接词统计过滤不适用于通常没有连接词的长代码；教材、论文、小说、专利也各有特征。通用阈值会误判大量数据。不同语言同理，因此阈值要逐领域调整。</p>
+<p>第二，使用验证集简化流程，只关注边界样本。统计和困惑度过滤器在同一领域内输出平滑，可以只检查阈值附近样本，判断应该提高还是降低阈值。图 6 对比全部过滤前后的数据分布：流程删除了很大比例的 Common Crawl 网页和专利数据，而保留了大多数书籍与论文数据。</p>
+<p><img alt="原论文第 12 页：长文本统计过滤、困惑度过滤与阈值选择" src="资源/原页-12.png"></p>
+<h3 id="32">3.2 预训练设置</h3>
+<h4 id="321">3.2.1 分词</h4>
+<p>我们选择 GPT-4 的分词方法，因为它能高效压缩多种文本。主要参考 <code>cl100k</code> 词表：它以英语和编程语言词元为主，共 100,256 项，中文词元不足 3000。为提高 InternLM 处理中文文本时的压缩率，同时把总词表控制在 100,000 以内，我们选取 <code>cl100k</code> 中排名前 60,004 的词元，再加入 32,397 个中文词元和 147 个备用词元。最终词表规模为 256 的整数倍，有助于高效训练。</p>
+<h4 id="322">3.2.2 预训练超参数</h4>
+<p>基本超参数见表 3。1.8B、7B、20B 模型分别使用 24、32、48 层，隐藏维度为 2048、4096、6144。训练使用 AdamW，参数为 $\beta_1=0.9$、$\beta_2=0.95$、$\epsilon=10^{-8}$、权重衰减 0.1。学习率按余弦曲线衰减，最终降至最大值的 10%。</p>
+<h3 id="33">3.3 预训练阶段</h3>
+<p>1.8B、7B、20B 模型预训练总词元数在 2.0 万亿到 2.6 万亿之间，分为三个阶段。第一阶段使用长度不超过 4K 的预训练语料；第二阶段加入 50% 长度不超过 32K 的语料；第三阶段使用能力专项增强数据。每个阶段都混合英语、中文和代码。</p>
+<p><img alt="原论文第 13 页：长文本过滤结果、模型超参数与预训练阶段" src="资源/原页-13.png"></p>
+<h4 id="331-4k">3.3.1 4K 上下文训练</h4>
+<p>约 90% 的训练步骤使用最长 4096 词元的数据。数据超过 4096 时强制截断，剩余部分也继续用于训练。</p>
+<h4 id="332">3.3.2 长上下文训练</h4>
+<p>扩展上下文窗口可以显著改善大型语言模型在检索增强生成、智能体等应用中的表现。InternLM2 先使用 4K 上下文语料，再切换到 32K 上下文语料；并非全部改用 32K，仍有 50% 的数据短于 4096 词元。长上下文阶段约占总训练步骤的 9%。适配长序列时，RoPE 基数从 50,000 调整为 1,000,000，以更有效地编码长上下文位置。得益于 InternEvo 的扩展性和 FlashAttention，上下文从 4K 增至 32K 后，训练速度只下降 40%。</p>
+<h4 id="333">3.3.3 能力专项增强训练</h4>
+<p>推理、数学解题和知识记忆是大型语言模型的重要能力，但相关高质量数据在完整预训练语料中分布稀疏，模型难以精通。既有工作尝试在预训练中加入指令数据或高质量数据来增强能力。InternLM2 精心组合高质量检索数据与 HuggingFace Datasets 平台上的多类开源数据，构建增强数据集，共 244 亿词元。数据包括 159.7 亿词元检索得到的 STEM 数据、21.7 亿词元特殊领域数据与 62.6 亿词元精选高质量数据。我们滤除测试集相关内容，并进行污染测试。为使模型充分拟合这些数据，训练使用更小的学习率和批量。</p>
+<p>增强训练后，InternLM2 在编程、推理、问答和考试任务上显著改善。为支持研究，我们发布增强训练前后的检查点，分别命名为 <code>InternLM2-{规模}-Base</code> 与 <code>InternLM2-{规模}</code>。</p>
+<p><img alt="原论文第 14 页：三阶段预训练、能力专项增强与对齐开篇" src="资源/原页-14.png"></p>
+<h2 id="4">4 对齐</h2>
+<p>预训练赋予大型语言模型解决多类任务所需的基础能力与知识。随后还需微调，以充分激发能力，并把模型引导为有用、无害的人工智能助手。这个通常称为“对齐”的阶段包括监督微调与人类反馈强化学习。</p>
+<p>SFT 使用高质量指令数据，使模型遵循多样的人类指令。之后，本文提出 COOL RLHF：使用新型条件奖励模型调和多步推理准确性、有用性、无害性等不同人类偏好，再执行三轮在线 RLHF 减少奖励黑客。为保留长上下文能力，SFT 和 RLHF 都继续使用长上下文预训练数据。本节还介绍提高工具使用能力的实践。</p>
+<h3 id="41">4.1 监督微调</h3>
+<p>SFT 使用 1000 万条经过有用性、无害性筛选的指令数据，主题涵盖通用对话、自然语言处理任务、数学题、代码生成和函数调用等。图 7 给出主题分布。为统一表示多种任务，数据样本转换为 ChatML 格式。7B 和 20B 模型都使用 AdamW 训练一个周期，初始学习率为 $4\times10^{-5}$。</p>
+<p><img alt="原论文第 15 页：SFT 数据分布与 COOL RLHF 动机" src="资源/原页-15.png"></p>
+<h3 id="42-cool">4.2 COOL 人类反馈强化学习</h3>
+<p>RLHF 通过人类反馈建立奖励模型，作为人类偏好的代理，再为大型语言模型使用 PPO 学习提供奖励信号，使模型更好地理解、执行传统方法难以明确定义的任务。</p>
+<p>但 RLHF 实践仍有问题。第一是偏好冲突。对话系统既要提供有用信息，又不能生成有害、不当内容；两者实际无法总是同时满足，因为有用信息在某些情况下可能涉及敏感或高风险内容。既有 RLHF 常依靠多个偏好模型分别评分，训练流水线因此加入更多模型，计算成本上升、训练速度下降。</p>
+<p>第二是奖励黑客，尤其在策略随规模增大而变强时，模型可能通过捷径“欺骗”奖励系统以获得高分，而不是真正学习预期行为，严重损害大型语言模型的有效性和可靠性。</p>
+<p>COOL RLHF 为此引入条件奖励机制，让奖励模型根据具体条件动态关注不同偏好，以最优方式整合多种偏好；同时使用多轮在线 RLHF，使模型及时适应新的人类反馈，缓解奖励黑客。</p>
+<h4 id="421">4.2.1 条件奖励模型</h4>
+<p>传统方法通常使用多个偏好模型处理跨领域偏好冲突。条件奖励模型则针对不同偏好加入不同系统提示，在单一奖励模型内建模多种偏好。由于奖励模型以已经能够遵循多样指令的 SFT 模型初始化，它也可以遵循不同系统提示，适应不同场景偏好。系统提示不仅是输入组成部分，更是引导奖励分数与特定情境偏好一致的关键工具；这种整合能够在不牺牲准确率的前提下，以统一模型处理矛盾、复杂的人类偏好。</p>
+<p><img alt="原论文第 16 页：条件奖励模型架构、系统提示与数据构成" src="资源/原页-16.png"></p>
+<h5 id="_19">数据构成</h5>
+<p>条件奖励模型训练数据覆盖对话、文章写作、诗歌、摘要、编程、数学、格式化输出等领域，包含最多 240 万组成对二元偏好数据。丰富数据确保模型广泛适应，能够在更复杂、更广泛的情境中开展强化学习。条件系统提示由此可以响应复杂的人类要求，在 PPO 阶段更细致地控制奖励分数。</p>
+<h5 id="_20">损失函数</h5>
+<p>为减小数据集中简单、困难样本不平衡的影响，我们受 Focal Loss 启发修改原排序损失，加入难度衰减系数：困难样本损失更大，简单样本损失更小，防止模型过拟合大量简单样本。式 1 给出焦点排序损失，其中 $P_{i,j}=\sigma(r_i-r_j)$ 表示奖励 $i$ 大于奖励 $j$ 的概率。只有模型正确预测训练样本偏好，也就是 $P_{i,j}&gt;0.5$ 时，难度衰减系数才生效，否则等于 1。超参数 $\gamma$ 调节难度衰减比例，默认设为 2。</p>
+<p>为让不同训练得到的奖励模型具有稳定、一致的输出分数，我们还加入对数障碍惩罚，把分数分布限制在 -5 到 5。这样可避免不同奖励模型分数分布变化后，还要在 PPO 阶段重新调节额外的奖励超参数。最终损失是排序损失与惩罚损失之和，权重系数 $\lambda$ 默认设为 0.02。这些设计提高奖励模型的稳健性和一致性，尤其适合难易样本不平衡的数据集。</p>
+<h5 id="_21">训练细节</h5>
+<p>奖励模型规模与 PPO 中的执行者模型保持一致。依照 InstructGPT，以 SFT 模型权重初始化奖励模型，并把输出层改为随机初始化的一维线性映射。构造批量时固定偏好数据总长度为 16,384 词元，而不是限制偏好对数量，以避免数据填充造成训练低效。最大上下文为 8192，每个序列末尾加入特殊词元，其输出值作为奖励分数。优化器采用 AdamW，学习率按余弦退火从 $10^{-5}$ 降至 $5\times10^{-6}$，权重衰减 0.01。模型只训练一个周期以防过拟合。</p>
+<p><img alt="原论文第 17 页：焦点排序损失、分数约束与在线 RLHF 开篇" src="资源/原页-17.png"></p>
+<h4 id="422-rlhf">4.2.2 在线 RLHF</h4>
+<p>获得条件奖励模型后，我们使用 PPO，使大型语言模型与奖励模型刻画的人类偏好对齐。为解决 PPO 阶段的奖励黑客，在线 RLHF 分成两条路径：快速路径负责立即、有针对性的改进；慢速路径负责奖励模型长期、全面的完善。两者互补，形成自适应框架，缓解奖励黑客并提高模型性能与可靠性。</p>
+<h5 id="_22">快速路径</h5>
+<p>快速路径通过针对性补丁，迅速识别、修正奖励黑客，提高奖励模型可靠性。PPO 训练推进时，模型会向高奖励区域移动，更多奖励黑客场景因而暴露并易于检测。每轮 RLHF 识别黑客模式后，比较本轮 PPO 早期、晚期模型的回答，构造突出这些模式的偏好对。只需把 20 到 100 个这样的偏好对加入训练，就足以显著阻止对应黑客模式，使奖励模型迅速适应新行为并更忠实于目标结果。</p>
+<h5 id="_23">慢速路径</h5>
+<p>快速路径重在修复奖励黑客；慢速路径则通过覆盖最新、最强模型的回答，提高奖励模型上限，尤其是高奖励区域的可靠性和稳健性。SFT、PPO 早期和 PPO 晚期模型生成的回答被组合成成对比较，再交给专业人工标注者标偏好。</p>
+<p>该流程能更细致、全面地完善奖励模型，但需要大量人工标注时间。为提高在线 RLHF 效率，实验启动时只使用此前所有模型已经积累的人类偏好，因此当前轮模型回答的偏好可能因标注耗时尚未加入。奖励模型持续随人类反馈更新，从而与人类偏好的复杂性和细微差异同步演进。</p>
+<h5 id="_24">实现</h5>
+<p>在线 RLHF 共执行三轮。每一轮中，快速路径收集数千条偏好补丁与在线偏好数据更新奖励模型，同时使用此前模型回答的全部现有人类偏好数据。每轮都带来新的观察，使我们能够动态调整、完善奖励模型，提高人类反馈训练语言模型的整体表现与可靠性。</p>
+<p><img alt="原论文第 18 页：在线 RLHF 快慢路径、实现与 PPO 训练细节" src="资源/原页-18.png"></p>
+<h4 id="423-ppo">4.2.3 PPO 训练细节</h4>
+<p>强化学习对齐采用标准 PPO 并作若干调整，以保证训练稳定。框架包括执行者、评论家、参考和奖励四个模型。后两个冻结，只训练前两个；四者规模相同，保证处理和生成数据的容量一致。训练在约 400 次迭代中遍历约 20 万条多样查询，并选择验证集最优检查点发布。</p>
+<h5 id="_25">模型初始化</h5>
+<p>参考模型与执行者都使用 SFT 权重初始化。评论家模型使用奖励模型除线性头之外的部分初始化，并先预训练 50 次迭代，此时执行者冻结。这对于稳定训练早期的价值估计、避免不稳定价值造成损害很关键。</p>
+<p>图 9 比较评论家从奖励模型或 SFT 模型初始化。奖励模型初始化的评论家在 PPO 最初几次迭代中损失更大，但约 20 次迭代后持续获得更低损失，并使执行者得到更高奖励。早期高损失可能反映奖励建模与评论家建模任务的根本差异；后期低损失则可能来自二者对世界知识的内部理解更一致，也更好地掌握评估原则。</p>
+<h5 id="_26">条件奖励</h5>
+<p>奖励模型适应多种条件。不同领域的查询在计算奖励前，会给每份采样回答加上适当的条件系统提示，如图 10 所示，确保模型回答符合各领域不同的上下文要求。这个系统提示与其余三个模型无关，只提供给奖励模型。</p>
+<h5 id="_27">预训练梯度</h5>
+<p>为降低 PPO 阶段灾难性遗忘风险，我们沿用 InstructGPT 方法加入预训练损失，系数为 0.5，预训练数据量约为 PPO 数据量的 50%。它帮助模型在适应新反馈、通过 PPO 学习时，仍保留初始阶段获得的基础能力与知识。</p>
+<p><img alt="原论文第 19 页：评论家初始化消融、条件 PPO 与预训练梯度" src="资源/原页-19.png"></p>
+<h5 id="_28">超参数</h5>
+<p>KL 散度系数设为 0.01，执行者与评论家学习率分别为 $10^{-6}$ 和 $5\times10^{-6}$。实验发现较大的 PPO $\lambda$ 值会产生更高奖励，因此设为 0.99。采样采用相对保守的 <code>top_p=0.9</code>，平衡多样性与收敛速度。本文没有使用价值损失裁剪或优势归一化。即使没有堆叠大量强化学习技巧，训练仍很稳定，部分原因正是细致的在线 RLHF 工作。</p>
+<h3 id="43">4.3 长上下文微调</h3>
+<p>为保留微调后的长上下文能力，SFT 与 RLHF 都继续使用长上下文预训练数据。数据有两类：书籍长上下文，以及从 GitHub 仓库获得并按特定方式拼接的代码长上下文。</p>
+<p>为增强 InternLM2 的数据分析能力，我们以 DS-1000 所用代码仓库为核心，包括 Pandas、NumPy、TensorFlow、SciPy、Scikit-learn、PyTorch 和 Matplotlib；再从 GitHub 搜索引用这些核心仓库且星标超过 10,000 的仓库，执行与预训练相同的过滤和清洗。每个仓库先以深度优先方式排列原始数据，同时生成简短描述文件内容的提示；之后按顺序拼接处理后的数据，直至 32K。实验表明，长上下文代码数据不仅改善长上下文能力，也改善编程能力。</p>
+<p><img alt="原论文第 20 页：PPO 超参数、长上下文微调与代码数据构建" src="资源/原页-20.png"></p>
+<h3 id="44">4.4 工具增强大型语言模型</h3>
+<h4 id="441">4.4.1 通用工具调用</h4>
+<p>我们修改 ChatML，引入“环境”角色以支持通用工具调用。普通对话格式保持不变，但采用智能体时会给模型更明确的信号。另定义两个关键字支持智能体的不同用途：代码解释器 <code>&lt;|interpreter|&gt;</code> 与外部插件 <code>&lt;|plugin|&gt;</code>。由此形成统一流式格式，既能处理不同插件扩展和人工智能环境，又兼容一般对话。图 17 给出具体示例。为充分激发 InternLM2 的智能体能力，我们让智能体语料与对话领域对齐，再依照语言模型的基础能力解耦语料，进行细粒度训练。</p>
+<h4 id="442">4.4.2 代码解释器</h4>
+<p>我们把 Python 代码解释器视为特殊工具，并沿用工具学习的统一模式，增强 InternLM2-Chat 借助代码解释器解决数学题的能力。数据采用推理与编程交错策略，以迭代式困难样本挖掘构造。</p>
+<p><img alt="原论文第 21 页：工具调用、代码解释器与评估概览" src="资源/原页-21.png"></p>
+<h2 id="5">5 评估与分析</h2>
+<h3 id="51">5.1 概览</h3>
+<p>本节从不同领域与任务全面评估、分析语言模型表现。评估分为下游任务与对齐两大类，每类再拆为具体子任务，以详细理解模型的优势与弱点。最后讨论数据污染问题及其对性能和可靠性的影响。除非另有说明，全部评估使用 OpenCompass。</p>
+<h3 id="52">5.2 下游任务表现</h3>
+<p>我们说明多项自然语言处理任务的评估协议和性能指标，介绍数据集、实验设置、结果与分析，并同先进方法比较。性能分为六个维度：综合考试、语言与知识、推理与数学、多编程语言代码、长上下文建模、工具使用。</p>
+<h4 id="521">5.2.1 综合考试</h4>
+<p>综合考试使用五个数据集：MMLU 含 57 个子任务，覆盖人文、社会科学、STEM 等领域，报告 5-shot；CMMLU 是面向中国的 67 子任务多选集，含许多中国特有任务，报告 5-shot；C-Eval 含 52 个子任务和四个难度等级，覆盖人文、社会科学、STEM 等，报告 5-shot；AGIEval 由面向普通考生的 20 项正式、高标准入学与资格考试构成，含选择题与开放题，报告 0-shot；GAOKAO-Bench 收录 2010 至 2022 年中国高考，本文只评估客观题，报告 0-shot。</p>
+<p><img alt="原论文第 22 页：基础模型与对话模型综合考试结果" src="资源/原页-22.png"></p>
+<p>基础模型结果见表 5，对话模型结果见表 6。InternLM2 系列在相近参数规模中表现出色。7B 和 20B 的 InternLM2 相比 InternLM2-Base 显著提高，证明通用数据预训练加领域增强语料有利于综合考试。AGIEval、GAOKAO 都来自专门为人类设计的考试，InternLM2 相比 Base 在这两项上的增幅大于其他数据集。对话模型中，InternLM2 同样领先相近规模模型；比较 7B SFT 与 COOL RLHF 模型可见，COOL RLHF 对综合考试表现影响很小。</p>
+<h4 id="522">5.2.2 语言与知识</h4>
+<p>语言与知识评估包括：TriviaQA 的阅读理解与开放域问答子集；由用户提问、专家验证答案的 NaturalQuestions；自由形式中文多选阅读理解 C3；面向中国 12 至 18 岁中学生的英文阅读理解考试 RACE 高中子集；以及从维基百科抽取、覆盖 101 种语言的 FLORES 翻译数据。FLORES 评估英语与其他 100 种语言的双向翻译，每个方向选择 100 个样本，以 BLEU 衡量。</p>
+<p><img alt="原论文第 23 页：语言与知识任务结果" src="资源/原页-23.png"></p>
+<p>基础模型结果见表 7，对话模型结果见表 8。严谨、高质量的训练语料使 InternLM2 在语言理解和知识应用任务中展现明显竞争力，适合依赖稳健语言理解与广泛知识的实际应用。</p>
+<h4 id="523">5.2.3 推理与数学</h4>
+<p>推理数据包括：WinoGrande，含 44,000 道二选一常识推理题，要求依据场景为代词选择正确实体；HellaSwag，含 70,000 道困难常识自然语言推断题，每题给出场景和四种结果，选择最合理结论；BigBench Hard，从 BIG-Bench 中抽取当时语言模型尚未超过人类的 23 项困难任务。</p>
+<p>数学数据包括：GSM8K-Test，约 1300 道小学情境数学题，通过 2 到 8 个基本算术步骤得到答案；MATH，12,500 道困难高中竞赛题，覆盖代数至微积分并提供完整逐步解答；TheoremQA，800 组由 STEM 定理驱动的问答，覆盖数学、电子工程与计算机、物理、金融中的 350 多条定理；MathBench，3709 道按阶段逐步提高难度的问题，包含中英双语理论题和应用题，并以三级标签标注细粒度知识点。</p>
+<p><img alt="原论文第 24 页：语言知识数据集说明与推理、数学数据集" src="资源/原页-24.png"></p>
+<p>多项选择题主要使用 0-shot；GSM8K、MATH 与 MathBench 开放题主要使用 few-shot，以提高指令遵循、便于抽取答案。为保证一致，基础模型多选题主要使用困惑度评估。</p>
+<h5 id="_29">推理结果</h5>
+<p>推理能力反映模型理解、处理、操纵抽象概念的能力，是复杂解题与决策的基础。7B 规模中，InternLM2-7B 除 BBH 外在多数数据集领先；WinoGrande 得分 84.7，比 Mistral-7B-v0.1 的 75.3 高 9.4 分，仅比 InternLM2-20B 的 85.2 低不到 1 分，显示强常识推理能力。全部基础模型中，InternLM2-20B 总体最佳。与 20B Base 相比，领域增强知识使其三个推理数据集平均提高 10.4%。</p>
+<p>对话模型中，InternLM2 在 7B 和 13-20B 两组继续领先；RLHF 与 SFT 模型在已经显著提高的推理能力基础上效果接近。7B 甚至在三个测试集上超过多数 13-20B 模型；20B 则在 HellaSwag 情境推理上比 GPT-3.5 高 15.6 分，在 BBH 困难综合推理上高 26.4 分。</p>
+<p><img alt="原论文第 25 页：推理任务结果与基础模型数学结果" src="资源/原页-25.png"></p>
+<h5 id="_30">数学结果</h5>
+<p>数学能力是模型认知与计算能力的重要组成。7B 基础模型中，InternLM2-7B 在多个难度的数学评估上领先。GSM8K 得分 70.8，比 ChatGLM3-6B-Base 高 10.1 个百分点，接近 InternLM2-7B-Base 36.0 的两倍，说明领域增强数据显著提高基本算术。MATH 上虽略落后，但 TheoremQA 得分 10.5，甚至超过规模更大的 Qwen-14B-Base 的 10.4，说明它不仅会计算，也擅长复杂定理应用。MathBench 中英文测试同样表现良好。</p>
+<p>13-20B 基础模型中，InternLM2-20B 在基本算术和定理应用上超过所有参评模型；Qwen-14B-Base 则在复杂解题与 MathBench 中英文任务上突出。</p>
+<p>对话模型结果见表 11。InternLM2-Chat 在 7B、20B 两个规模上都在 GSM8K、MATH、TheoremQA 中表现最佳。经过 COOL RLHF 的 20B 在各指标全面领先，超过 GPT-3.5 与 Mixtral-8x7B-Instruct-v0.1；MathBench 双语测试同样优秀。</p>
+<p><img alt="原论文第 26 页：数学对话模型结果与编程评估说明" src="资源/原页-26.png"></p>
+<h4 id="524">5.2.4 编程</h4>
+<p>Python 任务包括 HumanEval 与 MBPP。HumanEval 由 164 道精心设计的编程任务组成，每题包含 Python 函数和说明字符串，用于评估程序生成与补全；MBPP 含 974 道入门程序员可解决的任务，从简单数值操作到需要外部知识的整数序列定义。本文采用经作者人工验证子集的清洗版本。</p>
+<p>多编程语言任务使用 HumanEval-X。它把 HumanEval 的 164 题翻译为 C++、Java、JavaScript、Go 和 Python，共 820 组问题-答案，支持代码生成与翻译，并以测试用例验证功能正确性。评估还包含 MBPP 的中文版本 MBPP-CN。</p>
+<p>InternLM2 系列在 HumanEval、MBPP、MBPP-CN 上达到领先表现，其中 20B 对话模型比此前先进结果高出超过 10%，说明代码生成能力强。20B 相比 7B 在 MBPP-CN 上大幅提高，但 HumanEval-X 略有下降，可能因为模型针对中文微调后牺牲了一部分其他语言效果。</p>
+<h4 id="525">5.2.5 能力增强训练前后表现</h4>
+<p>此前结果清楚显示，经过能力专项增强训练的 InternLM2 持续超过对应 Base 模型。图 12 汇总训练前后的能力平均分：编程取 HumanEval、MBPP；推理取 MATH、GSM8K、SummEdits、BBH；问答取 HellaSwag、PIQA、WinoGrande、OpenBookQA、NaturalQuestions、TriviaQA；考试取 MMLU、AGIEval、C-Eval。</p>
+<p><img alt="原论文第 27 页：基础与对话模型编程结果、能力增强评估设置" src="资源/原页-27.png"></p>
+<p>各项能力均明显提高。表 14 还比较能力增强前后基础模型经过同样 SFT 后的表现，能力维度采用 OpenCompass 分类。基于增强后 InternLM2-7B 的 SFT 模型在语言、知识、推理、代码四项上均高于基于 7B Base 的 SFT 模型。报告其他部分的 SFT 结果基于增强前的 Base 模型。</p>
+<p><img alt="原论文第 28 页：编程结果续表与能力增强前后说明" src="资源/原页-28.png"></p>
+<p><img alt="原论文第 29 页：能力增强对比图、SFT 对比与长上下文评估开篇" src="资源/原页-29.png"></p>
+<h4 id="526">5.2.6 长上下文建模</h4>
+<h5 id="_31">长上下文理解与推理</h5>
+<p>主要使用 L-Eval 与 LongBench。L-Eval 含 18 个子任务，文本来自法律、经济、科技等领域，共 411 份文档、2000 多个测试样本，平均文档长度 7217 词；分为 5 个闭合任务与 13 个开放任务，分别以精确匹配准确率和 ROUGE 评分。LongBench 含 21 个子任务、4750 个样本，是首个双语长上下文基准，英文平均 6711 词，中文平均 13,386 字；21 个子任务分为 6 类，全面评估多种能力。</p>
+<p>所有 InternLM2 变体在两个基准上都表现出强长上下文能力。20B SFT 在 L-Eval 上最佳并大幅领先同类模型；LongBench 上，7B SFT 在六类中的四类超过其他不大于 7B 的模型，总分 48.1，仅略低于 ChatGLM3-6B 的 48.4。不同参数规模的 InternLM2 长上下文表现差异不大，原因有待进一步研究。</p>
+<h5 id="_32">大海捞针</h5>
+<p>“大海捞针”是单目标检索任务：把一条关键信息插入目标长度长文的不同位置，在提示末尾询问这条信息，从而可视化模型在不同长度、不同位置的长文本回忆能力。本文依照原始思想设计中文长文，采用覆盖金融、科技等广泛领域、内容新且质量高的 Skywork/ChineseDomainModelingEval 数据集，并使用 LMDeploy 加速推理。图 13 显示，InternLM2 在最长 200K 词元范围内几乎都能正确找回目标信息。</p>
+<p><img alt="原论文第 30 页：200K 大海捞针与长上下文基准结果" src="资源/原页-30.png"></p>
+<h4 id="527">5.2.7 工具使用</h4>
+<p>外部工具和 API 可以显著增强大型语言模型处理复杂现实问题的能力。本文使用 GSM8K、MATH、MathBench、T-Eval 和 CIBench 模板子集评估 InternLM2 的工具使用，全部采用 ReAct 协议，使模型交替生成思考过程并执行动作。</p>
+<p>MathBench 的 3709 道问题覆盖小学至高中数学概念。T-Eval 提供人工验证的高质量指令及逐步解答，从六个维度衡量模型使用 Google Search、高德地图等日常工具的能力。团队自建的 CIBench 通过交互式 Jupyter Notebook 模拟真实数据分析，包含多个连续任务，覆盖 Pandas、NumPy、PyTorch 等常用 Python 模块，全面评估数据分析能力。</p>
+<p>使用外部代码解释器并按 ReAct 解决编程和数学题后，即使基础表现已较高，模型仍有明显提升，MATH 的增幅尤其显著。MathBench 大多数情形也得到改善；小幅下降可能来自错误使用解释器。20B 对话模型在知识类、7B 对话模型在应用类的增幅较明显，差异可能来自训练数据构成不同。</p>
+<p>T-Eval 与 CIBench 上，InternLM2 持续达到或超过现有模型。相同规模下，7B 在两项都最佳；20B 在 T-Eval 具有竞争力，在 CIBench 得分最高。中英文结果都很强，显示多语言工具使用能力。</p>
+<p><img alt="原论文第 31 页：工具使用结果说明与对齐评估开篇" src="资源/原页-31.png"></p>
+<h3 id="53">5.3 对齐表现</h3>
+<p>预训练与 SFT 会改善客观能力，但回答风格可能不符合人类偏好，需要 RLHF 继续增强。因此，对齐评估对于判断模型是否真正满足人类需求非常重要。</p>
+<p>本节在多种主观对齐数据集上比较 SFT 与 RLHF 模型。表 17 显示，InternLM2 在多项基准上达到或接近先进水平，说明系列模型的主观输出与人类偏好高度一致。各数据集所用主观评估提示见附录。</p>
+<p><img alt="原论文第 32 页：代码解释器、T-Eval、CIBench 与对齐总表" src="资源/原页-32.png"></p>
+<h4 id="531">5.3.1 英文主观评估</h4>
+<h5 id="alpacaeval">AlpacaEval</h5>
+<p>AlpacaEval 是含 805 道题的单轮问答集，主要评估模型回答对人类的有用性。第二版设定基线模型，以 GPT-4 Turbo 为裁判，将基线回答与待测模型回答比较，选择更符合人类偏好的一个并计算胜率。它不直接收集裁判文本回答，而是统计分析裁判的 logit 概率，再把偏好作为加权胜率的权重。InternLM2-20B 胜率 21.8，在比较模型中达到最高结果；RLHF 明显高于 SFT，证明对齐策略有效。</p>
+<h5 id="mtbench">MTBench</h5>
+<p>MTBench 含 80 个两轮对话问题，覆盖推理、角色扮演、数学、编程、写作、人文、STEM、信息抽取八个维度，每维 10 题。第一轮测试基本回答，第二轮要求遵循额外具体指令完善先前回答，裁判模型按 1 到 10 分评分。InternLM2 的 7B、20B 分别达到 7.7、7.9，均领先同组模型，显示可靠多轮对话能力。</p>
+<p><img alt="原论文第 33 页：对齐基准总表与英文主观评估" src="资源/原页-33.png"></p>
+<h4 id="532">5.3.2 中文主观评估</h4>
+<h5 id="compassarena">CompassArena</h5>
+<p>CompassArena 含 520 道中文问题，覆盖知识、语言、数学、推理、创造力。它与 AlpacaEval 类似，由 GPT-4 Turbo 判断两模型胜负，并交换模型顺序进行双盲测试以减轻位置偏差。InternLM2 的 7B 和 20B 分别以 28.7、31.4 取得各组最高胜率，两种规模差距很小；但 RLHF 相比 SFT 大幅提高，说明性能增益主要来自 RLHF 更好地对齐人类偏好，而非单纯扩大模型。分项结果显示，InternLM2 的中文创造力和语言能力尤其强，胜率可与 GPT-4 Turbo 竞争。</p>
+<h5 id="alignbench">AlignBench</h5>
+<p>AlignBench 是包含 683 组问答的中文主观数据集，分为基础语言能力、高级中文理解、任务导向角色扮演等八类，覆盖物理、历史、音乐、法律等情境。内部裁判 CritiqueLLM 从多个维度给每题打 1 到 10 分并给出总分。InternLM2 7B、20B 分别为 6.1、6.8，均达到组内先进水平并超过 GPT-3.5 的 5.7。RLHF 后两个规模都比 SFT 明显提高。细分分数说明数学与推理仍需改善，但问答和角色扮演很强。</p>
+<p><img alt="原论文第 34 页：CompassArena 分项、AlignBench 与指令遵循评估" src="资源/原页-34.png"></p>
+<h4 id="533">5.3.3 指令遵循评估</h4>
+<p>IFEval 要求模型回答符合大小写限制、关键词限制等明确模式。它包含 25 类指令、541 道题，以规则判断每道题的回答是否正确，并通过不同统计方式给出提示级严格、提示级宽松、实例级严格、实例级宽松四种准确率；本文报告四者平均值。虽然以英语为主的 Llama2、Mistral 通常比中文模型更强，但 InternLM2 在 7B 组以 48.5 排第二，在 13-20B 组以 48.7 排第三，仍处于同规模领先位置。</p>
+<h4 id="534">5.3.4 条件奖励模型消融</h4>
+<p>为验证条件系统提示的作用，我们比较在多领域异质混合数据上训练的奖励模型是否使用条件系统提示。表 19 显示，不使用系统提示时，有用与无害对话、内容摘要、数学题、Reddit 回复等公开数据集的准确率明显下降；加入系统提示后，各领域准确率显著提高。本文 7B 奖励模型在使用条件提示后，六项测试均高于不使用条件提示的版本，并在多项上超过 UltraRM-13B 与 QwenRM。</p>
+<h3 id="54">5.4 数据污染讨论</h3>
+<p>我们在多个基础模型上计算 GSM8K 样本的语言建模损失，一个样本由问题和答案拼接而成。对每个模型分别比较训练集损失 $L_{train}$、测试集损失 $L_{test}$ 与由 GPT-4 生成、模仿 GSM8K 的专门参考集损失 $L_{ref}$。</p>
+<p><img alt="原论文第 35 页：IFEval、条件奖励模型消融与数据污染表" src="资源/原页-35.png"></p>
+<p>同时报告两个指标：$\Delta_1=L_{test}-L_{ref}$ 表示训练中可能出现的测试数据泄漏，值越低越可能泄漏；$\Delta_2=L_{test}-L_{train}$ 衡量训练集过拟合程度，值越高说明过拟合越严重。表 20 以灰色突出两个指标的异常值。结果显示，能力专项增强后的 InternLM2 在 GSM8K 上出现明显训练集损失差异，因此污染分析必须与性能结果一并考虑。</p>
+<h2 id="6">6 结论</h2>
+<p>本文提出 InternLM2 大型语言模型，它在主观与客观评估中都表现出色。模型规模覆盖 1.8B、7B、20B，使用超过 2 万亿词元的高质量预训练语料，适用于多种场景。为更好支持长上下文，InternLM2 使用 GQA 降低推理成本，并在最长 32K 上下文上继续训练。除模型本身外，我们还开源多个训练阶段的检查点，便于后续研究模型演化。</p>
+<p>报告详细说明 InternLM2 的训练方法，包括 InternEvo 框架、预训练文本数据、预训练代码数据、预训练长文本数据与对齐数据。针对 RLHF 中的偏好冲突，本文提出条件式在线 RLHF 调和多种偏好。这些经验可以帮助研究者准备预训练数据，并更有效地训练更大模型。</p>
+<p><img alt="原论文第 36 页：数据污染指标、结论与参考文献开篇" src="资源/原页-36.png"></p>
+<h2 id="_33">参考文献</h2>
+<p>参考文献按原论文第 36-46 页的顺序列出。第 36 页已在上一节呈现；为完整保留作者姓名、论文标题、出版信息和链接，以下继续使用原页截图。</p>
+<p><img alt="原论文第 37 页：参考文献" src="资源/原页-37.png"></p>
+<p><img alt="原论文第 38 页：参考文献" src="资源/原页-38.png"></p>
+<p><img alt="原论文第 39 页：参考文献" src="资源/原页-39.png"></p>
+<p><img alt="原论文第 40 页：参考文献" src="资源/原页-40.png"></p>
+<p><img alt="原论文第 41 页：参考文献" src="资源/原页-41.png"></p>
+<p><img alt="原论文第 42 页：参考文献" src="资源/原页-42.png"></p>
+<p><img alt="原论文第 43 页：参考文献" src="资源/原页-43.png"></p>
+<p><img alt="原论文第 44 页：参考文献" src="资源/原页-44.png"></p>
+<p><img alt="原论文第 45 页：参考文献" src="资源/原页-45.png"></p>
+<p><img alt="原论文第 46 页：参考文献" src="资源/原页-46.png"></p>
+<h2 id="a">附录 A</h2>
+<h3 id="a1">A.1 致谢</h3>
+<p>InternLM 项目得以完成，有赖于下列人员的贡献。作者感谢他们的支持；名单按姓氏字母顺序排列：Xiang Cao、Yuanyuan Cao、Weihan Cao、Yuhang Cao、Xiaodong Chang、Wenjun Chen、Lu Chen、Songyang Gao、Jianfei Gao、Yihan Geng、Honglin Guo、Ziwei Ji、Tian Lan、Menglei Li、Peiji Li、Bowen Li、Mo Li、Xingpu Li、Yiqi Lin、Lindong Lu、Han Lv、Ren Ma、Yichuan Ma、Xiuda Ma、Jiahui Peng、Runyu Peng、Wenwen Qu、Guanlin Shen、Haowen Shen、Jin Shi、Yixin Song、Chenlin Su、Xiaohui Su、Zhewen Tan、Shihan Tian、Zhongying Tu、Bo Wang、Shasha Wang、Zhiqiang Wang、Zerui Wang、Chonghua Wang、Mengke Wang、Jiang Wu、Hui Wu、Shuhao Xing、Rui Xu、Qian Yao、Chang Yuan、Zhiyuan Zeng、Zijian Zhang、Yifan Zhang、Min Zhang、Zhiyuan Zhao、Ying Zhao、Zilong Zheng、Yunhua Zhou、Zhihao Zhu、Jie Zhu、Lin Zhu。</p>
+<h3 id="a2">A.2 评估提示</h3>
+<p>图 17 展示 InternLM2-Chat 执行函数调用时采用的流式格式，特别使用 JSON 以方便下游应用。由于提示包含代码、占位符、工具协议和严格输出格式，依照原文以截图呈现。</p>
+<p><img alt="原论文第 47 页：致谢与函数调用流式格式" src="资源/原页-47.png"></p>
+<p>图 18 给出一例数学概念理解错误：问题询问环 $R$ 的两个双边理想 $U$、$V$ 经过哪些操作后仍必然是理想；错误分析指出，模型没有准确掌握环中理想的概念。</p>
+<p><img alt="原论文第 48 页：数学概念误解示例" src="资源/原页-48.png"></p>
+<p>图 19 给出 CIBench 提示。系统要求助手始终使用 IPython 解释器，以规定的“思考、动作、动作输入、响应”格式分步操作；代码必须放入 Markdown 代码块，每一步只解决当前问题，工具响应由环境返回，模型不得自行伪造。</p>
+<p><img alt="原论文第 49 页：CIBench 工具调用提示" src="资源/原页-49.png"></p>
+<p>图 20 给出 MATH 评估提示和 few-shot 示例。提示规定工具调用与直接回答的协议，并示范如何让 Python 解释器化简代数式、提取 $x^3$ 的系数。</p>
+<p><img alt="原论文第 50 页：MATH 代码解释器提示" src="资源/原页-50.png"></p>
+<p>图 21 给出 GSM8K 评估提示与示例，模型用 Python 计算两支篮球队的两分球、三分球和罚球总分，再依据工具结果输出最终答案。</p>
+<p><img alt="原论文第 51 页：GSM8K 代码解释器提示" src="资源/原页-51.png"></p>
+<p>图 22 给出 AlpacaEval 的裁判提示。裁判接收一条指令和两份顺序随机的模型回答，从人类视角比较质量与相关性，只输出最佳模型的标识符，以此生成大型语言模型排行榜。</p>
+<p><img alt="原论文第 52 页：AlpacaEval 裁判提示" src="资源/原页-52.png"></p>
+<p>图 23 给出 MTBench 的裁判提示。裁判需要重点评价助手对第二个用户问题的回答，并综合有用性、相关性、准确性、深度、创造力和细节程度；先提供简短解释，再严格按指定格式给出 1 到 10 分。</p>
+<p><img alt="原论文第 53 页：MTBench 裁判提示" src="资源/原页-53.png"></p></article></main>
+  </div>
+  <button class="nav-backdrop" type="button" aria-label="关闭文章目录"></button>
+  <script>
+    (() => {
+      const body = document.body;
+      const aside = document.getElementById('reader-toc');
+      const toggle = document.querySelector('.nav-toggle');
+      const backdrop = document.querySelector('.nav-backdrop');
+      const headings = [...document.querySelectorAll('article h1, article h2, article h3, article h4, article h5, article h6')];
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      document.querySelector('.toc-count').textContent = `${tocLinks.length} 个标题 · 滚动自动定位`;
+
+      const closeNav = () => { body.classList.remove('nav-open'); toggle.setAttribute('aria-expanded', 'false'); };
+      toggle.addEventListener('click', () => {
+        const opening = !body.classList.contains('nav-open');
+        body.classList.toggle('nav-open', opening);
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+      backdrop.addEventListener('click', closeNav);
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeNav(); });
+      tocLinks.forEach((link) => link.addEventListener('click', () => { if (matchMedia('(max-width: 720px)').matches) closeNav(); }));
+
+      const byId = new Map(tocLinks.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+      let activeId = '';
+      const followActiveLink = (link, force = false) => {
+        if (!link || matchMedia('(max-width: 720px)').matches) return;
+        const panelRect = aside.getBoundingClientRect();
+        const linkRect = link.getBoundingClientRect();
+        const safeTop = panelRect.top + 28;
+        const safeBottom = panelRect.bottom - 28;
+        if (!force && linkRect.top >= safeTop && linkRect.bottom <= safeBottom) return;
+        /* 让当前章节始终跟随正文，并落在左侧目录视口约四分之一处。 */
+        const targetTop = aside.scrollTop + linkRect.top - panelRect.top - aside.clientHeight * .22;
+        const clampedTop = Math.max(0, Math.min(targetTop, aside.scrollHeight - aside.clientHeight));
+        if (Math.abs(aside.scrollTop - clampedTop) > 4) {
+          /* 与正文同步，不用平滑动画追赶，快速翻页时当前标题也不会掉出视口。 */
+          aside.scrollTop = clampedTop;
+        }
+      };
+      const updateActive = () => {
+        let current = headings[0];
+        const line = matchMedia('(max-width: 720px)').matches ? 82 : 46;
+        for (const heading of headings) {
+          if (heading.getBoundingClientRect().top <= line) current = heading;
+          else break;
+        }
+        if (current && current.id !== activeId) {
+          activeId = current.id;
+          const activeLink = byId.get(activeId);
+          tocLinks.forEach((link) => {
+            link.classList.toggle('is-current', link === activeLink);
+            if (link === activeLink) link.setAttribute('aria-current', 'location');
+            else link.removeAttribute('aria-current');
+            link.classList.remove('is-ancestor');
+          });
+          let parentItem = activeLink?.parentElement?.parentElement?.closest('li');
+          while (parentItem) {
+            const parentLink = parentItem.querySelector(':scope > a');
+            if (parentLink) parentLink.classList.add('is-ancestor');
+            parentItem = parentItem.parentElement?.closest('li');
+          }
+          followActiveLink(activeLink, true);
+        }
+      };
+      let updateQueued = false;
+      addEventListener('scroll', () => {
+        if (updateQueued) return;
+        updateQueued = true;
+        requestAnimationFrame(() => {
+          updateQueued = false;
+          updateActive();
+          followActiveLink(byId.get(activeId), true);
+        });
+      }, { passive: true });
+      addEventListener('resize', updateActive);
+      addEventListener('pageshow', updateActive);
+      if (document.fonts?.ready) document.fonts.ready.then(updateActive);
+      updateActive();
+    })();
+  </script>
+</body>
+</html>
